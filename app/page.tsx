@@ -1,34 +1,34 @@
-import pic1 from "@/public/midjourneyV6/v6pic1.jpg";
-import pic2 from "@/public/midjourneyV6/v6pic2.jpg";
-import pic3 from "@/public/midjourneyV6/v6pic3.jpg";
-import pic4 from "@/public/midjourneyV6/v6pic4.jpg";
-import pic6 from "@/public/midjourneyV6/v6pic6.jpg";
-import pic7 from "@/public/midjourneyV6/v6pic7.jpg";
-import pic8 from "@/public/midjourneyV6/v6pic8.jpg";
-import pic9 from "@/public/midjourneyV6/v6pic9.jpg";
-import pic10 from "@/public/midjourneyV6/v6pic10.jpg";
-import pic11 from "@/public/midjourneyV6/v6pic11.jpg";
-import pic12 from "@/public/midjourneyV6/v6pic12.jpg";
-import pic13 from "@/public/midjourneyV6/v6pic13.jpg";
-import pic14 from "@/public/midjourneyV6/v6pic14.jpg";
-import Image from "next/image";
+// import pic1 from "@/public/midjourneyV6/v6pic1.jpg";
+// import pic2 from "@/public/midjourneyV6/v6pic2.jpg";
+// import pic3 from "@/public/midjourneyV6/v6pic3.jpg";
+// import pic4 from "@/public/midjourneyV6/v6pic4.jpg";
+// import pic6 from "@/public/midjourneyV6/v6pic6.jpg";
+// import pic7 from "@/public/midjourneyV6/v6pic7.jpg";
+// import pic8 from "@/public/midjourneyV6/v6pic8.jpg";
+// import pic9 from "@/public/midjourneyV6/v6pic9.jpg";
+// import pic10 from "@/public/midjourneyV6/v6pic10.jpg";
+// import pic11 from "@/public/midjourneyV6/v6pic11.jpg";
+// import pic12 from "@/public/midjourneyV6/v6pic12.jpg";
+// import pic13 from "@/public/midjourneyV6/v6pic13.jpg";
+// import pic14 from "@/public/midjourneyV6/v6pic14.jpg";
+// import Image from "next/image";
 import Link from "next/link";
 
-const Imgs = [
-  pic1,
-  pic2,
-  pic3,
-  pic4,
-  pic6,
-  pic7,
-  pic8,
-  pic9,
-  pic10,
-  pic11,
-  pic12,
-  pic13,
-  pic14,
-];
+// const Imgs = [
+//   pic1,
+//   pic2,
+//   pic3,
+//   pic4,
+//   pic6,
+//   pic7,
+//   pic8,
+//   pic9,
+//   pic10,
+//   pic11,
+//   pic12,
+//   pic13,
+//   pic14,
+// ];
 export default function Home() {
   return (
     <main className="flex items-center flex-col p-12">
@@ -43,7 +43,7 @@ export default function Home() {
       <Link href="/create" className="mt-16 start-btn text-center">
         <span className="text">开 始</span>
       </Link>
-      <div className="gap-4 mt-16 xl:columns-4 columns-2">
+      {/* <div className="gap-4 mt-16 xl:columns-4 columns-2">
         {Imgs.map((img, index) => {
           return (
             <div className="rounded-lg cursor-pointer">
@@ -56,7 +56,7 @@ export default function Home() {
             </div>
           );
         })}
-      </div>
+      </div> */}
     </main>
   );
 }
