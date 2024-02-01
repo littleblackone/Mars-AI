@@ -6,7 +6,7 @@ import React from "react";
 import CustomLink from "./CustomLink";
 export default function Header() {
   return (
-    <div className=" p-12 flex items-center w-full justify-between text-[#F4DFB6]">
+    <div className=" px-32 py-12 pb-0 flex items-center w-full justify-between text-[#F4DFB6]">
       <div className="flex gap-[4rem]">
         <Link href="/" className="flex items-center ">
           <Image src="/logo.png" alt="logo" height={52} width={52}></Image>
@@ -18,7 +18,7 @@ export default function Header() {
         </ul>
       </div>
 
-      <div className="text-xl">登&nbsp;&nbsp;录</div>
+      {/* <div className="text-xl">登&nbsp;&nbsp;录</div> */}
     </div>
   );
 }

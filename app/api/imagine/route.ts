@@ -2,9 +2,8 @@ import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
 const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/imagine";
-const fetchUrl = "https://api.midjourneyapi.xyz/mj/v2/fetch";
 
-const handler = async (req: NextRequest) => {
+const handleImagine = async (req: NextRequest) => {
   try {
     const body = await req.json();
 
@@ -21,15 +20,14 @@ const handler = async (req: NextRequest) => {
     const options = {
       headers: {
         "X-API-KEY": process.env.GOAPI_KEY,
-        "x-webhook-secret": process.env.WEBHOOK_SECRET,
       },
       data: {
         prompt: body.prompt,
         aspect_ratio: "",
         process_mode: "fast",
         notify_progress: true,
-        webhook_secret: process.env.WEBHOOK_SECRET,
-        webhook_endpoint: "https://mars-ai.vercel.app/api/webhook",
+        webhook_secret: "",
+        webhook_endpoint: "",
       },
       url: imagineUrl,
       method: "post",
@@ -37,14 +35,9 @@ const handler = async (req: NextRequest) => {
 
     const response = await axios(options);
 
-    let imageData;
-
     if (response.data.status == "success") {
-      const taskId = response.data.task_id;
-      imageData = await axios.post(fetchUrl, { task_id: taskId });
-
-      return NextResponse.json(imageData.data.task_result, {
-        status: imageData.status,
+      return NextResponse.json(response.data, {
+        status: response.status,
       });
     }
   } catch (error) {
@@ -57,4 +50,4 @@ const handler = async (req: NextRequest) => {
   }
 };
 
-export const POST = handler;
+export const POST = handleImagine;
