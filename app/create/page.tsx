@@ -24,8 +24,9 @@ export default function Create() {
         }
       );
       console.log(response.data);
-
       setImageDatas(response.data);
+      const imgWebhook = await axios.post("/api/webhook");
+      console.log(imgWebhook);
     } catch (error) {
       console.error("Error sending prompt:", error);
     }

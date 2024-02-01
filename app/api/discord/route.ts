@@ -29,8 +29,7 @@ const handler = async (req: NextRequest) => {
         process_mode: "fast",
         notify_progress: true,
         webhook_secret: process.env.WEBHOOK_SECRET,
-        webhook_endpoint:
-          "https://webhook.site/5876ca8a-6406-40c7-acf2-f8ddc02922a4",
+        webhook_endpoint: "https://mars-ai.vercel.app/api/webhook",
       },
       url: imagineUrl,
       method: "post",
