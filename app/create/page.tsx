@@ -14,7 +14,7 @@ export default function Create() {
 
   const handleGenerateImage = async () => {
     try {
-      const response: { task_result: ImageData } = await axios.post(
+      const response: { data: ImageData } = await axios.post(
         "/api/discord",
         { prompt },
         {
@@ -23,9 +23,9 @@ export default function Create() {
           },
         }
       );
-      console.log(response.task_result);
+      console.log(response.data);
 
-      setImageDatas(response.task_result);
+      setImageDatas(response.data);
     } catch (error) {
       console.error("Error sending prompt:", error);
     }
@@ -33,19 +33,21 @@ export default function Create() {
 
   return (
     <div className="flex items-center  p-12 text-white">
-      <textarea
-        cols={20}
-        value={prompt}
-        rows={5}
-        className="bg-white/60"
-        onChange={handleTextChange}
-      ></textarea>
-      <button
-        className=" bg-white/60 rounded-lg p-4"
-        onClick={handleGenerateImage}
-      >
-        生成{imageDatas?.task_progress}
-      </button>
+      <div className=" flex flex-col gap-6">
+        <textarea
+          cols={20}
+          value={prompt}
+          rows={5}
+          className="bg-white/60"
+          onChange={handleTextChange}
+        ></textarea>
+        <button
+          className=" bg-white/60 rounded-lg p-4"
+          onClick={handleGenerateImage}
+        >
+          {imageDatas?.task_progress}
+        </button>
+      </div>
 
       <div className=" w-[20rem] h-[20rem] bg-white/60 ml-6">
         <Image

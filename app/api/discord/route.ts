@@ -1,5 +1,4 @@
 import axios from "axios";
-
 import { NextRequest, NextResponse } from "next/server";
 
 const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/imagine";
@@ -22,6 +21,7 @@ const handler = async (req: NextRequest) => {
     const options = {
       headers: {
         "X-API-KEY": process.env.GOAPI_KEY,
+        "x-webhook-secret": process.env.WEBHOOK_SECRET,
       },
       data: {
         prompt: body.prompt,
@@ -29,21 +29,25 @@ const handler = async (req: NextRequest) => {
         process_mode: "fast",
         notify_progress: true,
         webhook_secret: process.env.WEBHOOK_SECRET,
-        webhook_endpoint: "http://localhost:3000/api/discord",
+        webhook_endpoint:
+          "https://webhook.site/5876ca8a-6406-40c7-acf2-f8ddc02922a4",
       },
       url: imagineUrl,
       method: "post",
     };
 
     const response = await axios(options);
+
     let imageData;
 
     if (response.data.status == "success") {
       const taskId = response.data.task_id;
       imageData = await axios.post(fetchUrl, { task_id: taskId });
-    }
 
-    return NextResponse.json(imageData, { status: imageData?.status });
+      return NextResponse.json(imageData.data.task_result, {
+        status: imageData.status,
+      });
+    }
   } catch (error) {
     console.error(`Error: ${error}`);
 
