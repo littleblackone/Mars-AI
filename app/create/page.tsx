@@ -27,10 +27,10 @@ export default function Create() {
       setImageDatas(response.data);
 
       setInterval(async () => {
-        const imgWebhook = await axios.post("/api/webhook");
+        const imgWebhook = await axios.get("/api/webhook");
         console.log(imgWebhook);
       }, 5000);
-      
+
     } catch (error) {
       console.error("Error sending prompt:", error);
     }

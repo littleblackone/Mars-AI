@@ -4,4 +4,4 @@ async function ImageWebhook(req: NextRequest, res: NextResponse) {
   return NextResponse.json(res, { status: res.status });
 }
 
-export const POST = ImageWebhook;
+export const GET = ImageWebhook;
