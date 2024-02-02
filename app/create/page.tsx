@@ -2,9 +2,10 @@
 import axios from "axios";
 import Image from "next/image";
 import React, { useState } from "react";
-import { ImageData } from "../interface/ImageData";
-import { Form } from "@/components/ui/form";
+
 import { debounce } from "@/lib/utils";
+import { ImageData } from "../interface/ImageData";
+import { ImageForm } from "@/components/shared/ImageForm";
 
 export default function Create() {
   const [prompt, setPrompt] = useState<string>("");
@@ -45,9 +46,9 @@ export default function Create() {
   }, 1000);
 
   return (
-    <div className="p-12 flex items-center w-full bg-white/70 rounded-xl h-screen justify-between  text-white">
-      <div className=" flex flex-col gap-6 w-96 h-full ">
-        <textarea
+    <div className="p-12 px-6 flex items-start w-full h-full bg-white/70 rounded-xl ">
+      <ImageForm></ImageForm>
+      {/* <textarea
           cols={20}
           value={prompt}
           rows={5}
@@ -73,8 +74,7 @@ export default function Create() {
           width={320}
           height={320}
           alt="midjourney image"
-        ></Image>
-      </div>
+        ></Image> */}
     </div>
   );
 }

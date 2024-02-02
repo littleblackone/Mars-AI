@@ -14,3 +14,7 @@ export const debounce = (func: any, delay: number) => {
     }, delay);
   };
 };
+
+export function generateRandomInteger() {
+  return Math.floor(Math.random() * 4294967295);
+}
