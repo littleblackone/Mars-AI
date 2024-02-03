@@ -48,33 +48,6 @@ export default function Create() {
   return (
     <div className="p-12 px-6 flex items-start w-full h-full bg-white/70 rounded-xl ">
       <ImageForm></ImageForm>
-      {/* <textarea
-          cols={20}
-          value={prompt}
-          rows={5}
-          className="bg-white/60"
-          onChange={handleTextChange}
-        ></textarea>
-        <button
-          className=" bg-white/60 rounded-lg p-4"
-          onClick={handleGenerateImage}
-          disabled={isFetching}
-        >
-          {imageDatas?.task_progress}
-        </button>
-      </div>
-
-      <div className=" w-[20rem] h-[20rem] bg-white/60 ml-6">
-        <Image
-          src={
-            imageDatas?.task_progress === 100
-              ? imageDatas.image_url
-              : "/loading.jpg"
-          }
-          width={320}
-          height={320}
-          alt="midjourney image"
-        ></Image> */}
     </div>
   );
 }

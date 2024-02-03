@@ -17,13 +17,13 @@ export interface ImageData {
 }
 
 export interface ImageFormData {
-  aspectRatio:
+  aspectRatio?:
     | " --ar 1:1"
     | " --ar 3:2"
     | " --ar 4:3"
     | " --ar 16:9"
     | " --ar 9:16";
-  model:
+  model?:
     | " --v 1"
     | " --v 2"
     | " --v 3"
@@ -35,14 +35,14 @@ export interface ImageFormData {
     | " --niji 4"
     | " --niji 5"
     | " --niji 6";
-  artStyles: string;
-  negativePrompt: string;
-  seeds: number;
-  speed: " --fast" | " --turbo";
+  artStyles?: string;
+  negativePrompt?: string;
+  seeds?: number;
+  // speed?: " --fast" | " --turbo";
   stylize: number;
   chaos: number;
   prompt: string;
-  numberOfImage: "1" | "2" | "3" | "4";
+  numberOfImage?: "1" | "2" | "3" | "4";
 }
 
 export interface StyleStatus {

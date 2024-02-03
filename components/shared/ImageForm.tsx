@@ -20,7 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { debounce, generateRandomInteger } from "@/lib/utils";
+import {
+  debounce,
+  generateFinalPrompt,
+  generateRandomInteger,
+} from "@/lib/utils";
 import axios from "axios";
 import Image from "next/image";
 import {
@@ -42,6 +46,7 @@ import { styles } from "@/lib/constant";
 import { Textarea } from "../ui/textarea";
 import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
+import { CheckIcon } from "lucide-react";
 
 export const ImageForm = () => {
   //form data
@@ -53,23 +58,21 @@ export const ImageForm = () => {
   const [speed, setSpeed] = useState(" --fast");
   const [stylize, setStylize] = useState(100);
   const [chaos, setChaos] = useState(0);
-  const [prompt, setPrompt] = useState("");
+  // const [prompt, setPrompt] = useState("");
   const [imageNum, setImageNum] = useState("1");
   //fetch data
-  const [imageDatas, setImageDatas] = useState<ImageData>();
+  const [imageDatas, setImageDatas] = useState<ImageData | null>();
   //temp data
   const [isFetching, setIsFetching] = useState(false);
   const [tempStylize, setTempStylize] = useState([100]);
   const [tempchaos, setTempChaos] = useState([0]);
   const [tempStyle, setTempStyle] = useState("");
 
-  const [open, setOpen] = useState(false);
+  // const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  //   setPrompt(event.target.value);
+  // };
 
-  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setPrompt(event.target.value);
-  };
-
-  const handleGenerateImage = debounce(async (values: ImageFormData) => {
+  const handleGenerateImage = debounce(async (prompt: string) => {
     try {
       setIsFetching(true);
       const response = await axios.post("/api/imagine", { prompt });
@@ -104,7 +107,7 @@ export const ImageForm = () => {
       prompt: "",
       negativePrompt: "",
       seeds: 0,
-      speed: " --fast",
+      // speed: " --fast",
       stylize: 100,
       chaos: 0,
       aspectRatio: " --ar 1:1",
@@ -115,8 +118,9 @@ export const ImageForm = () => {
   });
 
   const onSubmit = (values: z.infer<typeof ImageValidation>) => {
-    // handleGenerateImage(values);
-    console.log(values);
+    setImageDatas(null);
+    const finalPrompt = generateFinalPrompt(values);
+    handleGenerateImage(finalPrompt);
   };
 
   return (
@@ -160,7 +164,7 @@ export const ImageForm = () => {
                 </FormItem>
               )}
             ></FormField>
-            <FormField
+            {/* <FormField
               control={form.control}
               name="speed"
               render={({ field }) => (
@@ -186,7 +190,7 @@ export const ImageForm = () => {
                   </div>
                 </FormItem>
               )}
-            ></FormField>
+            ></FormField> */}
             <FormField
               control={form.control}
               name="aspectRatio"
@@ -255,49 +259,50 @@ export const ImageForm = () => {
                   <FormLabel className=" text-nowrap text-base">
                     添加艺术风格:
                   </FormLabel>
-                  <Popover open={open} onOpenChange={setOpen}>
+                  <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className=" justify-center">
-                        {tempStyle ? (
-                          <span>{tempStyle}</span>
-                        ) : (
-                          <>
-                            <span>风格列表</span>
-                          </>
-                        )}
-                      </Button>
+                      <FormControl>
+                        <Button variant="outline" className=" justify-center">
+                          {field.value ? (
+                            styles.find((style) => style.label === field.value)
+                              ?.label
+                          ) : (
+                            <>
+                              <span>风格列表</span>
+                            </>
+                          )}
+                        </Button>
+                      </FormControl>
                     </PopoverTrigger>
-                    <FormControl>
-                      <PopoverContent
-                        className="p-0"
-                        side="right"
-                        align="start"
-                      >
-                        <Command
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <CommandInput placeholder="探索艺术风格..."></CommandInput>
-                          <CommandList>
-                            <CommandEmpty>没有找到相关的艺术风格</CommandEmpty>
-                            <CommandGroup>
-                              {styles.map((style) => (
-                                <CommandItem
-                                  key={style.value}
-                                  value={style.label}
-                                  onSelect={(value) => {
-                                    setTempStyle(value);
-                                    setOpen(false);
-                                  }}
-                                >
-                                  {style.label}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </FormControl>
+
+                    <PopoverContent className="p-0" side="right" align="start">
+                      <Command>
+                        <CommandInput placeholder="探索艺术风格..."></CommandInput>
+                        <CommandList>
+                          <CommandEmpty>没有找到相关的艺术风格</CommandEmpty>
+                          <CommandGroup>
+                            {styles.map((style) => (
+                              <CommandItem
+                                key={style.value}
+                                value={style.label}
+                                onSelect={() => {
+                                  form.setValue("artStyles", style.label);
+                                }}
+                              >
+                                {style.label}
+                                <CheckIcon
+                                  className={` ml-auto h-4 w-4 ${
+                                    style.label === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  }`}
+                                ></CheckIcon>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
                   </Popover>
                 </FormItem>
               )}
@@ -313,11 +318,11 @@ export const ImageForm = () => {
                   </FormLabel>
                   <div className="-translate-y-[3px]">
                     <FormControl>
-                      <Textarea
+                      <Input
                         {...field}
                         className=" resize-none"
                         placeholder="请输入你不想图片中出现的元素"
-                      ></Textarea>
+                      ></Input>
                     </FormControl>
                   </div>
                 </FormItem>
@@ -430,39 +435,41 @@ export const ImageForm = () => {
             ></FormField>
           </div>
 
-          <div className=" flex-1 w-full  bg-white/25 overflow-hidden h-full flex-center">
-            {/* <Image
-              src={
-                imageDatas?.task_progress === 100
-                  ? imageDatas.image_url
-                  : "/loading.jpg"
-              }
-              width={320}
-              height={320}
-              alt="midjourney image"
-            ></Image> */}
+          <div className=" flex-1 w-full  bg-white/25 overflow-hidden h-full  flex-center">
             <FormField
               control={form.control}
               name="prompt"
               render={({ field }) => (
-                <FormItem className="flex flex-col ">
+                <FormItem className="flex flex-col  w-full h-full">
                   <Image
-                    src={"/loading.jpg"}
+                    src={
+                      imageDatas?.task_progress === 100
+                        ? imageDatas.image_url
+                        : "/loading.jpg"
+                    }
                     width={320}
                     height={320}
                     alt="midjourney image"
+                    className=" place-self-center mt-auto"
                   ></Image>
-                  <FormControl>
-                    <Input
-                      className=""
-                      placeholder="让你的想象变成事实......"
-                      {...field}
-                    ></Input>
-                  </FormControl>
-                  <FormMessage></FormMessage>
-                  <Button type="submit" size="lg" disabled={isFetching}>
-                    生成
-                  </Button>
+                  <div className=" flex gap-2 mx-4 !mt-auto !mb-2 flex-col flex-center">
+                    <FormControl>
+                      <Textarea
+                        className=""
+                        placeholder="让你的想象变成事实......"
+                        {...field}
+                      ></Textarea>
+                    </FormControl>
+                    <FormMessage></FormMessage>
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full"
+                      disabled={isFetching}
+                    >
+                      生成 {`${imageDatas?.task_progress}`}
+                    </Button>
+                  </div>
                 </FormItem>
               )}
             ></FormField>
