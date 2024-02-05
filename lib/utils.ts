@@ -54,7 +54,6 @@ export function generateFinalPrompt(values: ImageFormData) {
     model
     // speed
   );
-  console.log(finalPromptArray);
 
   const finalPrompt =
     finalPromptArray.filter((item) => item !== "").length > 0

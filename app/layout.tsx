@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <link rel="icon" href="/logo.png" sizes="any" />
-      <body className={`${inter.className} bg-main-bg w-full min-h-screen`}>
+      <body className={`${inter.className}  bg-main-bg w-full min-h-screen`}>
         <Header></Header>
         <div className=" p-32">{children}</div>
         <Footer></Footer>

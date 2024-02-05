@@ -33,7 +33,8 @@ const config: Config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       backgroundImage: {
-        "main-bg": "linear-gradient(to bottom, #030637, #492E87 50%, #3C0753);",
+        "create-bg": "linear-gradient(to bottom, #C960A0, #6F74DC);",
+        "main-bg": "linear-gradient(to bottom, #4D1379, #6F74DC);",
       },
     },
   },

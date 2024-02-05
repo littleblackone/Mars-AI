@@ -24,9 +24,6 @@ export interface ImageFormData {
     | " --ar 16:9"
     | " --ar 9:16";
   model?:
-    | " --v 1"
-    | " --v 2"
-    | " --v 3"
     | " --v 4"
     | " --v 5"
     | " --v 5.1"
@@ -38,11 +35,9 @@ export interface ImageFormData {
   artStyles?: string;
   negativePrompt?: string;
   seeds?: number;
-  // speed?: " --fast" | " --turbo";
   stylize: number;
   chaos: number;
   prompt: string;
-  numberOfImage?: "1" | "2" | "3" | "4";
 }
 
 export interface StyleStatus {
