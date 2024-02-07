@@ -4,7 +4,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageValidation } from "../../lib/validations";
-import { ExclamationTriangleIcon, TrashIcon } from "@radix-ui/react-icons";
+import {
+  EnterFullScreenIcon,
+  ExclamationTriangleIcon,
+  MagicWandIcon,
+  TrashIcon,
+} from "@radix-ui/react-icons";
 import {
   Form,
   FormControl,
@@ -58,6 +63,7 @@ export const ImageForm = () => {
   const [seed, setSeed] = useState<string>();
   const [tempFormValue, setTempFormValue] = useState<ImageFormData>();
   const [finalPrompt, setFinalPrompt] = useState<string>();
+  const [open, setOpen] = useState(false);
 
   const testImageArr = [
     "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_0.webp",
@@ -84,7 +90,7 @@ export const ImageForm = () => {
 
           setFetchTime((prev) => prev + 2);
 
-          if (fetchTime >= 60) {
+          if (fetchTime >= 120) {
             clearInterval(intervalId);
             setIsFetching(false);
             console.log("请求超时，请重试");
@@ -124,7 +130,6 @@ export const ImageForm = () => {
     setImageDatas(null);
     setImageArr([]);
     setFetchTime(0);
-    setTaskId("");
     setTempFormValue(values);
     const finalPrompt = generateFinalPrompt(values);
     setFinalPrompt(finalPrompt);
@@ -139,7 +144,7 @@ export const ImageForm = () => {
         <Alert
           variant="destructive"
           className={`mb-6 text-red-500 bg-white/60 hidden ${
-            fetchTime >= 60 && "block"
+            fetchTime >= 120 && "block"
           }`}
         >
           <ExclamationTriangleIcon className="h-4 w-4"></ExclamationTriangleIcon>
@@ -442,6 +447,7 @@ export const ImageForm = () => {
                         }
                       </div>
                     )} */}
+
                     {testImageArr.map((imgUrl, index) => (
                       <div
                         key={index}
@@ -455,6 +461,7 @@ export const ImageForm = () => {
                         <button
                           type="button"
                           className="  absolute w-full h-full inset-0 bg-transparent hover:bg-transparent"
+                          onClick={() => setOpen(true)}
                         ></button>
                         <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
                           <TooltipProvider delayDuration={200}>
@@ -483,14 +490,17 @@ export const ImageForm = () => {
                           <TooltipProvider delayDuration={200}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <ImageFullView
-                                  tempFormValue={tempFormValue}
-                                  imgUrl={imgUrl}
-                                  index={index}
-                                  taskId={taskId}
-                                  seed={seed || ""}
-                                  finalPrompt={finalPrompt || ""}
-                                ></ImageFullView>
+                                <button
+                                  type="button"
+                                  onClick={() => setOpen(true)}
+                                  className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                >
+                                  <EnterFullScreenIcon
+                                    width={20}
+                                    height={20}
+                                    color="white"
+                                  ></EnterFullScreenIcon>
+                                </button>
                               </TooltipTrigger>
                               <TooltipContent side="right">
                                 <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
@@ -499,6 +509,17 @@ export const ImageForm = () => {
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
+
+                          <ImageFullView
+                            open={open}
+                            setOpen={setOpen}
+                            tempFormValue={tempFormValue}
+                            ParentimageArr={imageArr}
+                            index={index}
+                            parentTaskId={taskId}
+                            parentSeed={seed || ""}
+                            finalPrompt={finalPrompt || ""}
+                          ></ImageFullView>
 
                           <Separator className=" bg-gray-500/75"></Separator>
 

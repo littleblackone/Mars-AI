@@ -47,9 +47,11 @@ export interface StyleStatus {
 
 export interface FullViewData {
   index: number;
-  taskId: string;
-  imgUrl: string;
-  seed: string;
+  parentTaskId: string;
+  parentSeed: string;
   finalPrompt: string;
   tempFormValue: ImageFormData | undefined;
+  open: boolean;
+  ParentimageArr: string[];
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
