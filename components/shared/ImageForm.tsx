@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageValidation } from "../../lib/validations";
+import { ExclamationTriangleIcon, TrashIcon } from "@radix-ui/react-icons";
 import {
   Form,
   FormControl,
@@ -20,10 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { debounce, generateFinalPrompt } from "@/lib/utils";
+import { debounce, generateFinalPrompt, handleDownload } from "@/lib/utils";
 import axios from "axios";
-import Image from "next/image";
-import { ImageData } from "@/app/interface/ImageData";
+import { ImageData, ImageFormData } from "@/app/interface/ImageData";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import {
@@ -38,21 +38,40 @@ import { styles } from "@/lib/constant";
 import { Textarea } from "../ui/textarea";
 import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, DownloadIcon } from "lucide-react";
 import { Separator } from "../ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import { ImageFullView } from "./ImageFullView";
 
 export const ImageForm = () => {
-  //fetch data
   const [imageDatas, setImageDatas] = useState<ImageData | null>();
-  //temp data
+  const [fetchTime, setFetchTime] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(false);
   const [imageArr, setImageArr] = useState<string[]>([]);
+  const [taskId, setTaskId] = useState<string>("");
+  const [seed, setSeed] = useState<string>();
+  const [tempFormValue, setTempFormValue] = useState<ImageFormData>();
+  const [finalPrompt, setFinalPrompt] = useState<string>();
+
+  const testImageArr = [
+    "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_0.webp",
+    "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_1.webp",
+    "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_2.webp",
+    "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_3.webp",
+  ];
 
   const handleGenerateImage = debounce(async (prompt: string) => {
     try {
       setIsFetching(true);
       const response = await axios.post("/api/imagine", { prompt });
       const taskId = response.data.task_id;
+      setTaskId(taskId);
 
       const intervalId = setInterval(async () => {
         try {
@@ -60,13 +79,20 @@ export const ImageForm = () => {
             "/api/fetchImage",
             { taskId }
           );
-          setImageDatas(taskResult.data);
-          console.log(imageDatas?.task_progress);
 
+          setImageDatas(taskResult.data);
+
+          setFetchTime((prev) => prev + 2);
+
+          if (fetchTime >= 60) {
+            clearInterval(intervalId);
+            setIsFetching(false);
+            console.log("请求超时，请重试");
+          }
           if (taskResult.data.task_progress === 100) {
             clearInterval(intervalId);
-            setImageDatas(taskResult.data);
             setImageArr(taskResult.data.image_urls);
+            setSeed(taskResult.data.seed);
             setIsFetching(false);
           }
         } catch (error) {
@@ -97,13 +123,31 @@ export const ImageForm = () => {
   const onSubmit = (values: z.infer<typeof ImageValidation>) => {
     setImageDatas(null);
     setImageArr([]);
+    setFetchTime(0);
+    setTaskId("");
+    setTempFormValue(values);
     const finalPrompt = generateFinalPrompt(values);
-    handleGenerateImage(finalPrompt);
+    setFinalPrompt(finalPrompt);
+    console.log(finalPrompt);
+
+    // handleGenerateImage(finalPrompt);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className=" w-full">
+        <Alert
+          variant="destructive"
+          className={`mb-6 text-red-500 bg-white/60 hidden ${
+            fetchTime >= 60 && "block"
+          }`}
+        >
+          <ExclamationTriangleIcon className="h-4 w-4"></ExclamationTriangleIcon>
+          <AlertTitle>错误</AlertTitle>
+          <AlertDescription>
+            请求超时，请重试或隔几分钟再试一次。
+          </AlertDescription>
+        </Alert>
         <div className=" flex items-center flex-1  w-full h-[80vh] hide-scroll">
           <div className=" px-6 py-2 flex-shrink-0  w-[20rem] h-full flex flex-col justify-between items-start">
             <FormField
@@ -198,6 +242,10 @@ export const ImageForm = () => {
                               <span>风格列表</span>
                             </>
                           )}
+                          <span>
+                            {styles.find((style) => style.label === field.value)
+                              ?.label === "无" && "艺术风格"}
+                          </span>
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -378,33 +426,106 @@ export const ImageForm = () => {
                 <FormItem className="flex flex-col  w-full h-full">
                   <div
                     className={`w-full h-full gap-4 grid-cols-2 ${
-                      imageArr.length === 0 && "!flex-center"
+                      imageArr.length === 0 && ""
                     } grid grid-rows-[repeat(auto,minmax(min-content,1fr))] items-center justify-center`}
                   >
-                    <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
-                      {imageArr.length === 0 && (
+                    {/* {imageArr.length === 0 && (
+                      <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
+                        {
+                          <img
+                            src={"/pending2.png"}
+                            alt="midjourney image"
+                            className={`rounded-xl w-[65%] h-[65%] aspect-square ${
+                              isFetching && "flicker"
+                            }`}
+                          ></img>
+                        }
+                      </div>
+                    )} */}
+                    {testImageArr.map((imgUrl, index) => (
+                      <div
+                        key={index}
+                        className=" flex-center relative overflow-hidden group"
+                      >
                         <img
-                          src={"/pending2.png"}
+                          src={imgUrl}
                           alt="midjourney image"
-                          className={`rounded-xl w-[65%] h-[65%] ${
-                            isFetching && "flicker"
-                          }`}
+                          className={`rounded-xl min-w-[240px] w-[70%] h-[70%] `}
                         ></img>
-                      )}
-                    </div>
-                    {imageArr.length === 4 &&
-                      imageArr.map(
-                        (imgUrl) =>
-                          imgUrl && (
-                            <div className=" flex-center overflow-hidden">
-                              <img
-                                src={imgUrl}
-                                alt="midjourney image"
-                                className={`rounded-xl min-w-[240px] w-[70%] h-[70%] aspect-square`}
-                              ></img>
-                            </div>
-                          )
-                      )}
+                        <button
+                          type="button"
+                          className="  absolute w-full h-full inset-0 bg-transparent hover:bg-transparent"
+                        ></button>
+                        <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownload(imgUrl, index)}
+                                  className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                >
+                                  <DownloadIcon
+                                    width={20}
+                                    height={20}
+                                    color="white"
+                                  ></DownloadIcon>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                  下载
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <ImageFullView
+                                  tempFormValue={tempFormValue}
+                                  imgUrl={imgUrl}
+                                  index={index}
+                                  taskId={taskId}
+                                  seed={seed || ""}
+                                  finalPrompt={finalPrompt || ""}
+                                ></ImageFullView>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                  放大进行更多操作
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
+                          <Separator className=" bg-gray-500/75"></Separator>
+
+                          <TooltipProvider delayDuration={200}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="active:translate-y-[1px] rounded-md hover:stroke-red-500 bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                >
+                                  <TrashIcon
+                                    width={20}
+                                    height={20}
+                                    color="white"
+                                  ></TrashIcon>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                  删除
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </div>
+                    ))}
                   </div>
 
                   <div className=" flex gap-4 mx-4 !mt-auto !mb-2 flex-col flex-center">
@@ -422,10 +543,12 @@ export const ImageForm = () => {
                       className="w-full button-85 mb-4 text-lg"
                       disabled={isFetching}
                     >
-                      {isFetching ? "生成中...  " : "生成"}
+                      {isFetching ? "生成中..." : "生成"}
                       {isFetching ? (
-                        <span className="flicker">
-                          {imageDatas?.task_progress}%
+                        <span className="flicker ml-2">
+                          {imageDatas &&
+                            imageDatas.task_progress >= 0 &&
+                            imageDatas?.task_progress + "%"}
                         </span>
                       ) : (
                         ""

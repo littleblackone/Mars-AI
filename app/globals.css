@@ -309,5 +309,5 @@
 }
 
 .flicker {
-  animation: flicker 2s infinite; /* 使用 flicker 动画，持续2秒，无限循环 */
+  animation: flicker 2s infinite;
 }

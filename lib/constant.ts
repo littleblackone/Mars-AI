@@ -1,6 +1,7 @@
 import { StyleStatus } from "@/app/interface/ImageData";
 
 export const styles: StyleStatus[] = [
+  { value: "Empty", label: "无" },
   { value: "Realism", label: "现实主义" },
   { value: "Impressionism", label: "印象派" },
   { value: "Expressionism", label: "表现主义" },

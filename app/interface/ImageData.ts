@@ -44,3 +44,12 @@ export interface StyleStatus {
   value: string;
   label: string;
 }
+
+export interface FullViewData {
+  index: number;
+  taskId: string;
+  imgUrl: string;
+  seed: string;
+  finalPrompt: string;
+  tempFormValue: ImageFormData | undefined;
+}
