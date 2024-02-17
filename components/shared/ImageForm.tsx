@@ -1,12 +1,10 @@
 "use client";
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageValidation } from "../../lib/validations";
 import {
   EnterFullScreenIcon,
-  ExclamationTriangleIcon,
   MagicWandIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
@@ -28,7 +26,11 @@ import {
 } from "../ui/select";
 import { debounce, generateFinalPrompt, handleDownload } from "@/lib/utils";
 import axios from "axios";
-import { ImageData, ImageFormData } from "@/app/interface/ImageData";
+import {
+  TaskResult,
+  ImageFormData,
+  FetchImageData,
+} from "@/app/interface/ImageData";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import {
@@ -40,12 +42,11 @@ import {
   CommandList,
 } from "../ui/command";
 import { styles } from "@/lib/constant";
-import { Textarea } from "../ui/textarea";
 import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
 import { CheckIcon, DownloadIcon } from "lucide-react";
 import { Separator } from "../ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+
 import {
   Tooltip,
   TooltipContent,
@@ -53,9 +54,10 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 import { ImageFullView } from "./ImageFullView";
+import { toast } from "sonner";
 
 export const ImageForm = () => {
-  const [imageDatas, setImageDatas] = useState<ImageData | null>();
+  const [imageDatas, setImageDatas] = useState<TaskResult | null>();
   const [fetchTime, setFetchTime] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(false);
   const [imageArr, setImageArr] = useState<string[]>([]);
@@ -64,13 +66,146 @@ export const ImageForm = () => {
   const [tempFormValue, setTempFormValue] = useState<ImageFormData>();
   const [finalPrompt, setFinalPrompt] = useState<string>();
   const [open, setOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  const testImageArr = [
-    "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_0.webp",
-    "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_1.webp",
-    "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_2.webp",
-    "https://cdn.midjourney.com/cb51a757-acb6-44dd-b8f6-ce0c9dfa1df3/0_3.webp",
-  ];
+  // const testImageList = [
+  //   "https://cdn.midjourney.com/6da040fb-11e8-4403-91ee-b456633306da/0_0.webp",
+  //   "https://cdn.midjourney.com/6da040fb-11e8-4403-91ee-b456633306da/0_1.webp",
+  //   "https://cdn.midjourney.com/6da040fb-11e8-4403-91ee-b456633306da/0_2.webp",
+  //   "https://cdn.midjourney.com/6da040fb-11e8-4403-91ee-b456633306da/0_3.webp",
+  // ];
+
+  const handleGetSeed = async (taskId: string) => {
+    try {
+      const response = await axios.post("/api/seed", { taskId });
+
+      const newTaskId = response.data.task_id;
+
+      const intervalId = setInterval(async () => {
+        const taskResult: FetchImageData = await axios.post("/api/fetchImage", {
+          taskId: newTaskId,
+        });
+
+        if (taskResult.data.status === "finished") {
+          clearInterval(intervalId);
+          setSeed(taskResult.data.task_result.seed);
+        }
+      }, 1000);
+    } catch (error) {
+      console.error("Error fetching seed:", error);
+    }
+  };
+
+  const handleVaryStrong = async (originTaskId: string, index: string) => {
+    try {
+      setImageArr([]);
+      setImageDatas(null);
+      setFetchTime(0);
+      setIsFetching(true);
+      const response = await axios.post("/api/vary", { originTaskId, index });
+      const newTaskId = response.data.task_id;
+
+      const intervalId = setInterval(async () => {
+        try {
+          const taskResult: FetchImageData = await axios.post(
+            "/api/fetchImage",
+            {
+              taskId: newTaskId,
+            }
+          );
+
+          setImageDatas(taskResult.data.task_result);
+
+          setFetchTime((prev) => prev + 2);
+
+          if (taskResult.data.status === "finished") {
+            setImageArr(taskResult.data.task_result.image_urls);
+            setTaskId(taskResult.data.task_id);
+            await handleGetSeed(taskResult.data.task_id);
+            clearInterval(intervalId);
+            setIsFetching(false);
+          }
+        } catch (error) {
+          console.error("Error fetching image:", error);
+        }
+      }, 2000);
+    } catch (error) {
+      console.error("Error vary(strong) image:", error);
+    }
+  };
+
+  const handleVarySubtle = async (originTaskId: string, index: string) => {
+    try {
+      setImageArr([]);
+      setFetchTime(0);
+      setImageDatas(null);
+      setIsFetching(true);
+
+      let varySubId: string;
+      let isFirstIntervalCompleted: boolean = false;
+
+      const response = await axios.post("/api/upscale", {
+        originTaskId,
+        index,
+      });
+
+      const taskId = response.data.task_id;
+
+      const upscaleIntervalId = setInterval(async () => {
+        try {
+          const taskResult: FetchImageData = await axios.post(
+            "/api/fetchImage",
+            {
+              taskId,
+            }
+          );
+
+          console.log("wait for image......");
+
+          if (taskResult.data.status === "finished") {
+            clearInterval(upscaleIntervalId);
+            isFirstIntervalCompleted = true;
+            const response: FetchImageData = await axios.post("/api/vary", {
+              originTaskId: taskId,
+              index: "low_variation",
+            });
+            varySubId = response.data.task_id;
+          }
+        } catch (error) {
+          console.error("Error", error);
+        }
+      }, 1000);
+
+      const intervalId = setInterval(async () => {
+        try {
+          if (!isFirstIntervalCompleted) return;
+
+          const taskResult: FetchImageData = await axios.post(
+            "/api/fetchImage",
+            {
+              taskId: varySubId,
+            }
+          );
+
+          setImageDatas(taskResult.data.task_result);
+
+          setFetchTime((prev) => prev + 2);
+
+          if (taskResult.data.status === "finished") {
+            setImageArr(taskResult.data.task_result.image_urls);
+            setTaskId(taskResult.data.task_id);
+            await handleGetSeed(taskResult.data.task_id);
+            clearInterval(intervalId);
+            setIsFetching(false);
+          }
+        } catch (error) {
+          console.error("Error fetch image:", error);
+        }
+      }, 2000);
+    } catch (error) {
+      console.error("Error vary(subtle) image:", error);
+    }
+  };
 
   const handleGenerateImage = debounce(async (prompt: string) => {
     try {
@@ -81,24 +216,23 @@ export const ImageForm = () => {
 
       const intervalId = setInterval(async () => {
         try {
-          const taskResult: { data: ImageData } = await axios.post(
-            "/api/fetchImage",
-            { taskId }
-          );
+          const taskResult = await axios.post("/api/fetchImage", { taskId });
 
-          setImageDatas(taskResult.data);
+          setImageDatas(taskResult.data.task_result);
 
           setFetchTime((prev) => prev + 2);
 
           if (fetchTime >= 120) {
             clearInterval(intervalId);
             setIsFetching(false);
+            toast.error("请求超时，请重试");
             console.log("请求超时，请重试");
           }
-          if (taskResult.data.task_progress === 100) {
+
+          if (taskResult.data.status === "finished") {
+            setImageArr(taskResult.data.task_result.image_urls);
+            await handleGetSeed(taskId);
             clearInterval(intervalId);
-            setImageArr(taskResult.data.image_urls);
-            setSeed(taskResult.data.seed);
             setIsFetching(false);
           }
         } catch (error) {
@@ -133,26 +267,12 @@ export const ImageForm = () => {
     setTempFormValue(values);
     const finalPrompt = generateFinalPrompt(values);
     setFinalPrompt(finalPrompt);
-    console.log(finalPrompt);
-
-    // handleGenerateImage(finalPrompt);
+    handleGenerateImage(finalPrompt);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className=" w-full">
-        <Alert
-          variant="destructive"
-          className={`mb-6 text-red-500 bg-white/60 hidden ${
-            fetchTime >= 120 && "block"
-          }`}
-        >
-          <ExclamationTriangleIcon className="h-4 w-4"></ExclamationTriangleIcon>
-          <AlertTitle>错误</AlertTitle>
-          <AlertDescription>
-            请求超时，请重试或隔几分钟再试一次。
-          </AlertDescription>
-        </Alert>
         <div className=" flex items-center flex-1  w-full h-[80vh] hide-scroll">
           <div className=" px-6 py-2 flex-shrink-0  w-[20rem] h-full flex flex-col justify-between items-start">
             <FormField
@@ -431,151 +551,214 @@ export const ImageForm = () => {
                 <FormItem className="flex flex-col  w-full h-full">
                   <div
                     className={`w-full h-full gap-4 grid-cols-2 ${
-                      imageArr.length === 0 && ""
+                      imageArr.length === 0 && "flex-center"
                     } grid grid-rows-[repeat(auto,minmax(min-content,1fr))] items-center justify-center`}
                   >
-                    {/* {imageArr.length === 0 && (
+                    {imageArr.length === 0 && (
                       <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
                         {
                           <img
                             src={"/pending2.png"}
                             alt="midjourney image"
-                            className={`rounded-xl w-[65%] h-[65%] aspect-square ${
+                            className={`rounded-xl w-[65%]  aspect-square ${
                               isFetching && "flicker"
                             }`}
                           ></img>
                         }
                       </div>
-                    )} */}
+                    )}
 
-                    {testImageArr.map((imgUrl, index) => (
-                      <div
-                        key={index}
-                        className=" flex-center relative overflow-hidden group"
-                      >
-                        <img
-                          src={imgUrl}
-                          alt="midjourney image"
-                          className={`rounded-xl min-w-[240px] w-[70%] h-[70%] `}
-                        ></img>
-                        <button
-                          type="button"
-                          className="  absolute w-full h-full inset-0 bg-transparent hover:bg-transparent"
-                          onClick={() => setOpen(true)}
-                        ></button>
-                        <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDownload(imgUrl, index)}
-                                  className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                >
-                                  <DownloadIcon
-                                    width={20}
-                                    height={20}
-                                    color="white"
-                                  ></DownloadIcon>
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="right">
-                                <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                  下载
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  onClick={() => setOpen(true)}
-                                  className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                >
-                                  <EnterFullScreenIcon
-                                    width={20}
-                                    height={20}
-                                    color="white"
-                                  ></EnterFullScreenIcon>
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="right">
-                                <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                  放大进行更多操作
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                    {imageArr.length === 4 &&
+                      imageArr.map((imgUrl, index) => (
+                        <div
+                          key={index}
+                          className=" flex-center relative overflow-hidden group"
+                        >
+                          <div className="  min-w-[240px] max-w-[300px] w-full h-full relative">
+                            <img
+                              src={imgUrl}
+                              alt="midjourney image"
+                              className={`rounded-xl min-w-[240px] max-w-[300px] w-full h-full`}
+                            ></img>
+                            <button
+                              type="button"
+                              className="absolute min-w-[240px] h-full rounded-xl aspect-square inset-0 bg-transparent hover:bg-transparent"
+                              onClick={() => {
+                                setSelectedIndex(index);
+                                setOpen(true);
+                              }}
+                            ></button>
+                          </div>
 
                           <ImageFullView
                             open={open}
                             setOpen={setOpen}
                             tempFormValue={tempFormValue}
-                            ParentimageArr={imageArr}
-                            index={index}
+                            parentimageArr={imageArr}
+                            selectedIndex={selectedIndex || 0}
                             parentTaskId={taskId}
                             parentSeed={seed || ""}
                             finalPrompt={finalPrompt || ""}
                           ></ImageFullView>
 
-                          <Separator className=" bg-gray-500/75"></Separator>
+                          <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleDownload(imgUrl, index)
+                                    }
+                                    className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                  >
+                                    <DownloadIcon
+                                      width={20}
+                                      height={20}
+                                      color="white"
+                                    ></DownloadIcon>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">
+                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                    下载
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
 
-                          <TooltipProvider delayDuration={200}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="active:translate-y-[1px] rounded-md hover:stroke-red-500 bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                >
-                                  <TrashIcon
-                                    width={20}
-                                    height={20}
-                                    color="white"
-                                  ></TrashIcon>
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent side="right">
-                                <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                  删除
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => setOpen(true)}
+                                    className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                  >
+                                    <EnterFullScreenIcon
+                                      width={20}
+                                      height={20}
+                                      color="white"
+                                    ></EnterFullScreenIcon>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">
+                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                    放大
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            <Separator className=" bg-gray-500/75"></Separator>
+
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleVaryStrong(taskId, index + 1 + "");
+                                    }}
+                                    className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                  >
+                                    <MagicWandIcon
+                                      width={20}
+                                      height={20}
+                                      color="white"
+                                    ></MagicWandIcon>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">
+                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                    Vary(strong)
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      handleVarySubtle(taskId, index + 1 + "");
+                                    }}
+                                    className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                  >
+                                    <MagicWandIcon
+                                      width={15}
+                                      height={15}
+                                      color="white"
+                                    ></MagicWandIcon>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">
+                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                    Vary(subtle)
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+
+                            <Separator className=" bg-gray-500/75"></Separator>
+
+                            <TooltipProvider delayDuration={200}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="active:translate-y-[1px] rounded-md hover:stroke-red-500 bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                  >
+                                    <TrashIcon
+                                      width={20}
+                                      height={20}
+                                      color="white"
+                                    ></TrashIcon>
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">
+                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                    删除
+                                  </p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
 
-                  <div className=" flex gap-4 mx-4 !mt-auto !mb-2 flex-col flex-center">
-                    <FormControl>
-                      <Textarea
-                        className=" mt-6 bg-white/60 border-none focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                        placeholder="让你的想象变成事实......"
-                        {...field}
-                      ></Textarea>
-                    </FormControl>
-                    <FormMessage></FormMessage>
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full button-85 mb-4 text-lg"
-                      disabled={isFetching}
-                    >
-                      {isFetching ? "生成中..." : "生成"}
-                      {isFetching ? (
-                        <span className="flicker ml-2">
-                          {imageDatas &&
-                            imageDatas.task_progress >= 0 &&
-                            imageDatas?.task_progress + "%"}
-                        </span>
-                      ) : (
-                        ""
-                      )}
-                    </Button>
+                  <div className="flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-4">
+                    <div className="flex w-full flex-center">
+                      <FormControl>
+                        <Input
+                          className="bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+                          placeholder="让你的想象变成事实......"
+                          {...field}
+                        ></Input>
+                      </FormControl>
+                      <Button
+                        type="submit"
+                        size="lg"
+                        className="w-fit button-85 ml-2  text-lg"
+                        disabled={isFetching}
+                      >
+                        {isFetching ? "生成中..." : "生成"}
+                        {isFetching ? (
+                          <span className="flicker ml-2">
+                            {imageDatas &&
+                              imageDatas.task_progress >= 0 &&
+                              imageDatas?.task_progress + "%"}
+                          </span>
+                        ) : (
+                          ""
+                        )}
+                      </Button>
+                    </div>
                   </div>
+                  <FormMessage className="ml-4"></FormMessage>
                 </FormItem>
               )}
             ></FormField>

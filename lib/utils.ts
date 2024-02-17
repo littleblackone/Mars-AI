@@ -3,6 +3,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { styles } from "./constant";
 import axios from "axios";
+import { toast } from "sonner";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -73,25 +74,34 @@ export function generateFinalPrompt(values: ImageFormData) {
 
 export const handleDownload = (url: string, index: number) => {
   try {
-    axios.get(url, { responseType: "blob" }).then((res) => {
-      let contentType = "";
-      if (res.headers["content-type"]) {
-        contentType = res.headers["content-type"];
-      }
-      const blob = new Blob([res.data], {
-        type: contentType,
-      });
-      const blobUrl = URL.createObjectURL(blob);
+    //添加时间戳作为请求url的随机参数，避免浏览器使用缓存的响应(解决跨域)
+    const timeStamp = new Date().getTime();
+    
+    axios
+      .get(url, {
+        params: { timeStamp },
+        responseType: "blob",
+      })
+      .then((res) => {
+        let contentType = "";
+        if (res.headers["content-type"]) {
+          contentType = res.headers["content-type"];
+        }
+        const blob = new Blob([res.data], {
+          type: contentType,
+        });
+        const blobUrl = URL.createObjectURL(blob);
 
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `midjourney${index}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(blobUrl);
-    });
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = `midjourney${index}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      });
   } catch (error) {
+    toast.error("服务器繁忙，请稍后重试");
     console.error("Error downloading image:", error);
   }
 };

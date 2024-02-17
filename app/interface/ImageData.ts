@@ -1,4 +1,4 @@
-export interface ImageData {
+export interface TaskResult {
   discord_image_url: string;
   image_url: string;
   image_urls: string[];
@@ -11,9 +11,53 @@ export interface ImageData {
   quota_used: number;
   credit: number;
   message: string;
+  warning: string;
   error_messages: string[];
   need_retry: boolean;
   actions: string[];
+}
+
+export interface TaskParam {
+  prompt: string;
+  index: string;
+  zoom_ratio: string;
+  aspect_ratio: string;
+  direction: string;
+}
+
+export interface TaskMeta {
+  account_id: string;
+  task_type: string;
+  origin_task_id: string;
+  bot_hash: string;
+  bot_id: number;
+  model_version: string;
+  process_mode: string;
+  quota_frozen: number;
+  frozen_credit: number;
+  created_at: number;
+  created_at_utc: string;
+  started_at: number;
+  started_at_utc: string;
+  ended_at: number;
+  ended_at_utc: string;
+  task_request: {
+    task_id: string;
+  };
+  task_param: TaskParam;
+}
+
+export interface TaskResponse {
+  task_id: string;
+  status: string;
+  process_time: number;
+  retry_count: number;
+  meta: TaskMeta;
+  task_result: TaskResult;
+}
+
+export interface FetchImageData {
+  data: TaskResponse;
 }
 
 export interface ImageFormData {
@@ -46,12 +90,12 @@ export interface StyleStatus {
 }
 
 export interface FullViewData {
-  index: number;
+  selectedIndex: number;
   parentTaskId: string;
   parentSeed: string;
   finalPrompt: string;
   tempFormValue: ImageFormData | undefined;
   open: boolean;
-  ParentimageArr: string[];
+  parentimageArr: string[];
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }

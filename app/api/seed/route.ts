@@ -1,17 +1,16 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const varyUrl = "https://api.midjourneyapi.xyz/mj/v2/variation";
+const seedUrl = "https://api.midjourneyapi.xyz/mj/v2/seed";
 
-const handleVary = async (req: NextRequest) => {
+const handleGetSeed = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    console.log(body);
 
-    if (!body.originTaskId || !body.index) {
-      console.log("missing origin task id or index");
+    if (!body.taskId) {
+      console.log("missing origin task id");
       return NextResponse.json(
-        { error: "missing origin task id or index" },
+        { error: "missing origin task id" },
         {
           status: 400,
         }
@@ -23,11 +22,9 @@ const handleVary = async (req: NextRequest) => {
         "X-API-KEY": process.env.GOAPI_KEY,
       },
       data: {
-        origin_task_id: body.originTaskId,
-        index: body.index,
-        notify_progress: true,
+        task_id: body.taskId,
       },
-      url: varyUrl,
+      url: seedUrl,
       method: "post",
     };
 
@@ -46,4 +43,4 @@ const handleVary = async (req: NextRequest) => {
   }
 };
 
-export const POST = handleVary;
+export const POST = handleGetSeed;

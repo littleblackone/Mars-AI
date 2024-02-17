@@ -6,6 +6,7 @@ const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/upscale";
 const handleUpscale = async (req: NextRequest) => {
   try {
     const body = await req.json();
+    console.log(body);
 
     if (!body.originTaskId || !body.index) {
       console.log("missing origin task id or index");
@@ -24,8 +25,7 @@ const handleUpscale = async (req: NextRequest) => {
       data: {
         origin_task_id: body.originTaskId,
         index: body.index,
-        webhook_secret: "",
-        webhook_endpoint: "",
+        notify_progress: true,
       },
       url: imagineUrl,
       method: "post",
@@ -33,11 +33,9 @@ const handleUpscale = async (req: NextRequest) => {
 
     const response = await axios(options);
 
-    if (response.data.status == "success") {
-      return NextResponse.json(response.data, {
-        status: response.status,
-      });
-    }
+    return NextResponse.json(response.data, {
+      status: response.status,
+    });
   } catch (error) {
     console.error(`Error: ${error}`);
 

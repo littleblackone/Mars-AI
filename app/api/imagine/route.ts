@@ -26,8 +26,6 @@ const handleImagine = async (req: NextRequest) => {
         aspect_ratio: "",
         process_mode: "fast",
         notify_progress: true,
-        webhook_secret: "",
-        webhook_endpoint: "",
       },
       url: imagineUrl,
       method: "post",
