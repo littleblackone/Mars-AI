@@ -68,13 +68,6 @@ export const ImageForm = () => {
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  // const testImageList = [
-  //   "https://cdn.midjourney.com/6da040fb-11e8-4403-91ee-b456633306da/0_0.webp",
-  //   "https://cdn.midjourney.com/6da040fb-11e8-4403-91ee-b456633306da/0_1.webp",
-  //   "https://cdn.midjourney.com/6da040fb-11e8-4403-91ee-b456633306da/0_2.webp",
-  //   "https://cdn.midjourney.com/6da040fb-11e8-4403-91ee-b456633306da/0_3.webp",
-  // ];
-
   const handleGetSeed = async (taskId: string) => {
     try {
       const response = await axios.post("/api/seed", { taskId });
@@ -267,7 +260,7 @@ export const ImageForm = () => {
     setTempFormValue(values);
     const finalPrompt = generateFinalPrompt(values);
     setFinalPrompt(finalPrompt);
-    handleGenerateImage(finalPrompt);
+    // handleGenerateImage(finalPrompt);
   };
 
   return (
@@ -595,6 +588,7 @@ export const ImageForm = () => {
                             setOpen={setOpen}
                             tempFormValue={tempFormValue}
                             parentimageArr={imageArr}
+                            setParentImageArr={setImageArr}
                             selectedIndex={selectedIndex || 0}
                             parentTaskId={taskId}
                             parentSeed={seed || ""}
@@ -745,15 +739,16 @@ export const ImageForm = () => {
                         className="w-fit button-85 ml-2  text-lg"
                         disabled={isFetching}
                       >
-                        {isFetching ? "生成中..." : "生成"}
                         {isFetching ? (
-                          <span className="flicker ml-2">
-                            {imageDatas &&
-                              imageDatas.task_progress >= 0 &&
-                              imageDatas?.task_progress + "%"}
-                          </span>
+                          <>
+                            <span className="flicker">
+                              {imageDatas && imageDatas.task_progress >= 0
+                                ? imageDatas?.task_progress + "%"
+                                : "0%"}
+                            </span>
+                          </>
                         ) : (
-                          ""
+                          "生成"
                         )}
                       </Button>
                     </div>
@@ -763,7 +758,6 @@ export const ImageForm = () => {
               )}
             ></FormField>
           </div>
-          <div className=" w-[20rem] h-full flex-shrink-0 "></div>
         </div>
       </form>
     </Form>

@@ -284,12 +284,14 @@
 
 /* 定义滚动条滑块的样式 */
 .hide-scrollbar::-webkit-scrollbar-thumb {
+  display: none;
   background: rgb(241, 239, 239, 0.2); /* 设置滚动条滑块的背景色 */
   border-radius: 5px; /* 设置滚动条滑块的圆角 */
 }
 
 /* 鼠标悬停在滚动条滑块上时的样式 */
 .hide-scrollbar::-webkit-scrollbar-thumb:hover {
+  display: none;
   background: rgb(241, 239, 239, 0.5); /* 设置鼠标悬停时滚动条滑块的背景色 */
 }
 .hide-scrollbar::-webkit-scrollbar-corner {

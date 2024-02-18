@@ -24,6 +24,7 @@ export function ImageFullView({
   open,
   setOpen,
   parentimageArr,
+  setParentImageArr,
 }: FullViewData) {
   const [isFetching, setIsFetching] = useState(false);
 
@@ -104,6 +105,8 @@ export function ImageFullView({
               mainImageIndex !== undefined ? mainImageIndex : selectedIndex
             ] = taskResult.data.task_result.image_url || "";
 
+            setParentImageArr(parentimageArr);
+
             clearInterval(intervalId);
             setIsFetching(false);
           }
@@ -124,15 +127,34 @@ export function ImageFullView({
     }
   }, [upscale2x, upscale4x]);
 
+  useEffect(() => {
+    if (isFetching === false) {
+      setUpscale2x(false);
+      setUpscale4x(false);
+    }
+  }, [isFetching]);
+
+  useEffect(() => {
+    if (imageDatas?.task_progress === 100) {
+      setImageDatas(null);
+      toast.success("Upscale图片成功");
+    }
+  }, [imageDatas]);
+
   return (
     <Dialog
       open={open}
       onOpenChange={(open) => {
-        if (!open) {
+        if (open === false) {
           setMainImageIndex(undefined);
+          setUpscale2x(false);
+          setUpscale4x(false);
         }
-
-        setOpen(open);
+        if (isFetching) {
+          setOpen(true);
+        } else {
+          setOpen(open);
+        }
       }}
     >
       <DialogContent className=" !h-[800px]  min-w-[1260px]">
@@ -156,6 +178,16 @@ export function ImageFullView({
             >
               <DownloadIcon width={20} height={20} color="black"></DownloadIcon>
             </Button>
+            <span
+              className={`${
+                isFetching && "flicker"
+              } absolute p-2.5 right-0 top-10`}
+            >
+              {imageDatas
+                ? imageDatas?.task_progress >= 0 &&
+                  imageDatas?.task_progress + "%"
+                : ""}
+            </span>
             <div
               className={` w-[80%] h-full relative ${isFetching && "hidden"}`}
             >
@@ -167,9 +199,7 @@ export function ImageFullView({
                       : selectedIndex
                   ]
                 }
-                className={`w-full h-full ${
-                  isFetching && (upscale2x || upscale4x) && "hidden"
-                }`}
+                className={`w-full h-full ${isFetching && "hidden"}`}
                 alt="full view img"
               ></img>
               <div
@@ -229,7 +259,7 @@ export function ImageFullView({
               src={"/pending2.png"}
               alt="midjourney image"
               className={`hidden w-[75%] h-full aspect-square ${
-                isFetching && (upscale2x || upscale4x) && "flicker !block"
+                isFetching && "flicker !block"
               }`}
             ></img>
           </div>
@@ -300,18 +330,12 @@ export function ImageFullView({
                 disabled={isFetching}
                 onClick={() => {
                   setUpscale2x(true);
-                  setUpscale4x(false);
                 }}
               >
-                {isFetching && upscale2x ? (
+                {isFetching ? (
                   <>
                     <img src="/Spin.svg" alt="spin" width={20} height={20} />
-                    <span className="flicker ">
-                      Upscaling...&nbsp;
-                      {imageDatas &&
-                        imageDatas.task_progress >= 0 &&
-                        imageDatas?.task_progress + "%"}
-                    </span>
+                    <span className="flicker ">Upscaling...&nbsp;</span>
                   </>
                 ) : (
                   <>
@@ -327,18 +351,12 @@ export function ImageFullView({
                 disabled={isFetching}
                 onClick={() => {
                   setUpscale4x(true);
-                  setUpscale2x(false);
                 }}
               >
-                {isFetching && upscale4x ? (
+                {isFetching ? (
                   <>
                     <img src="/Spin.svg" alt="spin" width={20} height={20} />
-                    <span className="flicker ">
-                      Upscaling...&nbsp;
-                      {imageDatas &&
-                        imageDatas.task_progress >= 0 &&
-                        imageDatas?.task_progress + "%"}
-                    </span>
+                    <span className="flicker ">Upscaling...&nbsp;</span>
                   </>
                 ) : (
                   <>

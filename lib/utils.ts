@@ -76,7 +76,6 @@ export const handleDownload = (url: string, index: number) => {
   try {
     //添加时间戳作为请求url的随机参数，避免浏览器使用缓存的响应(解决跨域)
     const timeStamp = new Date().getTime();
-    
     axios
       .get(url, {
         params: { timeStamp },
