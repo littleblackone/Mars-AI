@@ -14,6 +14,7 @@ import UpscaleSvg from "@/components/shared/UpscaleSvg";
 import { DownloadIcon } from "lucide-react";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useUpscaleImage } from "@/lib/store/useUpscaleImage";
 
 export function ImageFullView({
   selectedIndex,
@@ -38,6 +39,13 @@ export function ImageFullView({
 
   const negativeWords = tempFormValue?.negativePrompt?.split(" ");
   let imgIndexList = [0, 1, 2, 3];
+
+  const upscaleImageList = [
+    "https://cdn.midjourney.com/4098da5a-9af2-4a11-86ab-202931d8c31b/0_0.webp",
+    "https://cdn.midjourney.com/4098da5a-9af2-4a11-86ab-202931d8c31b/0_1.webp",
+  ];
+
+  const setImages = useUpscaleImage((state) => state.setImages);
 
   const handleCopy = async (text: string) => {
     try {
@@ -123,7 +131,8 @@ export function ImageFullView({
 
   useEffect(() => {
     if (upscale2x || upscale4x) {
-      handleUpscaleImage();
+      // handleUpscaleImage();
+      setImages(upscaleImageList[0]);
     }
   }, [upscale2x, upscale4x]);
 

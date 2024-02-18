@@ -55,6 +55,8 @@ import {
 } from "../ui/tooltip";
 import { ImageFullView } from "./ImageFullView";
 import { toast } from "sonner";
+import { useOriginImage } from "@/lib/store/useOriginImage";
+import { useVaryImage } from "@/lib/store/useVaryImage";
 
 export const ImageForm = () => {
   const [imageDatas, setImageDatas] = useState<TaskResult | null>();
@@ -67,6 +69,23 @@ export const ImageForm = () => {
   const [finalPrompt, setFinalPrompt] = useState<string>();
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const setOriginImages = useOriginImage((state) => state.setImages);
+  const setVaryImages = useVaryImage((state) => state.setImages);
+
+  const testOriginImageList = [
+    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
+    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
+    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
+    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
+  ];
+
+  const varyImageList = [
+    "https://cdn.midjourney.com/79cc2747-00c6-41bb-9e2b-d4f87223dac5/0_0.webp",
+    "https://cdn.midjourney.com/79cc2747-00c6-41bb-9e2b-d4f87223dac5/0_1.webp",
+    "https://cdn.midjourney.com/79cc2747-00c6-41bb-9e2b-d4f87223dac5/0_2.webp",
+    "https://cdn.midjourney.com/79cc2747-00c6-41bb-9e2b-d4f87223dac5/0_3.webp",
+  ];
 
   const handleGetSeed = async (taskId: string) => {
     try {
@@ -260,6 +279,10 @@ export const ImageForm = () => {
     setTempFormValue(values);
     const finalPrompt = generateFinalPrompt(values);
     setFinalPrompt(finalPrompt);
+
+    setImageArr(testOriginImageList);
+    setOriginImages(testOriginImageList);
+
     // handleGenerateImage(finalPrompt);
   };
 
@@ -652,7 +675,10 @@ export const ImageForm = () => {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      handleVaryStrong(taskId, index + 1 + "");
+                                      // handleVaryStrong(taskId, index + 1 + "");
+                                      setVaryImages(varyImageList);
+                                      setImageArr([]);
+                                      setImageArr(varyImageList);
                                     }}
                                     className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
                                   >
@@ -677,7 +703,10 @@ export const ImageForm = () => {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      handleVarySubtle(taskId, index + 1 + "");
+                                      // handleVarySubtle(taskId, index + 1 + "");
+                                      setVaryImages(varyImageList);
+                                      setImageArr([]);
+                                      setImageArr(varyImageList);
                                     }}
                                     className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
                                   >
