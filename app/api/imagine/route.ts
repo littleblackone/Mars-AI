@@ -33,11 +33,9 @@ const handleImagine = async (req: NextRequest) => {
 
     const response = await axios(options);
 
-    if (response.data.status == "success") {
-      return NextResponse.json(response.data, {
-        status: response.status,
-      });
-    }
+    return NextResponse.json(response.data, {
+      status: response.status,
+    });
   } catch (error) {
     console.error(`Error: ${error}`);
 

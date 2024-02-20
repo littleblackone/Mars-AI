@@ -1,17 +1,16 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/upscale";
+const outPaintUrl = "https://api.midjourneyapi.xyz/mj/v2/outpaint";
 
-const handleUpscale = async (req: NextRequest) => {
+const handleOutPaint = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    console.log(body);
 
-    if (!body.originTaskId || !body.index) {
-      console.log("missing origin task id or index");
+    if (!body.originTaskId || !body.zoomRatio) {
+      console.log("missing originTaskId or zoomRatio");
       return NextResponse.json(
-        { error: "missing origin task id or index" },
+        { error: "missing originTaskId or zoomRatio" },
         {
           status: 400,
         }
@@ -24,22 +23,19 @@ const handleUpscale = async (req: NextRequest) => {
       },
       data: {
         origin_task_id: body.originTaskId,
-        index: body.index,
+        zoom_ratio: body.zoomRatio,
         notify_progress: true,
       },
-      url: imagineUrl,
+      url: outPaintUrl,
       method: "post",
     };
 
     const response = await axios(options);
-    console.log(response);
 
     return NextResponse.json(response.data, {
       status: response.status,
     });
   } catch (error) {
-    // console.log(error);
-
     console.error(`Error: ${error}`);
 
     return NextResponse.json(
@@ -49,4 +45,4 @@ const handleUpscale = async (req: NextRequest) => {
   }
 };
 
-export const POST = handleUpscale;
+export const POST = handleOutPaint;

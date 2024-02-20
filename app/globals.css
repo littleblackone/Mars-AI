@@ -273,26 +273,48 @@
 }
 
 /* 隐藏滚动条 */
-.hide-scrollbar::-webkit-scrollbar {
+.styled-scrollbar::-webkit-scrollbar {
   width: 10px; /* 设置滚动条的宽度 */
 }
 
 /* 定义滚动条轨道的样式 */
-.hide-scrollbar::-webkit-scrollbar-track {
+.styled-scrollbar::-webkit-scrollbar-track {
   background: transparent; /* 设置滚动条轨道的背景色 */
 }
 
 /* 定义滚动条滑块的样式 */
-.hide-scrollbar::-webkit-scrollbar-thumb {
-  display: none;
+.styled-scrollbar::-webkit-scrollbar-thumb {
   background: rgb(241, 239, 239, 0.2); /* 设置滚动条滑块的背景色 */
   border-radius: 5px; /* 设置滚动条滑块的圆角 */
 }
 
 /* 鼠标悬停在滚动条滑块上时的样式 */
+.styled-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(241, 239, 239, 0.5); /* 设置鼠标悬停时滚动条滑块的背景色 */
+}
+.styled-scrollbar::-webkit-scrollbar-corner {
+  display: none;
+}
+
+/* 隐藏滚动条 */
+.hide-scrollbar::-webkit-scrollbar {
+  width: 10px; /* 设置滚动条的宽度 */
+  display: none;
+}
+/* 定义滚动条轨道的样式 */
+.hide-scrollbar::-webkit-scrollbar-track {
+  display: none;
+  /* background: transparent; 设置滚动条轨道的背景色 */
+}
+
+/* 定义滚动条滑块的样式 */
+.hide-scrollbar::-webkit-scrollbar-thumb {
+  display: none;
+}
+
+/* 鼠标悬停在滚动条滑块上时的样式 */
 .hide-scrollbar::-webkit-scrollbar-thumb:hover {
   display: none;
-  background: rgb(241, 239, 239, 0.5); /* 设置鼠标悬停时滚动条滑块的背景色 */
 }
 .hide-scrollbar::-webkit-scrollbar-corner {
   display: none;
@@ -312,4 +334,17 @@
 
 .flicker {
   animation: flicker 2s infinite;
+}
+
+.gear-icon {
+  animation: rotate 2s linear infinite; /* 定义旋转动画 */
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg); /* 从 0 度开始旋转 */
+  }
+  to {
+    transform: rotate(360deg); /* 旋转到 360 度 */
+  }
 }

@@ -116,3 +116,21 @@ export function extractArAndModel(input: string): string {
     return "";
   }
 }
+
+export function parseAspectRatio(aspectRatio: string): {
+  greaterThanOne: boolean;
+  equalToOne: boolean;
+  lessThanOne: boolean;
+} {
+  const ratio = aspectRatio.split(" --ar ")[1].split(":");
+  const width = parseInt(ratio[0]);
+  const height = parseInt(ratio[1]);
+
+  const aspectRatioValue = width / height;
+
+  return {
+    greaterThanOne: aspectRatioValue > 1,
+    equalToOne: aspectRatioValue === 1,
+    lessThanOne: aspectRatioValue < 1,
+  };
+}

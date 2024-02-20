@@ -6,12 +6,18 @@ import { useVaryImage } from "@/lib/store/useVaryImage";
 import { useEffect, useState } from "react";
 import ArrowSvg from "./ArrowSvg";
 import { useOpenHistory } from "@/lib/store/useOpenHistory";
+import { useZoomImages } from "@/lib/store/useZoomImages";
+import { useExpandImages } from "@/lib/store/useExpandImages";
 
 export default function HistoryImage() {
   const originImageList = useOriginImage((state) => state.images);
   const varyImageList = useVaryImage((state) => state.images);
   const upscaleImageList = useUpscaleImage((state) => state.images);
+  const zoomImageList = useZoomImages((state) => state.images);
+  const expandImageList = useExpandImages((state) => state.images);
+
   const [isOpenHistoryArea, setIsOpenHistoryArea] = useState(false);
+
   const open = useOpenHistory((state) => state.open);
   useEffect(() => {
     setIsOpenHistoryArea(
@@ -20,6 +26,7 @@ export default function HistoryImage() {
         upscaleImageList.length > 0
     );
   }, [originImageList, varyImageList, upscaleImageList]);
+
   // const originImageList = [
   //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
   //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
@@ -57,7 +64,7 @@ export default function HistoryImage() {
               src={imgUrl}
               key={imgUrl}
               alt="midjourney image"
-              className={`rounded-md mb-2 w-[100px]  aspect-square cursor-pointer hover:scale-105 transition-all duration-200`}
+              className={`rounded-md mb-2 w-[100px]  cursor-pointer hover:scale-105 transition-all duration-200`}
             ></img>
           );
         })}
@@ -90,6 +97,44 @@ export default function HistoryImage() {
       </span>
       <div className=" columns-2 ">
         {upscaleImageList.map((imgUrl) => {
+          return (
+            <img
+              src={imgUrl}
+              key={imgUrl}
+              alt="midjourney image"
+              className={`rounded-md mb-2 w-[100px]  aspect-square cursor-pointer hover:scale-105 transition-all duration-200`}
+            ></img>
+          );
+        })}
+      </div>
+      <span
+        className={`self-start mb-2 text-white/70 hidden ${
+          zoomImageList.length > 0 && open && "!block"
+        }`}
+      >
+        Zoom Images
+      </span>
+      <div className=" columns-2 ">
+        {zoomImageList.map((imgUrl) => {
+          return (
+            <img
+              src={imgUrl}
+              key={imgUrl}
+              alt="midjourney image"
+              className={`rounded-md mb-2 w-[100px]  aspect-square cursor-pointer hover:scale-105 transition-all duration-200`}
+            ></img>
+          );
+        })}
+      </div>
+      <span
+        className={`self-start mb-2 text-white/70 hidden ${
+          expandImageList.length > 0 && open && "!block"
+        }`}
+      >
+        Expand Images
+      </span>
+      <div className=" columns-2 ">
+        {expandImageList.map((imgUrl) => {
           return (
             <img
               src={imgUrl}

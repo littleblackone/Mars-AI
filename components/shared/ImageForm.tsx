@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageValidation } from "../../lib/validations";
@@ -24,7 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { debounce, generateFinalPrompt, handleDownload } from "@/lib/utils";
+import {
+  debounce,
+  generateFinalPrompt,
+  handleDownload,
+  parseAspectRatio,
+} from "@/lib/utils";
 import axios from "axios";
 import {
   TaskResult,
@@ -69,23 +74,30 @@ export const ImageForm = () => {
   const [finalPrompt, setFinalPrompt] = useState<string>();
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [aspectRatio, setAspectRatio] = useState("");
+  const [isASLessOne, setIsASLessOne] = useState<boolean>(false);
 
   const setOriginImages = useOriginImage((state) => state.setImages);
   const setVaryImages = useVaryImage((state) => state.setImages);
 
-  const testOriginImageList = [
-    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
-    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
-    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
-    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
-  ];
-
-  const varyImageList = [
-    "https://cdn.midjourney.com/79cc2747-00c6-41bb-9e2b-d4f87223dac5/0_0.webp",
-    "https://cdn.midjourney.com/79cc2747-00c6-41bb-9e2b-d4f87223dac5/0_1.webp",
-    "https://cdn.midjourney.com/79cc2747-00c6-41bb-9e2b-d4f87223dac5/0_2.webp",
-    "https://cdn.midjourney.com/79cc2747-00c6-41bb-9e2b-d4f87223dac5/0_3.webp",
-  ];
+  // const testOriginImageList = [
+  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
+  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
+  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
+  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
+  // ];
+  // const testOriginImageList = [
+  //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_0.webp",
+  //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_1.webp",
+  //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_2.webp",
+  //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_3.webp",
+  // ];
+  // const testOriginImageList = [
+  //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
+  //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
+  //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
+  //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
+  // ];
 
   const handleGetSeed = async (taskId: string) => {
     try {
@@ -131,10 +143,11 @@ export const ImageForm = () => {
           setFetchTime((prev) => prev + 2);
 
           if (taskResult.data.status === "finished") {
+            clearInterval(intervalId);
             setImageArr(taskResult.data.task_result.image_urls);
+            setVaryImages(taskResult.data.task_result.image_urls);
             setTaskId(taskResult.data.task_id);
             await handleGetSeed(taskResult.data.task_id);
-            clearInterval(intervalId);
             setIsFetching(false);
           }
         } catch (error) {
@@ -172,8 +185,6 @@ export const ImageForm = () => {
             }
           );
 
-          console.log("wait for image......");
-
           if (taskResult.data.status === "finished") {
             clearInterval(upscaleIntervalId);
             isFirstIntervalCompleted = true;
@@ -204,10 +215,11 @@ export const ImageForm = () => {
           setFetchTime((prev) => prev + 2);
 
           if (taskResult.data.status === "finished") {
+            clearInterval(intervalId);
             setImageArr(taskResult.data.task_result.image_urls);
+            setVaryImages(taskResult.data.task_result.image_urls);
             setTaskId(taskResult.data.task_id);
             await handleGetSeed(taskResult.data.task_id);
-            clearInterval(intervalId);
             setIsFetching(false);
           }
         } catch (error) {
@@ -242,9 +254,10 @@ export const ImageForm = () => {
           }
 
           if (taskResult.data.status === "finished") {
-            setImageArr(taskResult.data.task_result.image_urls);
-            await handleGetSeed(taskId);
             clearInterval(intervalId);
+            setImageArr(taskResult.data.task_result.image_urls);
+            setOriginImages(taskResult.data.task_result.image_urls);
+            await handleGetSeed(taskId);
             setIsFetching(false);
           }
         } catch (error) {
@@ -272,18 +285,33 @@ export const ImageForm = () => {
     },
   });
 
+  useEffect(() => {
+    if (imageDatas?.task_progress === 100) {
+      form.resetField("prompt");
+    }
+  }, [imageDatas]);
+
+  useEffect(() => {
+    if (aspectRatio !== "") {
+      const { lessThanOne } = parseAspectRatio(aspectRatio);
+      console.log("lessThanOne", lessThanOne);
+      if (lessThanOne) {
+        setIsASLessOne(true);
+      } else {
+        setIsASLessOne(false);
+      }
+    }
+  }, [aspectRatio]);
+
   const onSubmit = (values: z.infer<typeof ImageValidation>) => {
     setImageDatas(null);
     setImageArr([]);
     setFetchTime(0);
     setTempFormValue(values);
+    setAspectRatio(values.aspectRatio || "");
     const finalPrompt = generateFinalPrompt(values);
     setFinalPrompt(finalPrompt);
-
-    setImageArr(testOriginImageList);
-    setOriginImages(testOriginImageList);
-
-    // handleGenerateImage(finalPrompt);
+    handleGenerateImage(finalPrompt);
   };
 
   return (
@@ -310,14 +338,9 @@ export const ImageForm = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className=" focus:ring-transparent">
-                        <SelectItem value=" --v 4">v4</SelectItem>
-                        <SelectItem value=" --v 5">v5</SelectItem>
-                        <SelectItem value=" --v 5.1">v5.1</SelectItem>
                         <SelectItem value=" --v 5.2">v5.2</SelectItem>
                         <SelectItem value=" --v 6">v6</SelectItem>
-                        <SelectItem value=" --niji 4">Niji 4</SelectItem>
-                        <SelectItem value=" --niji 5">Niji 5</SelectItem>
-                        <SelectItem value=" --niji 6">Niji 6</SelectItem>
+                        <SelectItem value=" --niji 6">niji 6</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -559,7 +582,7 @@ export const ImageForm = () => {
             ></FormField>
           </div>
 
-          <div className="hide-scrollbar bg-white/15 overflow-scroll rounded-xl p-8 flex-1 w-full min-w-[560px]  h-full  flex-center">
+          <div className="styled-scrollbar bg-white/15 overflow-scroll rounded-xl p-8 flex-1 w-full min-w-[560px]  h-full  flex-center">
             <FormField
               control={form.control}
               name="prompt"
@@ -568,7 +591,9 @@ export const ImageForm = () => {
                   <div
                     className={`w-full h-full gap-4 grid-cols-2 ${
                       imageArr.length === 0 && "flex-center"
-                    } grid grid-rows-[repeat(auto,minmax(min-content,1fr))] items-center justify-center`}
+                    } grid  items-center justify-center ${
+                      isASLessOne && `!flex`
+                    }`}
                   >
                     {imageArr.length === 0 && (
                       <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
@@ -588,9 +613,9 @@ export const ImageForm = () => {
                       imageArr.map((imgUrl, index) => (
                         <div
                           key={index}
-                          className=" flex-center relative overflow-hidden group"
+                          className=" flex-center relative  group"
                         >
-                          <div className="  min-w-[240px] max-w-[300px] w-full h-full relative">
+                          <div className="  min-w-[240px] max-w-[300px] w-full  relative">
                             <img
                               src={imgUrl}
                               alt="midjourney image"
@@ -598,7 +623,7 @@ export const ImageForm = () => {
                             ></img>
                             <button
                               type="button"
-                              className="absolute min-w-[240px] h-full rounded-xl aspect-square inset-0 bg-transparent hover:bg-transparent"
+                              className="absolute min-w-[240px] h-full rounded-xl inset-0 bg-transparent hover:bg-transparent"
                               onClick={() => {
                                 setSelectedIndex(index);
                                 setOpen(true);
@@ -611,7 +636,6 @@ export const ImageForm = () => {
                             setOpen={setOpen}
                             tempFormValue={tempFormValue}
                             parentimageArr={imageArr}
-                            setParentImageArr={setImageArr}
                             selectedIndex={selectedIndex || 0}
                             parentTaskId={taskId}
                             parentSeed={seed || ""}
@@ -675,10 +699,7 @@ export const ImageForm = () => {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      // handleVaryStrong(taskId, index + 1 + "");
-                                      setVaryImages(varyImageList);
-                                      setImageArr([]);
-                                      setImageArr(varyImageList);
+                                      handleVaryStrong(taskId, index + 1 + "");
                                     }}
                                     className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
                                   >
@@ -703,10 +724,7 @@ export const ImageForm = () => {
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      // handleVarySubtle(taskId, index + 1 + "");
-                                      setVaryImages(varyImageList);
-                                      setImageArr([]);
-                                      setImageArr(varyImageList);
+                                      handleVarySubtle(taskId, index + 1 + "");
                                     }}
                                     className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
                                   >

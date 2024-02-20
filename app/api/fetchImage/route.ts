@@ -5,6 +5,7 @@ const fetchUrl = "https://api.midjourneyapi.xyz/mj/v2/fetch";
 const handleFetch = async (req: NextRequest) => {
   try {
     const body = await req.json();
+
     const taskId = body.taskId;
 
     if (!taskId) {

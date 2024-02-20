@@ -1,17 +1,16 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/upscale";
+const panUrl = "https://api.midjourneyapi.xyz/mj/v2/pan";
 
-const handleUpscale = async (req: NextRequest) => {
+const handlePan = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    console.log(body);
 
-    if (!body.originTaskId || !body.index) {
-      console.log("missing origin task id or index");
+    if (!body.originTaskId || !body.direction) {
+      console.log("missing originTaskId or direction");
       return NextResponse.json(
-        { error: "missing origin task id or index" },
+        { error: "missing originTaskId or direction" },
         {
           status: 400,
         }
@@ -24,22 +23,19 @@ const handleUpscale = async (req: NextRequest) => {
       },
       data: {
         origin_task_id: body.originTaskId,
-        index: body.index,
+        direction: body.direction,
         notify_progress: true,
       },
-      url: imagineUrl,
+      url: panUrl,
       method: "post",
     };
 
     const response = await axios(options);
-    console.log(response);
 
     return NextResponse.json(response.data, {
       status: response.status,
     });
   } catch (error) {
-    // console.log(error);
-
     console.error(`Error: ${error}`);
 
     return NextResponse.json(
@@ -49,4 +45,4 @@ const handleUpscale = async (req: NextRequest) => {
   }
 };
 
-export const POST = handleUpscale;
+export const POST = handlePan;
