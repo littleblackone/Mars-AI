@@ -19,6 +19,7 @@ import { Badge } from "../ui/badge";
 import {
   debounce,
   extractArAndModel,
+  handleCopy,
   handleDownload,
   parseAspectRatio,
 } from "@/lib/utils";
@@ -34,7 +35,6 @@ import { Label } from "../ui/label";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { useZoomImages } from "@/lib/store/useZoomImages";
 import { useExpandImages } from "@/lib/store/useExpandImages";
-import { after } from "node:test";
 
 export function ImageFullView({
   selectedIndex,
@@ -96,14 +96,7 @@ export function ImageFullView({
   const model = tempFormValue?.model?.split(" --")[1];
   const aspectRatio = tempFormValue?.aspectRatio;
 
-  const handleCopy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("prompt已复制到剪贴板");
-    } catch (error) {
-      console.error("Failed to copy: ", error);
-    }
-  };
+  
   const handleZoom = debounce(async (zoomValue: string) => {
     try {
       setIsZooming(true);

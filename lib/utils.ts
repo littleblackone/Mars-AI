@@ -134,3 +134,12 @@ export function parseAspectRatio(aspectRatio: string): {
     lessThanOne: aspectRatioValue < 1,
   };
 }
+
+export const handleCopy = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("prompt已复制到剪贴板");
+  } catch (error) {
+    console.error("Failed to copy: ", error);
+  }
+};

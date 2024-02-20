@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageValidation } from "../../lib/validations";
 import {
+  CopyIcon,
   EnterFullScreenIcon,
   MagicWandIcon,
   TrashIcon,
@@ -27,6 +28,7 @@ import {
 import {
   debounce,
   generateFinalPrompt,
+  handleCopy,
   handleDownload,
   parseAspectRatio,
 } from "@/lib/utils";
@@ -62,6 +64,7 @@ import { ImageFullView } from "./ImageFullView";
 import { toast } from "sonner";
 import { useOriginImage } from "@/lib/store/useOriginImage";
 import { useVaryImage } from "@/lib/store/useVaryImage";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 export const ImageForm = () => {
   const [imageDatas, setImageDatas] = useState<TaskResult | null>();
@@ -80,12 +83,12 @@ export const ImageForm = () => {
   const setOriginImages = useOriginImage((state) => state.setImages);
   const setVaryImages = useVaryImage((state) => state.setImages);
 
-  // const testOriginImageList = [
-  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
-  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
-  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
-  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
-  // ];
+  const testOriginImageList = [
+    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
+    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
+    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
+    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
+  ];
   // const testOriginImageList = [
   //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_0.webp",
   //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_1.webp",
@@ -311,7 +314,7 @@ export const ImageForm = () => {
     setAspectRatio(values.aspectRatio || "");
     const finalPrompt = generateFinalPrompt(values);
     setFinalPrompt(finalPrompt);
-    handleGenerateImage(finalPrompt);
+    // handleGenerateImage(finalPrompt);
   };
 
   return (
@@ -325,7 +328,7 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between  w-[200px]">
                   <FormLabel className="text-white text-nowrap text-base">
-                    模型:
+                    Models:
                   </FormLabel>
                   <div className=" -translate-y-[3px]">
                     <Select
@@ -356,7 +359,7 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between  w-[200px]">
                   <FormLabel className="text-white text-nowrap text-base">
-                    图片比例:
+                    AspectRatio:
                   </FormLabel>
                   <div className="-translate-y-[3px]">
                     <Select
@@ -389,7 +392,7 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className=" flex flex-col w-[200px] ">
                   <FormLabel className="text-white text-nowrap text-base">
-                    添加艺术风格:
+                    Add styles:
                   </FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -403,7 +406,7 @@ export const ImageForm = () => {
                               ?.label
                           ) : (
                             <>
-                              <span>风格列表</span>
+                              <span>style list</span>
                             </>
                           )}
                           <span>
@@ -455,7 +458,7 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col ">
                   <FormLabel className="text-white text-nowrap text-base">
-                    否定词:
+                    Negative Words:
                   </FormLabel>
                   <div className="-translate-y-[3px]">
                     <FormControl>
@@ -479,7 +482,7 @@ export const ImageForm = () => {
                 <FormItem className="flex flex-col gap-4 ">
                   <div className="flex justify-between items-center">
                     <FormLabel className="text-white text-nowrap text-base">
-                      艺术程度:
+                      Stylize:
                     </FormLabel>
 
                     <FormControl>
@@ -520,7 +523,7 @@ export const ImageForm = () => {
                 <FormItem className="flex flex-col gap-4 ">
                   <div className="flex justify-between items-center">
                     <FormLabel className="text-white text-nowrap text-base">
-                      混乱程度:
+                      Chaos:
                     </FormLabel>
 
                     <FormControl>
@@ -588,14 +591,42 @@ export const ImageForm = () => {
               name="prompt"
               render={({ field }) => (
                 <FormItem className="flex flex-col  w-full h-full">
-                  <div
-                    className={`w-full h-full gap-4 grid-cols-2 ${
-                      imageArr.length === 0 && "flex-center"
-                    } grid  items-center justify-center ${
-                      isASLessOne && `!flex`
-                    }`}
+                  <Tabs
+                    defaultValue="ImageToText"
+                    className="flex flex-col flex-center"
                   >
-                    {imageArr.length === 0 && (
+                    <TabsList className=" shadow-md bg-white/40 my-2 p-4 py-6 gap-2 text-gray-600 rounded-md">
+                      <TabsTrigger
+                        value="textToImage"
+                        className=" py-[0.4rem] rounded-md"
+                      >
+                        文生图
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="ImageToText"
+                        className=" py-[0.4rem] rounded-md"
+                      >
+                        图生文
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="ImageToImage"
+                        className=" py-[0.4rem] rounded-md"
+                      >
+                        图生图
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent
+                      value="textToImage"
+                      className=" w-[50%] h-full"
+                    >
+                      <div
+                        className={`w-full h-full gap-4 grid-cols-2 ${
+                          imageArr.length === 0 && ""
+                        } grid  items-center justify-center ${
+                          isASLessOne && `!flex`
+                        }`}
+                      >
+                        {/* {imageArr.length === 0 && (
                       <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
                         {
                           <img
@@ -607,200 +638,324 @@ export const ImageForm = () => {
                           ></img>
                         }
                       </div>
-                    )}
+                    )} */}
 
-                    {imageArr.length === 4 &&
-                      imageArr.map((imgUrl, index) => (
-                        <div
-                          key={index}
-                          className=" flex-center relative  group"
-                        >
-                          <div className="  min-w-[240px] max-w-[300px] w-full  relative">
-                            <img
-                              src={imgUrl}
-                              alt="midjourney image"
-                              className={`rounded-xl min-w-[240px] max-w-[300px] w-full h-full`}
-                            ></img>
-                            <button
-                              type="button"
-                              className="absolute min-w-[240px] h-full rounded-xl inset-0 bg-transparent hover:bg-transparent"
-                              onClick={() => {
-                                setSelectedIndex(index);
-                                setOpen(true);
-                              }}
-                            ></button>
+                        {testOriginImageList.map((imgUrl, index) => (
+                          <div
+                            key={index}
+                            className=" flex-center relative  group"
+                          >
+                            <div className="  min-w-[240px] max-w-[300px] w-full  relative">
+                              <img
+                                src={imgUrl}
+                                alt="midjourney image"
+                                className={`rounded-xl min-w-[240px] max-w-[300px] w-full h-full`}
+                              ></img>
+                              <button
+                                type="button"
+                                className="absolute min-w-[240px] h-full rounded-xl inset-0 bg-transparent hover:bg-transparent"
+                                onClick={() => {
+                                  setSelectedIndex(index);
+                                  setOpen(true);
+                                }}
+                              ></button>
+                            </div>
+
+                            <ImageFullView
+                              open={open}
+                              setOpen={setOpen}
+                              tempFormValue={tempFormValue}
+                              parentimageArr={imageArr}
+                              selectedIndex={selectedIndex || 0}
+                              parentTaskId={taskId}
+                              parentSeed={seed || ""}
+                              finalPrompt={finalPrompt || ""}
+                            ></ImageFullView>
+
+                            <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleDownload(imgUrl, index)
+                                      }
+                                      className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                    >
+                                      <DownloadIcon
+                                        width={20}
+                                        height={20}
+                                        color="white"
+                                      ></DownloadIcon>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">
+                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                      下载
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => setOpen(true)}
+                                      className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                    >
+                                      <EnterFullScreenIcon
+                                        width={20}
+                                        height={20}
+                                        color="white"
+                                      ></EnterFullScreenIcon>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">
+                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                      放大
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <Separator className=" bg-gray-500/75"></Separator>
+
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleVaryStrong(
+                                          taskId,
+                                          index + 1 + ""
+                                        );
+                                      }}
+                                      className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                    >
+                                      <MagicWandIcon
+                                        width={20}
+                                        height={20}
+                                        color="white"
+                                      ></MagicWandIcon>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">
+                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                      Vary(strong)
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleVarySubtle(
+                                          taskId,
+                                          index + 1 + ""
+                                        );
+                                      }}
+                                      className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                    >
+                                      <MagicWandIcon
+                                        width={15}
+                                        height={15}
+                                        color="white"
+                                      ></MagicWandIcon>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">
+                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                      Vary(subtle)
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+
+                              <Separator className=" bg-gray-500/75"></Separator>
+
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="active:translate-y-[1px] rounded-md hover:stroke-red-500 bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                    >
+                                      <TrashIcon
+                                        width={20}
+                                        height={20}
+                                        color="white"
+                                      ></TrashIcon>
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">
+                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                      删除
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
                           </div>
-
-                          <ImageFullView
-                            open={open}
-                            setOpen={setOpen}
-                            tempFormValue={tempFormValue}
-                            parentimageArr={imageArr}
-                            selectedIndex={selectedIndex || 0}
-                            parentTaskId={taskId}
-                            parentSeed={seed || ""}
-                            finalPrompt={finalPrompt || ""}
-                          ></ImageFullView>
-
-                          <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleDownload(imgUrl, index)
-                                    }
-                                    className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                  >
-                                    <DownloadIcon
-                                      width={20}
-                                      height={20}
-                                      color="white"
-                                    ></DownloadIcon>
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                    下载
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={() => setOpen(true)}
-                                    className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                  >
-                                    <EnterFullScreenIcon
-                                      width={20}
-                                      height={20}
-                                      color="white"
-                                    ></EnterFullScreenIcon>
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                    放大
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-
-                            <Separator className=" bg-gray-500/75"></Separator>
-
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      handleVaryStrong(taskId, index + 1 + "");
-                                    }}
-                                    className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                  >
-                                    <MagicWandIcon
-                                      width={20}
-                                      height={20}
-                                      color="white"
-                                    ></MagicWandIcon>
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                    Vary(strong)
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      handleVarySubtle(taskId, index + 1 + "");
-                                    }}
-                                    className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                  >
-                                    <MagicWandIcon
-                                      width={15}
-                                      height={15}
-                                      color="white"
-                                    ></MagicWandIcon>
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                    Vary(subtle)
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-
-                            <Separator className=" bg-gray-500/75"></Separator>
-
-                            <TooltipProvider delayDuration={200}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    className="active:translate-y-[1px] rounded-md hover:stroke-red-500 bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                  >
-                                    <TrashIcon
-                                      width={20}
-                                      height={20}
-                                      color="white"
-                                    ></TrashIcon>
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                  <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                    删除
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
+                        ))}
+                      </div>
+                      <div className="flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-4">
+                        <div className="flex w-full flex-center">
+                          <FormControl>
+                            <Input
+                              className="bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+                              placeholder="让你的想象变成事实......"
+                              {...field}
+                            ></Input>
+                          </FormControl>
+                          <Button
+                            type="submit"
+                            size="lg"
+                            className="w-fit button-85 ml-2  text-lg"
+                            disabled={isFetching}
+                          >
+                            {isFetching ? (
+                              <>
+                                <span className="flicker">
+                                  {imageDatas && imageDatas.task_progress >= 0
+                                    ? imageDatas?.task_progress + "%"
+                                    : "0%"}
+                                </span>
+                              </>
+                            ) : (
+                              "生成"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                      <FormMessage className="ml-4"></FormMessage>
+                    </TabsContent>
+                    <TabsContent
+                      value="ImageToText"
+                      className=" w-[60%] h-full"
+                    >
+                      <div className=" w-full h-full flex flex-col items-center justify-center">
+                        <div className=" w-full h-full bg-white/35 rounded-md gap-4 p-6 flex flex-col items-center justify-between">
+                          <div className=" flex gap-2">
+                            <div className="leading-6 text-sm divx-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
+                              <div className="flex">
+                                <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
+                                  Prompt 1 :
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="flex-center h-8 w-8 p-0"
+                                  onClick={() => handleCopy("")}
+                                >
+                                  <CopyIcon height={12} width={12}></CopyIcon>
+                                </Button>
+                              </div>
+                              an oil painting of an old man in furs, in the
+                              style of andrew atroshenko, art of the upper
+                            </div>
+                          </div>
+                          <div className=" flex gap-2">
+                            <p className="leading-6 text-sm px-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
+                              <div className="flex">
+                                <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
+                                  Prompt 1 :
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="flex-center h-8 w-8 p-0"
+                                  onClick={() => handleCopy("")}
+                                >
+                                  <CopyIcon height={12} width={12}></CopyIcon>
+                                </Button>
+                              </div>
+                              an oil painting of an old man in furs, in the
+                              style of andrew atroshenko, art of the upper
+                            </p>
+                          </div>
+                          <div className=" flex gap-2">
+                            <p className="leading-6 text-sm px-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
+                              <div className="flex">
+                                <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
+                                  Prompt 1 :
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="flex-center h-8 w-8 p-0"
+                                  onClick={() => handleCopy("")}
+                                >
+                                  <CopyIcon height={12} width={12}></CopyIcon>
+                                </Button>
+                              </div>
+                              an oil painting of an old man in furs, in the
+                              style of andrew atroshenko, art of the upper
+                              paleolithic, aleksi briclot, paul
+                            </p>
+                          </div>
+                          <div className=" flex gap-2">
+                            <p className="leading-6 text-sm px-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
+                              <div className="flex">
+                                <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
+                                  Prompt 1 :
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="flex-center h-8 w-8 p-0"
+                                  onClick={() => handleCopy("")}
+                                >
+                                  <CopyIcon height={12} width={12}></CopyIcon>
+                                </Button>
+                              </div>
+                              an oil painting of an old man in furs, in the
+                              style of andrew atroshenko, art of the upper
+                              paleolithic, aleksi briclot, paul
+                            </p>
                           </div>
                         </div>
-                      ))}
-                  </div>
+                        <div className=" w-full flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-8">
+                          <div className="flex w-full flex-center">
+                            <Input
+                              className=" bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+                              placeholder="输入在线图片地址(常见结尾: jpg, png, webp)"
+                              {...field}
+                            ></Input>
 
-                  <div className="flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-4">
-                    <div className="flex w-full flex-center">
-                      <FormControl>
-                        <Input
-                          className="bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                          placeholder="让你的想象变成事实......"
-                          {...field}
-                        ></Input>
-                      </FormControl>
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className="w-fit button-85 ml-2  text-lg"
-                        disabled={isFetching}
-                      >
-                        {isFetching ? (
-                          <>
-                            <span className="flicker">
-                              {imageDatas && imageDatas.task_progress >= 0
-                                ? imageDatas?.task_progress + "%"
-                                : "0%"}
-                            </span>
-                          </>
-                        ) : (
-                          "生成"
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <FormMessage className="ml-4"></FormMessage>
+                            <Button
+                              type="button"
+                              size="lg"
+                              className="w-fit button-85 ml-2  text-lg"
+                              disabled={isFetching}
+                            >
+                              {isFetching ? (
+                                <>
+                                  <span className="flicker">
+                                    {imageDatas && imageDatas.task_progress >= 0
+                                      ? imageDatas?.task_progress + "%"
+                                      : "0%"}
+                                  </span>
+                                </>
+                              ) : (
+                                "生成"
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="ImageToImage">
+                      <div></div>
+                    </TabsContent>
+                  </Tabs>
                 </FormItem>
               )}
             ></FormField>
