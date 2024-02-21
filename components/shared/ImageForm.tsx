@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageValidation } from "../../lib/validations";
@@ -52,7 +52,7 @@ import {
 import { styles } from "@/lib/constant";
 import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
-import { CheckIcon, DownloadIcon } from "lucide-react";
+import { CheckIcon, DownloadIcon, UploadCloudIcon } from "lucide-react";
 import { Separator } from "../ui/separator";
 
 import {
@@ -87,7 +87,11 @@ export const ImageForm = () => {
     "",
     "",
   ]);
+  const [selectImageFile, setSelectImageFile] = useState<File>();
+  const [uploadImg, setUploadImg] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
+  const IMGBB_KEY = "bf349c2c6056943bee6bc4a507958c22";
   const setOriginImages = useOriginImage((state) => state.setImages);
   const setVaryImages = useVaryImage((state) => state.setImages);
 
@@ -97,18 +101,51 @@ export const ImageForm = () => {
     "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
     "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
   ];
-  // const testOriginImageList = [
-  //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_0.webp",
-  //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_1.webp",
-  //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_2.webp",
-  //   "https://cdn.midjourney.com/25f43b70-1a37-4ab7-bea2-6e65ae903fb1/0_3.webp",
-  // ];
-  // const testOriginImageList = [
-  //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
-  //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
-  //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
-  //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
-  // ];
+
+  const handleSelectImagUrl = (e: ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (!file.type.includes("image")) return;
+      setSelectImageFile(file);
+    }
+  };
+
+  const handleUploadImage = async () => {
+    try {
+      setIsFetching(true);
+      setIsUploading(true);
+      if (selectImageFile) {
+        const formData = new FormData();
+        formData.append("image", selectImageFile);
+
+        const response = await axios.post(
+          "https://api.imgbb.com/1/upload",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+            params: {
+              key: IMGBB_KEY,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          toast.success("上传成功");
+          setIsUploading(false);
+          setDescribeImageUrl(response.data.data.url);
+          setUploadImg(response.data.data.url);
+          await handleDescribe(response.data.data.url);
+        }
+      }
+    } catch (error) {
+      toast.error("上传失败，请检查文件格式或重新上传");
+      setIsFetching(false);
+      console.error("Error upload image:", error);
+    }
+  };
 
   const handleDescribe = async (imageUrl: string) => {
     try {
@@ -123,18 +160,18 @@ export const ImageForm = () => {
         });
 
         if (taskResult.data.status === "finished") {
+          clearInterval(intervalId);
+          toast.success("prompt获取成功");
           const prompts = taskResult.data.task_result.message;
           const promptStringArray = convertStringToArray(prompts);
-
           setGeneratePrompts(promptStringArray);
-          clearInterval(intervalId);
           setIsFetching(false);
         }
       }, 1000);
     } catch (error) {
       toast.error("请求失败，请查看图片地址格式是否正确");
       setIsFetching(false);
-      console.error("Error fetching seed:", error);
+      console.error("Error handle describe:", error);
     }
   };
 
@@ -629,9 +666,9 @@ export const ImageForm = () => {
                 <FormItem className="flex flex-col  w-full h-full">
                   <Tabs
                     defaultValue="ImageToText"
-                    className="flex flex-col flex-center"
+                    className="flex flex-col h-full w-full flex-center"
                   >
-                    <TabsList className=" shadow-md bg-white/40 my-2 p-4 py-6 gap-2 text-gray-600 rounded-md">
+                    <TabsList className=" shadow-md bg-white/40 my-2 mt-6 p-4 py-6 gap-2 text-gray-600 rounded-md">
                       <TabsTrigger
                         value="textToImage"
                         className=" py-[0.4rem] rounded-md"
@@ -653,7 +690,7 @@ export const ImageForm = () => {
                     </TabsList>
                     <TabsContent
                       value="textToImage"
-                      className=" w-[50%] h-full"
+                      className=" w-[65%] h-full"
                     >
                       <div
                         className={`w-full h-full gap-4 grid-cols-2 ${
@@ -708,7 +745,7 @@ export const ImageForm = () => {
                               finalPrompt={finalPrompt || ""}
                             ></ImageFullView>
 
-                            <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
+                            <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  -right-2 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
                               <TooltipProvider delayDuration={200}>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -873,56 +910,108 @@ export const ImageForm = () => {
                       </div>
                       <FormMessage className="ml-4"></FormMessage>
                     </TabsContent>
-                    <TabsContent
-                      value="ImageToText"
-                      className=" w-[60%] h-full"
-                    >
-                      <div className=" w-full h-full flex flex-col items-center justify-center">
-                        <div className=" w-full h-full bg-white/35 rounded-md gap-4 p-6 flex flex-col items-center justify-between">
-                          {generatePrompts &&
-                            generatePrompts.length === 4 &&
-                            generatePrompts.map((prompt, index) => (
-                              <div className=" flex gap-2 w-full">
-                                <div className="leading-6 w-full px-4 text-sm divx-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
-                                  <div className="flex">
-                                    <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
-                                      Prompt {index + 1} :
-                                    </span>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      className="flex-center h-8 w-8 p-0"
-                                      onClick={() =>
-                                        handleCopy(generatePrompts[index])
-                                      }
-                                    >
-                                      <CopyIcon
-                                        height={12}
-                                        width={12}
-                                      ></CopyIcon>
-                                    </Button>
+                    <TabsContent value="ImageToText" className=" w-full h-full">
+                      <div className=" w-full h-full flex flex-col items-center justify-center bordern">
+                        <div className="w-full h-full rounded-md flex bg-white/35">
+                          <div className=" w-full h-full rounded-md gap-4 p-6 flex flex-col items-center justify-center">
+                            {generatePrompts &&
+                              generatePrompts.length === 4 &&
+                              generatePrompts.map((prompt, index) => (
+                                <div
+                                  className=" flex gap-2 w-full h-full"
+                                  key={index}
+                                >
+                                  <div className="leading-6 h-[120px] overflow-y-scroll hide-scrollbar w-full  px-4 text-sm  font-medium text-gray-600 bg-white/30  p-2 rounded-md">
+                                    <div className="flex">
+                                      <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
+                                        Prompt {index + 1} :
+                                      </span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="flex-center h-8 w-8 p-0"
+                                        onClick={() =>
+                                          handleCopy(generatePrompts[index])
+                                        }
+                                      >
+                                        <CopyIcon
+                                          height={12}
+                                          width={12}
+                                        ></CopyIcon>
+                                      </Button>
+                                    </div>
+                                    {prompt}
                                   </div>
-                                  {prompt}
                                 </div>
+                              ))}
+                          </div>
+                          <div className=" w-full h-full flex-center">
+                            <div className=" flex flex-col gap-4 items-center">
+                              <div className=" w-[350px] h-[350px] flex-center">
+                                <img
+                                  src={
+                                    uploadImg !== ""
+                                      ? uploadImg
+                                      : describeImageUrl
+                                      ? describeImageUrl
+                                      : "/pending2.png"
+                                  }
+                                  className=" rounded-md max-w-[100%] max-h-[100%]"
+                                  alt="describe image"
+                                ></img>
                               </div>
-                            ))}
+
+                              <Input
+                                type="file"
+                                placeholder="Upload Image"
+                                accept="image/*"
+                                className="cursor-pointer bg-white/55 border-none"
+                                disabled={isFetching}
+                                onChange={(e) => {
+                                  handleSelectImagUrl(e);
+                                }}
+                              ></Input>
+                              <Button
+                                type="button"
+                                size="lg"
+                                className="w-full flex gap-2 button-85 text-lg"
+                                disabled={
+                                  isFetching || selectImageFile == undefined
+                                }
+                                onClick={() => {
+                                  handleUploadImage();
+                                }}
+                              >
+                                <UploadCloudIcon></UploadCloudIcon>
+                                {isUploading ? (
+                                  <>
+                                    <span className="flicker">上传中...</span>
+                                  </>
+                                ) : (
+                                  "上传"
+                                )}
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                        <div className=" w-full flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-8">
+                        <div className=" w-full flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-4">
                           <div className="flex w-full flex-center">
                             <Input
+                              value={describeImageUrl}
                               onChange={(e) =>
                                 setDescribeImageUrl(e.target.value)
                               }
                               className=" bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                              placeholder="在线图片地址(格式后缀结尾,如:https://example.com/image.jpg)"
+                              placeholder="在线图片地址(格式后缀结尾,如:https://example.com/image.jpg,不支持webp,如果想描述midjourney官网的图片,请下载后再上传)"
                             ></Input>
 
                             <Button
                               type="button"
                               size="lg"
                               className="w-fit button-85 ml-2  text-lg"
-                              disabled={isFetching}
+                              disabled={isFetching || describeImageUrl == ""}
                               onClick={() => {
+                                setUploadImg("");
                                 handleDescribe(describeImageUrl);
                               }}
                             >
@@ -938,8 +1027,11 @@ export const ImageForm = () => {
                         </div>
                       </div>
                     </TabsContent>
-                    <TabsContent value="ImageToImage">
-                      <div></div>
+                    <TabsContent
+                      value="ImageToImage"
+                      className=" w-full h-full"
+                    >
+                      <div className=" w-full h-full"></div>
                     </TabsContent>
                   </Tabs>
                 </FormItem>

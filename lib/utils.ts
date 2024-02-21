@@ -153,17 +153,19 @@ export function convertStringToArray(input: string): string[] {
 
   // 去除序号并保存剩余内容到数组中
   const result: string[] = filteredLines.map((line) => {
+    // 去除开头的序号
+    const lineWithoutIndex = line.replace(/^\d+\️⃣/, "").trim();
     // 匹配类似 [artist name](artist link) 格式的字符串
     const regex = /\[([^\]]+)\]\([^)]+\)/g;
-    const artistsMatches = line.match(regex);
+    const artistsMatches = lineWithoutIndex.match(regex);
 
     if (artistsMatches) {
       // 替换字符串中的 artist link 为艺术家的姓名
-      const replacedLine = line.replace(regex, (match, p1) => p1);
+      const replacedLine = lineWithoutIndex.replace(regex, (match, p1) => p1);
       return replacedLine.trim();
     }
 
-    return line.trim();
+    return lineWithoutIndex.trim();
   });
 
   return result;
