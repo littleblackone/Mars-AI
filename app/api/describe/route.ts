@@ -1,16 +1,16 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/upscale";
+const describeUrl = "https://api.midjourneyapi.xyz/mj/v2/describe";
 
-const handleUpscale = async (req: NextRequest) => {
+const handleDescribe = async (req: NextRequest) => {
   try {
     const body = await req.json();
-
-    if (!body.originTaskId || !body.index) {
-      console.log("missing origin task id or index");
+  
+    if (!body.imageUrl) {
+      console.log("missing online image url");
       return NextResponse.json(
-        { error: "missing origin task id or index" },
+        { error: "missing online image url" },
         {
           status: 400,
         }
@@ -22,11 +22,10 @@ const handleUpscale = async (req: NextRequest) => {
         "X-API-KEY": process.env.GOAPI_KEY,
       },
       data: {
-        origin_task_id: body.originTaskId,
-        index: body.index,
+        image_url: body.imageUrl,
         notify_progress: true,
       },
-      url: imagineUrl,
+      url: describeUrl,
       method: "post",
     };
 
@@ -36,6 +35,8 @@ const handleUpscale = async (req: NextRequest) => {
       status: response.status,
     });
   } catch (error) {
+    console.log(error);
+
     console.error(`Error: ${error}`);
 
     return NextResponse.json(
@@ -45,4 +46,4 @@ const handleUpscale = async (req: NextRequest) => {
   }
 };
 
-export const POST = handleUpscale;
+export const POST = handleDescribe;

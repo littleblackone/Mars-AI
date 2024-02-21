@@ -143,3 +143,28 @@ export const handleCopy = async (text: string) => {
     console.error("Failed to copy: ", error);
   }
 };
+
+export function convertStringToArray(input: string): string[] {
+  // 将字符串按换行符分割成数组
+  const lines: string[] = input.split("\n");
+
+  // 去除空白行
+  const filteredLines: string[] = lines.filter((line) => line.trim() !== "");
+
+  // 去除序号并保存剩余内容到数组中
+  const result: string[] = filteredLines.map((line) => {
+    // 匹配类似 [artist name](artist link) 格式的字符串
+    const regex = /\[([^\]]+)\]\([^)]+\)/g;
+    const artistsMatches = line.match(regex);
+
+    if (artistsMatches) {
+      // 替换字符串中的 artist link 为艺术家的姓名
+      const replacedLine = line.replace(regex, (match, p1) => p1);
+      return replacedLine.trim();
+    }
+
+    return line.trim();
+  });
+
+  return result;
+}

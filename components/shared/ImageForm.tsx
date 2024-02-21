@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import {
+  convertStringToArray,
   debounce,
   generateFinalPrompt,
   handleCopy,
@@ -79,6 +80,13 @@ export const ImageForm = () => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [aspectRatio, setAspectRatio] = useState("");
   const [isASLessOne, setIsASLessOne] = useState<boolean>(false);
+  const [describeImageUrl, setDescribeImageUrl] = useState<string>("");
+  const [generatePrompts, setGeneratePrompts] = useState<string[]>([
+    "",
+    "",
+    "",
+    "",
+  ]);
 
   const setOriginImages = useOriginImage((state) => state.setImages);
   const setVaryImages = useVaryImage((state) => state.setImages);
@@ -101,6 +109,34 @@ export const ImageForm = () => {
   //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
   //   "https://cdn.midjourney.com/ca9a11c6-fca4-4a73-80c7-241cdc22eff1/0_0.webp",
   // ];
+
+  const handleDescribe = async (imageUrl: string) => {
+    try {
+      setIsFetching(true);
+      const response = await axios.post("/api/describe", { imageUrl });
+
+      const newTaskId = response.data.task_id;
+
+      const intervalId = setInterval(async () => {
+        const taskResult: FetchImageData = await axios.post("/api/fetchImage", {
+          taskId: newTaskId,
+        });
+
+        if (taskResult.data.status === "finished") {
+          const prompts = taskResult.data.task_result.message;
+          const promptStringArray = convertStringToArray(prompts);
+
+          setGeneratePrompts(promptStringArray);
+          clearInterval(intervalId);
+          setIsFetching(false);
+        }
+      }, 1000);
+    } catch (error) {
+      toast.error("请求失败，请查看图片地址格式是否正确");
+      setIsFetching(false);
+      console.error("Error fetching seed:", error);
+    }
+  };
 
   const handleGetSeed = async (taskId: string) => {
     try {
@@ -843,91 +879,42 @@ export const ImageForm = () => {
                     >
                       <div className=" w-full h-full flex flex-col items-center justify-center">
                         <div className=" w-full h-full bg-white/35 rounded-md gap-4 p-6 flex flex-col items-center justify-between">
-                          <div className=" flex gap-2">
-                            <div className="leading-6 text-sm divx-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
-                              <div className="flex">
-                                <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
-                                  Prompt 1 :
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="flex-center h-8 w-8 p-0"
-                                  onClick={() => handleCopy("")}
-                                >
-                                  <CopyIcon height={12} width={12}></CopyIcon>
-                                </Button>
+                          {generatePrompts &&
+                            generatePrompts.length === 4 &&
+                            generatePrompts.map((prompt, index) => (
+                              <div className=" flex gap-2 w-full">
+                                <div className="leading-6 w-full px-4 text-sm divx-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
+                                  <div className="flex">
+                                    <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
+                                      Prompt {index + 1} :
+                                    </span>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      className="flex-center h-8 w-8 p-0"
+                                      onClick={() =>
+                                        handleCopy(generatePrompts[index])
+                                      }
+                                    >
+                                      <CopyIcon
+                                        height={12}
+                                        width={12}
+                                      ></CopyIcon>
+                                    </Button>
+                                  </div>
+                                  {prompt}
+                                </div>
                               </div>
-                              an oil painting of an old man in furs, in the
-                              style of andrew atroshenko, art of the upper
-                            </div>
-                          </div>
-                          <div className=" flex gap-2">
-                            <p className="leading-6 text-sm px-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
-                              <div className="flex">
-                                <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
-                                  Prompt 1 :
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="flex-center h-8 w-8 p-0"
-                                  onClick={() => handleCopy("")}
-                                >
-                                  <CopyIcon height={12} width={12}></CopyIcon>
-                                </Button>
-                              </div>
-                              an oil painting of an old man in furs, in the
-                              style of andrew atroshenko, art of the upper
-                            </p>
-                          </div>
-                          <div className=" flex gap-2">
-                            <p className="leading-6 text-sm px-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
-                              <div className="flex">
-                                <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
-                                  Prompt 1 :
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="flex-center h-8 w-8 p-0"
-                                  onClick={() => handleCopy("")}
-                                >
-                                  <CopyIcon height={12} width={12}></CopyIcon>
-                                </Button>
-                              </div>
-                              an oil painting of an old man in furs, in the
-                              style of andrew atroshenko, art of the upper
-                              paleolithic, aleksi briclot, paul
-                            </p>
-                          </div>
-                          <div className=" flex gap-2">
-                            <p className="leading-6 text-sm px-4 font-medium text-gray-600 bg-white/30  h-[136px] overflow-scroll hide-scrollbar p-2 rounded-md">
-                              <div className="flex">
-                                <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
-                                  Prompt 1 :
-                                </span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  className="flex-center h-8 w-8 p-0"
-                                  onClick={() => handleCopy("")}
-                                >
-                                  <CopyIcon height={12} width={12}></CopyIcon>
-                                </Button>
-                              </div>
-                              an oil painting of an old man in furs, in the
-                              style of andrew atroshenko, art of the upper
-                              paleolithic, aleksi briclot, paul
-                            </p>
-                          </div>
+                            ))}
                         </div>
                         <div className=" w-full flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-8">
                           <div className="flex w-full flex-center">
                             <Input
+                              onChange={(e) =>
+                                setDescribeImageUrl(e.target.value)
+                              }
                               className=" bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                              placeholder="输入在线图片地址(常见结尾: jpg, png, webp)"
-                              {...field}
+                              placeholder="在线图片地址(格式后缀结尾,如:https://example.com/image.jpg)"
                             ></Input>
 
                             <Button
@@ -935,14 +922,13 @@ export const ImageForm = () => {
                               size="lg"
                               className="w-fit button-85 ml-2  text-lg"
                               disabled={isFetching}
+                              onClick={() => {
+                                handleDescribe(describeImageUrl);
+                              }}
                             >
                               {isFetching ? (
                                 <>
-                                  <span className="flicker">
-                                    {imageDatas && imageDatas.task_progress >= 0
-                                      ? imageDatas?.task_progress + "%"
-                                      : "0%"}
-                                  </span>
+                                  <span className="flicker">生成中...</span>
                                 </>
                               ) : (
                                 "生成"
