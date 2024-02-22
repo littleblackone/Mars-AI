@@ -83,7 +83,7 @@ export default function HistoryImage() {
               key={imgUrl}
               src={imgUrl}
               alt="midjourney image"
-              className={`rounded-md mb-2 w-[100px]  aspect-square cursor-pointer hover:scale-105 transition-all duration-200`}
+              className={`rounded-md mb-2 w-[100px]   cursor-pointer hover:scale-105 transition-all duration-200`}
             ></img>
           );
         })}
@@ -102,7 +102,7 @@ export default function HistoryImage() {
               src={imgUrl}
               key={imgUrl}
               alt="midjourney image"
-              className={`rounded-md mb-2 w-[100px]  aspect-square cursor-pointer hover:scale-105 transition-all duration-200`}
+              className={`rounded-md mb-2 w-[100px]   cursor-pointer hover:scale-105 transition-all duration-200`}
             ></img>
           );
         })}
@@ -121,7 +121,7 @@ export default function HistoryImage() {
               src={imgUrl}
               key={imgUrl}
               alt="midjourney image"
-              className={`rounded-md mb-2 w-[100px]  aspect-square cursor-pointer hover:scale-105 transition-all duration-200`}
+              className={`rounded-md mb-2 w-[100px]   cursor-pointer hover:scale-105 transition-all duration-200`}
             ></img>
           );
         })}
@@ -140,7 +140,7 @@ export default function HistoryImage() {
               src={imgUrl}
               key={imgUrl}
               alt="midjourney image"
-              className={`rounded-md mb-2 w-[100px]  aspect-square cursor-pointer hover:scale-105 transition-all duration-200`}
+              className={`rounded-md mb-2 w-[100px]   cursor-pointer hover:scale-105 transition-all duration-200`}
             ></img>
           );
         })}

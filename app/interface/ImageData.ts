@@ -98,4 +98,5 @@ export interface FullViewData {
   open: boolean;
   parentimageArr: string[];
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setParentImgArr: React.Dispatch<React.SetStateAction<string[]>>;
 }

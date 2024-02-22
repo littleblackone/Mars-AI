@@ -2,15 +2,15 @@ import { create } from "zustand";
 
 interface ImageState {
   images: string[];
-  setImages: (image: string) => void;
+  setImages: (images: string[]) => void;
   deleteImage: (image: string) => void;
 }
 
 export const useExpandImages = create<ImageState>()((set) => ({
   images: [],
-  setImages: (image) =>
+  setImages: (images) =>
     set((state) => ({
-      images: [...state.images, image],
+      images: [...state.images, ...images],
     })),
   deleteImage: (image) =>
     set((state) => ({

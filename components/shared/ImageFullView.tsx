@@ -21,9 +21,8 @@ import {
   extractArAndModel,
   handleCopy,
   handleDownload,
-  parseAspectRatio,
 } from "@/lib/utils";
-import { toast } from "sonner";
+
 import UpscaleSvg from "@/components/shared/UpscaleSvg";
 import { DownloadIcon, ZoomIn } from "lucide-react";
 import axios from "axios";
@@ -45,6 +44,7 @@ export function ImageFullView({
   open,
   setOpen,
   parentimageArr,
+  setParentImgArr,
 }: FullViewData) {
   const [isFetching, setIsFetching] = useState(false);
 
@@ -60,7 +60,7 @@ export function ImageFullView({
   const [isExpanding, setIsExpanding] = useState(false);
 
   const [isUpscaled, setIsUpscaled] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); //global state
   const [isZoomed, setIsZoomed] = useState(false);
 
   const [isExpandUp, setIsExpandUp] = useState(false);
@@ -69,7 +69,7 @@ export function ImageFullView({
   const [isExpandRight, setIsExpandRight] = useState(false);
 
   const [imageDatas, setImageDatas] = useState<TaskResult | null>();
-  const [imageUrl, setImageUrl] = useState<string>("");
+
   const [upscale2x, setUpscale2x] = useState<boolean>(false);
   const [upscale4x, setUpscale4x] = useState<boolean>(false);
   const [upscaleSub, setUpscaleSub] = useState<boolean>(false);
@@ -81,10 +81,6 @@ export function ImageFullView({
   const [expandDirction, setExpandDirction] = useState<string>("");
   const [zoomValue, setZoomValue] = useState<string>("");
 
-  const [isASGreaterThanOne, setIsASGreaterThanOne] = useState<boolean>(false);
-  const [isASEQOne, setIsASEQOne] = useState<boolean>(false);
-  const [isASLessOne, setIsASLessOne] = useState<boolean>(false);
-
   const negativeWords = tempFormValue?.negativePrompt?.split(" ");
   tempFormValue?.model;
   let imgIndexList = [0, 1, 2, 3];
@@ -94,9 +90,7 @@ export function ImageFullView({
   const setExpandImages = useExpandImages((state) => state.setImages);
 
   const model = tempFormValue?.model?.split(" --")[1];
-  const aspectRatio = tempFormValue?.aspectRatio;
 
-  
   const handleZoom = debounce(async (zoomValue: string) => {
     try {
       setIsZooming(true);
@@ -149,7 +143,8 @@ export function ImageFullView({
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
-            setZoomImages(taskResult.data.task_result.image_url);
+            setZoomImages(taskResult.data.task_result.image_urls);
+            setParentImgArr(taskResult.data.task_result.image_urls);
             setImageDatas(taskResult.data.task_result);
             setIsZooming(false);
             setIsZoomed(true);
@@ -215,7 +210,8 @@ export function ImageFullView({
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
-            setExpandImages(taskResult.data.task_result.image_url);
+            setExpandImages(taskResult.data.task_result.image_urls);
+            setParentImgArr(taskResult.data.task_result.image_urls);
             setImageDatas(taskResult.data.task_result);
             setIsExpanding(false);
             setIsExpanded(true);
@@ -305,23 +301,6 @@ export function ImageFullView({
   }, 1000);
 
   useEffect(() => {
-    if (tempFormValue) {
-      const { greaterThanOne, equalToOne, lessThanOne } = parseAspectRatio(
-        aspectRatio || ""
-      );
-      setIsASEQOne(equalToOne);
-      setIsASGreaterThanOne(greaterThanOne);
-      setIsASLessOne(lessThanOne);
-    }
-  }, [tempFormValue, isASEQOne, isASGreaterThanOne, isASLessOne]);
-  
-  useEffect(() => {
-    if (imageDatas?.image_url) {
-      setImageUrl(imageDatas?.image_url);
-    }
-  }, [imageDatas, imageUrl]);
-
-  useEffect(() => {
     setIsFetching(isUpscaling || isZooming || isExpanding);
     setIsDisabledUpscale(isFetching || isExpanded);
     setIsDisabledZoom(isFetching || isUpscaled);
@@ -368,12 +347,11 @@ export function ImageFullView({
 
   const initializeValue = () => {
     setMainImageIndex(undefined);
-    setImageUrl("");
+
     setExpandDirction("");
     setImageDatas(null);
 
     setIsUpscaled(false);
-    setIsExpanded(false);
     setIsZoomed(false);
 
     setIsExpandDown(false);
@@ -411,13 +389,11 @@ export function ImageFullView({
               className="absolute px-2.5 right-2 top-2 active:translate-y-[1px] rounded-md"
               onClick={() => {
                 handleDownload(
-                  imageUrl !== ""
-                    ? imageUrl
-                    : parentimageArr[
-                        mainImageIndex !== undefined
-                          ? mainImageIndex
-                          : selectedIndex
-                      ],
+                  parentimageArr[
+                    mainImageIndex !== undefined
+                      ? mainImageIndex
+                      : selectedIndex
+                  ],
                   mainImageIndex !== undefined ? mainImageIndex : selectedIndex
                 );
               }}
@@ -436,27 +412,26 @@ export function ImageFullView({
                 : ""}
             </span>
             <div
-              className={`  h-auto relative ${isFetching && "hidden"} ${
-                isASEQOne && `w-[80%]`
-              } ${isASLessOne && `w-[45%]`} ${isASGreaterThanOne && `w-[80%]`}`}
+              className={` w-[712px] h-[712px] flex-center ${
+                isFetching && "hidden"
+              }`}
             >
               <img
                 src={
-                  imageUrl !== ""
-                    ? imageUrl
-                    : parentimageArr[
-                        mainImageIndex !== undefined
-                          ? mainImageIndex
-                          : selectedIndex
-                      ]
+                  parentimageArr[
+                    mainImageIndex !== undefined
+                      ? mainImageIndex
+                      : selectedIndex
+                  ]
                 }
-                className={`w-full h-full ${isFetching && "hidden"}`}
+                className={` max-w-[100%] max-h-[100%] ${
+                  isFetching && "hidden"
+                }`}
                 alt="full view img"
               ></img>
-
               <div
                 className={` absolute right-2 bottom-2 w-fit h-fit ${
-                  (isFetching || imageUrl !== "") && "hidden"
+                  isFetching && "hidden"
                 }`}
               >
                 <div className=" flex gap-1">
@@ -506,14 +481,14 @@ export function ImageFullView({
                   ></img>
                 </div>
               </div>
+              <img
+                src={"/pending2.png"}
+                alt="midjourney image"
+                className={`hidden w-full h-full aspect-square ${
+                  isFetching && "flicker !block"
+                }`}
+              ></img>
             </div>
-            <img
-              src={"/pending2.png"}
-              alt="midjourney image"
-              className={`hidden w-[75%] h-full aspect-square ${
-                isFetching && "flicker !block"
-              }`}
-            ></img>
           </div>
           <div className=" max-w-[20rem] flex p-2 flex-col  h-full bg-gray-400/25 rounded-r-md">
             <div className=" bg-white p-4 mt-4 rounded-md flex flex-col">
@@ -574,7 +549,11 @@ export function ImageFullView({
                   ))}
               </div>
             </div>
-            <div className="flex flex-col gap-2 w-full justify-between h-fit bg-white p-4 mt-4 rounded-md">
+            <div
+              className={`flex flex-col gap-2 w-full justify-between h-fit bg-white p-4 mt-4 rounded-md ${
+                isExpanded && `hidden`
+              }`}
+            >
               <Button
                 type="button"
                 variant="outline"
@@ -678,7 +657,7 @@ export function ImageFullView({
               <Button
                 type="button"
                 variant="outline"
-                className={`px-2 hidden ${isZoomed && "block"}`}
+                className={`px-2 hidden ${isExpanded && "flex"}`}
                 disabled={isDisabledZoom}
                 onClick={() => {
                   handleZoom("1");
@@ -741,7 +720,9 @@ export function ImageFullView({
               </Popover>
             </div>
 
-            <div className="flex flex-col gap-2 w-full  h-fit bg-white p-4 mt-4 rounded-md">
+            <div
+              className={`flex flex-col gap-2 w-full  h-fit bg-white p-4 mt-4 rounded-md `}
+            >
               <Button
                 type="button"
                 variant="outline"
@@ -750,9 +731,6 @@ export function ImageFullView({
                 onClick={() => {
                   setExpandDirction("up");
                   setIsExpandUp(true);
-                  setIsASLessOne(true);
-                  setIsASEQOne(false);
-                  setIsASGreaterThanOne(false);
                 }}
               >
                 {isExpanding ? (
@@ -775,9 +753,6 @@ export function ImageFullView({
                 onClick={() => {
                   setExpandDirction("down");
                   setIsExpandDown(true);
-                  setIsASLessOne(true);
-                  setIsASEQOne(false);
-                  setIsASGreaterThanOne(false);
                 }}
               >
                 {isExpanding ? (
@@ -800,9 +775,6 @@ export function ImageFullView({
                 onClick={() => {
                   setExpandDirction("right");
                   setIsExpandRight(true);
-                  setIsASGreaterThanOne(true);
-                  setIsASEQOne(false);
-                  setIsASLessOne(false);
                 }}
               >
                 {isExpanding ? (
@@ -825,9 +797,6 @@ export function ImageFullView({
                 onClick={() => {
                   setExpandDirction("left");
                   setIsExpandLeft(true);
-                  setIsASGreaterThanOne(true);
-                  setIsASEQOne(false);
-                  setIsASLessOne(false);
                 }}
               >
                 {isExpanding ? (

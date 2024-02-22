@@ -108,6 +108,7 @@ export const ImageForm = () => {
   let uploadImages: string[] = [];
 
   const IMGBB_KEY = "bf349c2c6056943bee6bc4a507958c22";
+
   const setOriginImages = useOriginImage((state) => state.setImages);
   const setVaryImages = useVaryImage((state) => state.setImages);
 
@@ -451,15 +452,6 @@ export const ImageForm = () => {
     },
   });
 
-  // useEffect(() => {
-  //   console.log("uploadImagesUrl:", uploadImagesUrl);
-  //   if (uploadImagesUrl.length === 0) {
-  //     console.log("uploadImagesUrl empty");
-  //   } else {
-  //     console.log("uploadImagesUrl:", uploadImagesUrl);
-  //   }
-  // }, [uploadImagesUrl, setuploadImagesUrl]);
-
   useEffect(() => {
     if (blendImages.length >= 2 && blendImages.length <= 5) {
       setCanBlend(true);
@@ -508,7 +500,7 @@ export const ImageForm = () => {
     setAspectRatio(values.aspectRatio || "");
     const finalPrompt = generateFinalPrompt(values);
     setFinalPrompt(finalPrompt);
-    // handleGenerateImage(finalPrompt);
+    handleGenerateImage(finalPrompt);
   };
 
   return (
@@ -786,8 +778,8 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col  w-full h-full">
                   <Tabs
-                    defaultValue="ImageToImage"
-                    className="flex flex-col h-full w-full flex-center"
+                    defaultValue="textToImage"
+                    className="flex flex-col h-full w-full items-center justify-between"
                   >
                     <TabsList className=" shadow-md bg-white/40 my-2 mt-6 p-4 py-6 gap-2 text-gray-600 rounded-md">
                       <TabsTrigger
@@ -815,190 +807,192 @@ export const ImageForm = () => {
                     >
                       <div
                         className={`w-full h-full gap-4 grid-cols-2 ${
-                          imageArr.length === 0 && ""
+                          imageArr.length === 0 && "flex-center"
                         } grid  items-center justify-center ${
                           isASLessOne && `!flex`
                         }`}
                       >
-                        {/* {imageArr.length === 0 && (
-                      <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
-                        {
-                          <img
-                            src={"/pending2.png"}
-                            alt="midjourney image"
-                            className={`rounded-xl w-[65%]  aspect-square ${
-                              isFetching && "flicker"
-                            }`}
-                          ></img>
-                        }
-                      </div>
-                    )} */}
-
-                        {testOriginImageList.map((imgUrl, index) => (
-                          <div
-                            key={index}
-                            className=" flex-center relative  group"
-                          >
-                            <div className="  min-w-[240px] max-w-[300px] w-full  relative">
+                        {imageArr.length === 0 && (
+                          <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
+                            {
                               <img
-                                src={imgUrl}
+                                src={"/pending2.png"}
                                 alt="midjourney image"
-                                className={`rounded-xl min-w-[240px] max-w-[300px] w-full h-full`}
+                                className={`rounded-xl w-[65%]  aspect-square ${
+                                  isFetching && "flicker"
+                                }`}
                               ></img>
-                              <button
-                                type="button"
-                                className="absolute min-w-[240px] h-full rounded-xl inset-0 bg-transparent hover:bg-transparent"
-                                onClick={() => {
-                                  setSelectedIndex(index);
-                                  setOpen(true);
-                                }}
-                              ></button>
-                            </div>
-
-                            <ImageFullView
-                              open={open}
-                              setOpen={setOpen}
-                              tempFormValue={tempFormValue}
-                              parentimageArr={imageArr}
-                              selectedIndex={selectedIndex || 0}
-                              parentTaskId={taskId}
-                              parentSeed={seed || ""}
-                              finalPrompt={finalPrompt || ""}
-                            ></ImageFullView>
-
-                            <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  -right-2 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
-                              <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleDownload(imgUrl, index)
-                                      }
-                                      className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                    >
-                                      <DownloadIcon
-                                        width={20}
-                                        height={20}
-                                        color="white"
-                                      ></DownloadIcon>
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right">
-                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                      下载
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-
-                              <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      onClick={() => setOpen(true)}
-                                      className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                    >
-                                      <EnterFullScreenIcon
-                                        width={20}
-                                        height={20}
-                                        color="white"
-                                      ></EnterFullScreenIcon>
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right">
-                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                      放大
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-
-                              <Separator className=" bg-gray-500/75"></Separator>
-
-                              <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        handleVaryStrong(
-                                          taskId,
-                                          index + 1 + ""
-                                        );
-                                      }}
-                                      className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                    >
-                                      <MagicWandIcon
-                                        width={20}
-                                        height={20}
-                                        color="white"
-                                      ></MagicWandIcon>
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right">
-                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                      Vary(strong)
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-
-                              <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        handleVarySubtle(
-                                          taskId,
-                                          index + 1 + ""
-                                        );
-                                      }}
-                                      className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                    >
-                                      <MagicWandIcon
-                                        width={15}
-                                        height={15}
-                                        color="white"
-                                      ></MagicWandIcon>
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right">
-                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                      Vary(subtle)
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-
-                              <Separator className=" bg-gray-500/75"></Separator>
-
-                              <TooltipProvider delayDuration={200}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      className="active:translate-y-[1px] rounded-md hover:stroke-red-500 bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                    >
-                                      <TrashIcon
-                                        width={20}
-                                        height={20}
-                                        color="white"
-                                      ></TrashIcon>
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right">
-                                    <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                      删除
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </div>
+                            }
                           </div>
-                        ))}
+                        )}
+
+                        {imageArr.length === 4 &&
+                          imageArr.map((imgUrl, index) => (
+                            <div
+                              key={index}
+                              className=" flex-center relative  group"
+                            >
+                              <div className="  min-w-[240px] max-w-[300px] w-full  relative">
+                                <img
+                                  src={imgUrl}
+                                  alt="midjourney image"
+                                  className={`rounded-xl min-w-[240px] max-w-[300px] w-full h-full`}
+                                ></img>
+                                <button
+                                  type="button"
+                                  className="absolute min-w-[240px] h-full rounded-xl inset-0 bg-transparent hover:bg-transparent"
+                                  onClick={() => {
+                                    setSelectedIndex(index);
+                                    setOpen(true);
+                                  }}
+                                ></button>
+                              </div>
+
+                              <ImageFullView
+                                open={open}
+                                setOpen={setOpen}
+                                tempFormValue={tempFormValue}
+                                parentimageArr={imageArr}
+                                selectedIndex={selectedIndex || 0}
+                                parentTaskId={taskId}
+                                parentSeed={seed || ""}
+                                finalPrompt={finalPrompt || ""}
+                                setParentImgArr={setImageArr}
+                              ></ImageFullView>
+
+                              <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  -right-2 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleDownload(imgUrl, index)
+                                        }
+                                        className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                      >
+                                        <DownloadIcon
+                                          width={20}
+                                          height={20}
+                                          color="white"
+                                        ></DownloadIcon>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        下载
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        onClick={() => setOpen(true)}
+                                        className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                      >
+                                        <EnterFullScreenIcon
+                                          width={20}
+                                          height={20}
+                                          color="white"
+                                        ></EnterFullScreenIcon>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        放大
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+
+                                <Separator className=" bg-gray-500/75"></Separator>
+
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          handleVaryStrong(
+                                            taskId,
+                                            index + 1 + ""
+                                          );
+                                        }}
+                                        className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                      >
+                                        <MagicWandIcon
+                                          width={20}
+                                          height={20}
+                                          color="white"
+                                        ></MagicWandIcon>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        Vary(strong)
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          handleVarySubtle(
+                                            taskId,
+                                            index + 1 + ""
+                                          );
+                                        }}
+                                        className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                      >
+                                        <MagicWandIcon
+                                          width={15}
+                                          height={15}
+                                          color="white"
+                                        ></MagicWandIcon>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        Vary(subtle)
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+
+                                <Separator className=" bg-gray-500/75"></Separator>
+
+                                <TooltipProvider delayDuration={200}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        className="active:translate-y-[1px] rounded-md hover:stroke-red-500 bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                      >
+                                        <TrashIcon
+                                          width={20}
+                                          height={20}
+                                          color="white"
+                                        ></TrashIcon>
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="right">
+                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        删除
+                                      </p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>
+                            </div>
+                          ))}
                       </div>
                       <div className="flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-4">
                         <div className="flex w-full flex-center">
