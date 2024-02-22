@@ -6,6 +6,7 @@ const blendUrl = "https://api.midjourneyapi.xyz/mj/v2/blend";
 const handleBlend = async (req: NextRequest) => {
   try {
     const body = await req.json();
+    console.log(body);
 
     if (!body.imageUrls || !body.dimension) {
       console.log("missing online image url or dimension");

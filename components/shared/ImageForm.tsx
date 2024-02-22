@@ -21,7 +21,9 @@ import * as z from "zod";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
@@ -54,6 +56,7 @@ import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
 import { CheckIcon, DownloadIcon, UploadCloudIcon } from "lucide-react";
 import { Separator } from "../ui/separator";
+import { FileUploader } from "react-drag-drop-files";
 
 import {
   Tooltip,
@@ -90,6 +93,19 @@ export const ImageForm = () => {
   const [selectImageFile, setSelectImageFile] = useState<File>();
   const [uploadImg, setUploadImg] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [blendImages, setBlendImages] = useState<File[]>([]);
+  const [blendOrgins, setBlendOrgins] = useState<
+    { name: string; src: string }[]
+  >([]);
+  const [isBlending, setIsBlending] = useState<boolean>(false);
+  const [canBlend, setCanBlend] = useState(true);
+
+  const [dimension, setDimension] = useState("square");
+  const [blendImg, setBlendImg] = useState("");
+
+  const fileTypes = ["png", "jpg", "jpeg", "webp"];
+
+  let uploadImages: string[] = [];
 
   const IMGBB_KEY = "bf349c2c6056943bee6bc4a507958c22";
   const setOriginImages = useOriginImage((state) => state.setImages);
@@ -144,6 +160,80 @@ export const ImageForm = () => {
       toast.error("上传失败，请检查文件格式或重新上传");
       setIsFetching(false);
       console.error("Error upload image:", error);
+    }
+  };
+
+  const handleUploadImages = async (images: File[]) => {
+    try {
+      const uploadPromises = images.map(async (img) => {
+        const formData = new FormData();
+        formData.append("image", img);
+
+        const response = await axios.post(
+          "https://api.imgbb.com/1/upload",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+            params: {
+              key: IMGBB_KEY,
+            },
+          }
+        );
+        return response.data;
+      });
+
+      const results = await Promise.all(uploadPromises);
+      console.log(results);
+
+      results.map((res) => {
+        uploadImages.push(res.data.url);
+        console.log("uploadImages", uploadImages);
+      });
+      const allSuccess = results.every((res) => res.data.success === true);
+      if (allSuccess) {
+        toast.success("上传成功");
+      }
+    } catch (error) {
+      toast.error("上传失败，请检查文件格式或重新上传");
+
+      console.error("Error upload image:", error);
+    }
+  };
+
+  const handleBlend = async () => {
+    try {
+      setIsBlending(true);
+      await handleUploadImages(blendImages);
+
+      const response = await axios.post("/api/blend", {
+        imageUrls: uploadImages,
+        dimension,
+      });
+
+      console.log(response.data);
+
+      const newTaskId = response.data.task_id;
+
+      const intervalId = setInterval(async () => {
+        const taskResult: FetchImageData = await axios.post("/api/fetchImage", {
+          taskId: newTaskId,
+        });
+
+        setImageDatas(taskResult.data.task_result);
+        if (taskResult.data.status === "finished") {
+          clearInterval(intervalId);
+          uploadImages = [];
+          setBlendImg(taskResult.data.task_result.image_url);
+          setIsBlending(false);
+          toast.success("blend成功");
+        }
+      }, 1000);
+    } catch (error) {
+      toast.error("请求失败，请查看图片地址格式是否正确");
+      setIsBlending(false);
+      console.error("Error handle describe:", error);
     }
   };
 
@@ -360,6 +450,37 @@ export const ImageForm = () => {
       artStyles: "",
     },
   });
+
+  // useEffect(() => {
+  //   console.log("uploadImagesUrl:", uploadImagesUrl);
+  //   if (uploadImagesUrl.length === 0) {
+  //     console.log("uploadImagesUrl empty");
+  //   } else {
+  //     console.log("uploadImagesUrl:", uploadImagesUrl);
+  //   }
+  // }, [uploadImagesUrl, setuploadImagesUrl]);
+
+  useEffect(() => {
+    if (blendImages.length >= 2 && blendImages.length <= 5) {
+      setCanBlend(true);
+    } else {
+      setCanBlend(false);
+    }
+    if (blendImages.length > 0) {
+      const updatedBlendOrgins: { name: string; src: string }[] = [];
+
+      blendImages.map((image) => {
+        const fileReader = new FileReader();
+        fileReader.onload = (event) => {
+          const src = event.target?.result as string;
+
+          updatedBlendOrgins.push({ name: image.name, src });
+          setBlendOrgins([...updatedBlendOrgins]);
+        };
+        fileReader.readAsDataURL(image);
+      });
+    }
+  }, [blendImages]);
 
   useEffect(() => {
     if (imageDatas?.task_progress === 100) {
@@ -665,7 +786,7 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col  w-full h-full">
                   <Tabs
-                    defaultValue="ImageToText"
+                    defaultValue="ImageToImage"
                     className="flex flex-col h-full w-full flex-center"
                   >
                     <TabsList className=" shadow-md bg-white/40 my-2 mt-6 p-4 py-6 gap-2 text-gray-600 rounded-md">
@@ -1029,9 +1150,119 @@ export const ImageForm = () => {
                     </TabsContent>
                     <TabsContent
                       value="ImageToImage"
-                      className=" w-full h-full"
+                      className=" w-[90%] h-full"
                     >
-                      <div className=" w-full h-full"></div>
+                      <div className=" w-full h-full bg-white/35 p-2 rounded-md">
+                        <div className="flex-center w-full h-full gap-4">
+                          <div className=" w-[500px] h-[500px] flex-center">
+                            <img
+                              src={blendImg !== "" ? blendImg : "/pending2.png"}
+                              alt="blend image"
+                              className={`rounded-md max-w-[100%] max-h-[100%] ${
+                                isBlending && "flicker"
+                              }`}
+                            />
+                          </div>
+
+                          <div className=" max-w-[350px] rounded-md h-full flex-center flex-col p-4 px-6 ">
+                            <div className="mb-4 self-start flex gap-2 items-center">
+                              <p className="text-md font-medium">dimension:</p>
+                              <Select
+                                onValueChange={(value) => {
+                                  setDimension(value);
+                                }}
+                                defaultValue={"square"}
+                              >
+                                <SelectTrigger className="bg-white/60 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                                  <SelectValue placeholder="dimension"></SelectValue>
+                                </SelectTrigger>
+
+                                <SelectContent className=" focus:ring-transparent">
+                                  <SelectItem value="square">
+                                    square(1:1)
+                                  </SelectItem>
+                                  <SelectItem value="portrait">
+                                    portrait(2:3)
+                                  </SelectItem>
+                                  <SelectItem value="landscape">
+                                    landscape(3:2)
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <FileUploader
+                              types={fileTypes}
+                              maxSize={32}
+                              disabled={blendOrgins.length >= 5}
+                              handleChange={(file: File) => {
+                                setBlendImages([...blendImages, file]);
+                              }}
+                            >
+                              <div className=" flex-center cursor-pointer rounded-md border-dashed border-2 border-blue-500 w-[300px] h-[120px]">
+                                <UploadCloudIcon stroke="rgb(37, 99, 235)"></UploadCloudIcon>
+                                <div className=" ml-2">
+                                  <p
+                                    className={`${
+                                      blendOrgins.length >= 5 && `text-gray-700`
+                                    } text-lg font-medium text-blue-700 hover:underline-offset-4 hover:underline under`}
+                                  >
+                                    在此处上传或拖拽文件
+                                  </p>
+                                  <p className=" text-sm text-gray-700">
+                                    文件类型:png, jpg, jpeg, webp
+                                  </p>
+                                  <p className=" text-sm text-gray-700">
+                                    文件数量:2到5个
+                                  </p>
+                                </div>
+                              </div>
+                            </FileUploader>
+                            <div className=" mt-4 relative flex flex-wrap w-full flex-center">
+                              {blendOrgins.map((image, index) =>
+                                index !== 4 ? (
+                                  <div className=" w-[120px] h-[120px] mb-2 flex-center">
+                                    <img
+                                      src={image.src}
+                                      alt="blend origin"
+                                      className=" max-w-[100%] max-h-[100%]  rounded-md"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className=" absolute translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[120px] h-[120px] mb-2 flex-center">
+                                    <img
+                                      src={image.src}
+                                      alt="blend origin"
+                                      className=" max-w-[100%] max-h-[100%]  rounded-md"
+                                    />
+                                  </div>
+                                )
+                              )}
+                            </div>
+                            <Button
+                              type="button"
+                              size="lg"
+                              className="w-full  flex gap-2 button-85 text-lg"
+                              disabled={isBlending || canBlend === false}
+                              onClick={() => {
+                                handleBlend();
+                              }}
+                            >
+                              {isBlending ? (
+                                <>
+                                  <span className="flicker">
+                                    {imageDatas && imageDatas.task_progress >= 0
+                                      ? imageDatas?.task_progress + "%"
+                                      : "0%"}
+                                  </span>
+                                </>
+                              ) : (
+                                "确定"
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </FormItem>
