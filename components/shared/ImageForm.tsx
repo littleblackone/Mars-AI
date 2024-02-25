@@ -40,20 +40,12 @@ import {
   ImageFormData,
   FetchImageData,
 } from "@/app/interface/ImageData";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+
 import { Button } from "../ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "../ui/command";
-import { styles } from "@/lib/constant";
+
 import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
-import { CheckIcon, DownloadIcon, UploadCloudIcon, X } from "lucide-react";
+import { DownloadIcon, UploadCloudIcon, X } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { FileUploader } from "react-drag-drop-files";
 
@@ -421,7 +413,10 @@ export const ImageForm = () => {
 
       const intervalId = setInterval(async () => {
         try {
-          const taskResult = await axios.post("/api/fetchImage", { taskId });
+          const taskResult: FetchImageData = await axios.post(
+            "/api/fetchImage",
+            { taskId }
+          );
 
           setImageDatas(taskResult.data.task_result);
 
@@ -431,7 +426,18 @@ export const ImageForm = () => {
             clearInterval(intervalId);
             setIsFetching(false);
             toast.error("请求超时，请重试");
-            console.log("请求超时，请重试");
+          }
+
+          if (taskResult.data.task_result.error_messages.length > 0) {
+            clearInterval(intervalId);
+            setIsFetching(false);
+            console.error(
+              "Error imagine:",
+              taskResult.data.task_result.error_messages[0]
+            );
+            toast.error(taskResult.data.task_result.error_messages[0], {
+              duration: 5000,
+            });
           }
 
           if (taskResult.data.status === "finished") {
@@ -469,11 +475,11 @@ export const ImageForm = () => {
       prompt: "",
       negativePrompt: "",
       seeds: 0,
-      stylize: 100,
+      quality: " --q 1",
       chaos: 0,
       aspectRatio: " --ar 1:1",
       model: " --v 5.2",
-      artStyles: "",
+      stylize: 100,
     },
   });
 
@@ -522,6 +528,7 @@ export const ImageForm = () => {
       setFinalPrompt(finalPrompt);
       handleGenerateImage(finalPrompt);
     } else {
+      setTempFormValue(undefined);
       handleGenerateImage(values.prompt);
     }
   };
@@ -647,16 +654,16 @@ export const ImageForm = () => {
             ></FormField>
 
             <Separator className=" w-[75%]" />
-
             <FormField
               control={form.control}
-              name="artStyles"
+              name="quality"
               render={({ field }) => (
-                <FormItem className=" flex flex-col w-[200px] ">
-                  <div className="flex gap-2 items-center">
+                <FormItem className="flex items-center justify-between  w-[200px]">
+                  <div className=" flex gap-2 items-center">
                     <FormLabel className="text-white text-nowrap text-base">
-                      Add styles:
+                      Quality:
                     </FormLabel>
+
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
                         <InfoCircledIcon
@@ -666,64 +673,38 @@ export const ImageForm = () => {
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
-                          图片的艺术风格,默认为无
+                          命令: --quality 或 --q<br></br>
+                          quality参数会更改生成图像所花费的时间。更高质量的设置需要更长的时间来处理和生成更多的细节,值越高也意味着每个作业使用的GPU分钟数越多,质量设置不会影响分辨率,默认为高质量。
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/quality"
+                          >
+                            官方文档
+                          </Link>
                         </p>
                       </HoverCardContent>
                     </HoverCard>
                   </div>
 
-                  <Popover>
-                    <PopoverTrigger asChild>
+                  <div className="-translate-y-[3px]">
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Button
-                          variant="outline"
-                          className="bg-white/60 border-none w-fit justify-center"
-                        >
-                          {field.value ? (
-                            styles.find((style) => style.label === field.value)
-                              ?.label
-                          ) : (
-                            <>
-                              <span>style list</span>
-                            </>
-                          )}
-                          <span>
-                            {styles.find((style) => style.label === field.value)
-                              ?.label === "无" && "艺术风格"}
-                          </span>
-                        </Button>
+                        <SelectTrigger className="bg-white/60 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                          <SelectValue placeholder="图片质量"></SelectValue>
+                        </SelectTrigger>
                       </FormControl>
-                    </PopoverTrigger>
-
-                    <PopoverContent className="p-0" side="right" align="start">
-                      <Command>
-                        <CommandInput placeholder="探索艺术风格..."></CommandInput>
-                        <CommandList>
-                          <CommandEmpty>没有找到相关的艺术风格</CommandEmpty>
-                          <CommandGroup>
-                            {styles.map((style) => (
-                              <CommandItem
-                                key={style.value}
-                                value={style.label}
-                                onSelect={() => {
-                                  form.setValue("artStyles", style.label);
-                                }}
-                              >
-                                {style.label}
-                                <CheckIcon
-                                  className={` ml-auto h-4 w-4 ${
-                                    style.label === field.value
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  }`}
-                                ></CheckIcon>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                      <SelectContent>
+                        <SelectItem value=" --q .25">低质量</SelectItem>
+                        <SelectItem value=" --q .5">中质量</SelectItem>
+                        <SelectItem value=" --q 1">高质量</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </FormItem>
               )}
             ></FormField>
@@ -749,8 +730,8 @@ export const ImageForm = () => {
                       <HoverCardContent>
                         <p className="text-white text-sm">
                           命令: --no<br></br>
-                          不想图片中出现的元素(以空格分开),比如不想出现床,凳子,书桌,则输入:床
-                          凳子 书桌。详情查看
+                          不想图片中出现的元素(以逗号分开),比如:床,凳子,书桌
+                          详情查看
                           <Link
                             target="_blank"
                             rel="stylesheet"
@@ -1288,7 +1269,7 @@ export const ImageForm = () => {
                                 finalPrompt={finalPrompt || ""}
                                 setParentImgArr={setImageArr}
                                 setParentSeed={setSeed}
-                                manualPrompt = {manualPrompt}
+                                manualPrompt={manualPrompt}
                               ></ImageFullView>
 
                               <VaryRegion

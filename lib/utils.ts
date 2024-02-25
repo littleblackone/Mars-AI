@@ -1,4 +1,8 @@
-import { FetchImageData, ImageFormData } from "@/app/interface/ImageData";
+import {
+  FetchImageData,
+  ImageFormData,
+  Options,
+} from "@/app/interface/ImageData";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { styles } from "./constant";
@@ -23,12 +27,6 @@ export function generateRandomInteger() {
   return Math.floor(Math.random() * 4294967295);
 }
 
-function formatNegativePrompt(negativePrompt: string): string {
-  const words = negativePrompt.split(" ").filter((word) => word.trim() !== "");
-  const formattedWords = words.map((word) => ` --no ${word}`).join("");
-  return formattedWords;
-}
-
 export function generateFinalPrompt(
   values: ImageFormData,
   useStyleRow: boolean
@@ -41,28 +39,26 @@ export function generateFinalPrompt(
     chaos,
     aspectRatio,
     model,
-    artStyles,
+    quality,
   } = values;
 
-  const handledNegativePrompt = formatNegativePrompt(negativePrompt || "");
+  const handledNegativePrompt =
+    " --no " + negativePrompt?.replace(/，/g, ",").replace(/\s+/g, "").trim();
 
   const finalPromptArray = [];
 
-  const englishArtStyles: string =
-    styles.find((style) => style.label === artStyles)?.value || "";
-
   finalPromptArray.push(prompt);
-
-  if (englishArtStyles !== "Empty") {
-    finalPromptArray.push(`, ${englishArtStyles}`);
-  }
 
   if (useStyleRow) {
     finalPromptArray.push(" --style raw");
   }
 
+  if (handledNegativePrompt !== " --no ") {
+    finalPromptArray.push(handledNegativePrompt);
+  }
+
   finalPromptArray.push(
-    handledNegativePrompt,
+    quality,
     ` --stylize ${stylize}`,
     ` --chaos ${chaos}`,
     aspectRatio,
@@ -198,3 +194,70 @@ export const handleGetSeed = async (taskId: string, setSeed: any) => {
     console.error("Error fetching seed:", error);
   }
 };
+
+export function extractOptions(inputString: string): Options {
+  const options: Options = {
+    AspectRatio: "",
+    Chaos: "",
+    ImageWeight: "",
+    Quality: "",
+    Stop: "",
+    Style: "",
+    Stylize: "",
+    Tile: false,
+    Weird: "",
+    Seed: "",
+    Version: "",
+  };
+
+  const parts = inputString.split("--").slice(1); // Split string by '--', ignore first element
+  parts.forEach((part) => {
+    const [key, ...valueParts] = part.trim().split(/\s+/);
+    const value = valueParts.join(" ");
+
+    switch (key) {
+      case "aspect":
+      case "ar":
+        options.AspectRatio = value;
+        break;
+      case "chaos":
+        options.Chaos = value;
+        break;
+      case "iw":
+        options.ImageWeight = value;
+        break;
+      case "quality":
+      case "q":
+        options.Quality = value;
+        break;
+      case "stop":
+        options.Stop = value;
+        break;
+      case "style":
+        options.Style = value;
+        break;
+      case "stylize":
+      case "s":
+        options.Stylize = value;
+        break;
+      case "tile":
+        options.Tile = true;
+        break;
+      case "weird":
+      case "w":
+        options.Weird = value;
+        break;
+      case "seed":
+        options.Seed = value;
+        break;
+      case "version":
+      case "v":
+        options.Version = value;
+        break;
+      default:
+        break;
+    }
+  });
+
+  return options;
+}

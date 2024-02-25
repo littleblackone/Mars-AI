@@ -13,12 +13,14 @@ import { Button } from "../ui/button";
 import {
   FetchImageData,
   FullViewData,
+  Options,
   TaskResult,
 } from "@/app/interface/ImageData";
 import { Badge } from "../ui/badge";
 import {
   debounce,
   extractArAndModel,
+  extractOptions,
   handleCopy,
   handleDownload,
   handleGetSeed,
@@ -84,8 +86,6 @@ export function ImageFullView({
   const [expandDirction, setExpandDirction] = useState<string>("");
   const [zoomValue, setZoomValue] = useState<string>("");
 
-  const negativeWords = tempFormValue?.negativePrompt?.split(" ");
-
   let imgIndexList = [0, 1, 2, 3];
 
   const setUpscaleImages = useUpscaleImage((state) => state.setImages);
@@ -108,6 +108,9 @@ export function ImageFullView({
   const isExpandRight = useIsExpandRight((state) => state.isExpandeRight);
 
   const model = tempFormValue?.model?.split(" --")[1];
+  const option: Options = extractOptions(manualPrompt);
+  const formAS = extractArAndModel(tempFormValue?.aspectRatio || "");
+  const formModel = extractArAndModel(tempFormValue?.model || "");
 
   // parentimageArr = [
   //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
@@ -532,34 +535,36 @@ export function ImageFullView({
                   type="button"
                   variant="outline"
                   className="flex-center h-8 w-8 p-0"
-                  onClick={() => handleCopy(finalPrompt)}
+                  onClick={() =>
+                    handleCopy(finalPrompt !== "" ? finalPrompt : manualPrompt)
+                  }
                 >
                   <CopyIcon height={12} width={12}></CopyIcon>
                 </Button>
               </div>
               <p className=" text-sm text-gray-600 leading-5 line-clamp-3">
-                {tempFormValue?.prompt}
+                {tempFormValue?.prompt || manualPrompt}
               </p>
 
-              <div className="flex gap-2 flex-wrap mt-2">
+              <div className="flex gap-2 flex-wrap mt-2 h-[52px] overflow-y-scroll hide-scrollbar">
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">ar</span>
                   <span className="ml-1 text-gray-800">
-                    {extractArAndModel(tempFormValue?.aspectRatio || "")}
+                    {formAS !== "" ? formAS : option.AspectRatio}
                   </span>
                 </Badge>
 
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">model</span>
                   <span className="ml-1 text-gray-800">
-                    {extractArAndModel(tempFormValue?.model || "")}
+                    {formModel !== "" ? formModel : option.Version}
                   </span>
                 </Badge>
 
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">stylize</span>
                   <span className="ml-1 text-gray-800">
-                    {tempFormValue?.stylize}
+                    {tempFormValue?.stylize || option.Stylize}
                   </span>
                 </Badge>
 
@@ -571,16 +576,54 @@ export function ImageFullView({
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">chaos</span>
                   <span className="ml-1 text-gray-800">
-                    {tempFormValue?.chaos}
+                    {tempFormValue?.chaos || option.Chaos}
                   </span>
                 </Badge>
-                {tempFormValue?.negativePrompt &&
-                  negativeWords?.map((word) => (
-                    <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                      <span className=" text-gray-500">no</span>
-                      <span className="ml-1 text-gray-800">{word}</span>
-                    </Badge>
-                  ))}
+
+                {option.ImageWeight !== "" && (
+                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">iw</span>
+                    <span className="ml-1 text-gray-800">
+                      {option.ImageWeight}
+                    </span>
+                  </Badge>
+                )}
+
+                {option.Quality != "" && (
+                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">quality</span>
+                    <span className="ml-1 text-gray-800">{option.Quality}</span>
+                  </Badge>
+                )}
+
+                {option.Stop !== "" && (
+                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">stop</span>
+                    <span className="ml-1 text-gray-800">{option.Stop}</span>
+                  </Badge>
+                )}
+
+                {option.Style !== "" && (
+                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">style </span>
+                    <span className="ml-1 text-gray-800">{option.Style}</span>
+                  </Badge>
+                )}
+
+                {option.Tile && (
+                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">
+                      {option.Tile ? "tile" : ""}
+                    </span>
+                  </Badge>
+                )}
+
+                {option.Weird !== "" && (
+                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">weird </span>
+                    <span className="ml-1 text-gray-800">{option.Weird}</span>
+                  </Badge>
+                )}
               </div>
             </div>
             <div

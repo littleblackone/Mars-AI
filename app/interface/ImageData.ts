@@ -76,7 +76,7 @@ export interface ImageFormData {
     | " --niji 4"
     | " --niji 5"
     | " --niji 6";
-  artStyles?: string;
+  quality: " --q .25" | " --q .5" | " --q 1";
   negativePrompt?: string;
   seeds?: number;
   stylize: number;
@@ -114,4 +114,18 @@ export interface InpaintData {
   selectedIndex: number;
   parentimageArr: string[];
   setParentImageArr: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+export interface Options {
+  AspectRatio: string;
+  Chaos: string;
+  ImageWeight: string;
+  Quality: string;
+  Stop: string;
+  Style: string;
+  Stylize: string;
+  Tile: boolean;
+  Weird: string;
+  Seed: string;
+  Version: string;
 }

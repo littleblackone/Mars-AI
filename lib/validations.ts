@@ -6,10 +6,10 @@ export const ImageValidation = z.object({
     .optional(),
 
   model: z.enum([" --v 5.2", " --v 6", " --niji 6"]).optional(),
-  artStyles: z.string().max(50, "艺术风格过多").optional(),
   negativePrompt: z.string().max(300, "字数超过限制,请简短一些").optional(),
   seeds: z.number().min(0).max(4294967295).optional(),
   stylize: z.number().min(0).max(1000),
+  quality: z.enum([" --q .25", " --q .5", " --q 1"]),
   chaos: z.number().min(0).max(100),
   prompt: z
     .string()

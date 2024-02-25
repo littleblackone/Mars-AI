@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { handleGetSeed } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useIsInpainting } from "@/lib/store/useisInpainting";
+import { useIsCropLoading } from "@/lib/store/useIsCropLoading";
 
 export default function VaryRegion({
   open,

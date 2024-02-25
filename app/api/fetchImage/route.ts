@@ -16,11 +16,14 @@ const handleFetch = async (req: NextRequest) => {
     }
 
     const taskResult = await axios.post(fetchUrl, { task_id: taskId });
+    console.log(taskResult.data.task_result.error_messages);
 
     return NextResponse.json(taskResult.data, {
       status: taskResult.status,
     });
   } catch (error) {
+    console.log(error);
+
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
