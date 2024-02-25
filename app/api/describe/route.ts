@@ -6,7 +6,7 @@ const describeUrl = "https://api.midjourneyapi.xyz/mj/v2/describe";
 const handleDescribe = async (req: NextRequest) => {
   try {
     const body = await req.json();
-  
+    const useTurbo = body.useTurbo;
     if (!body.imageUrl) {
       console.log("missing online image url");
       return NextResponse.json(
@@ -24,6 +24,7 @@ const handleDescribe = async (req: NextRequest) => {
       data: {
         image_url: body.imageUrl,
         notify_progress: true,
+        process_mode: useTurbo ? "turbo" : "fast",
       },
       url: describeUrl,
       method: "post",

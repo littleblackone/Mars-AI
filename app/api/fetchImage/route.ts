@@ -8,7 +8,7 @@ const handleFetch = async (req: NextRequest) => {
 
     const taskId = body.taskId;
 
-    if (!taskId) {
+    if (taskId === "") {
       return NextResponse.json(
         { error: "taskId not provided" },
         { status: 400 }

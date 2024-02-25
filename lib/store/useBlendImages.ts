@@ -6,7 +6,7 @@ interface ImageState {
   deleteImage: (index: number) => void;
 }
 
-export const useVaryImage = create<ImageState>()((set) => ({
+export const useBlendImages = create<ImageState>()((set) => ({
   images: [],
   setImages: (images) =>
     set((state) => ({ images: [...state.images, ...images] })),

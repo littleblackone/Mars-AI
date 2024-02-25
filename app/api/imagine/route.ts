@@ -6,7 +6,7 @@ const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/imagine";
 const handleImagine = async (req: NextRequest) => {
   try {
     const body = await req.json();
-
+    const useTurbo = body.useTurbo;
     if (!body.prompt) {
       console.log("Please enter the prompt");
       return NextResponse.json(
@@ -24,7 +24,7 @@ const handleImagine = async (req: NextRequest) => {
       data: {
         prompt: body.prompt,
         aspect_ratio: "",
-        process_mode: "fast",
+        process_mode: useTurbo ? "turbo" : "fast",
         notify_progress: true,
       },
       url: imagineUrl,

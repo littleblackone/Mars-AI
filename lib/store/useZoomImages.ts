@@ -3,7 +3,7 @@ import { create } from "zustand";
 interface ImageState {
   images: string[];
   setImages: (images: string[]) => void;
-  deleteImage: (image: string) => void;
+  deleteImage: (index: number) => void;
 }
 
 export const useZoomImages = create<ImageState>()((set) => ({
@@ -12,8 +12,8 @@ export const useZoomImages = create<ImageState>()((set) => ({
     set((state) => ({
       images: [...state.images, ...images],
     })),
-  deleteImage: (image) =>
+  deleteImage: (index) =>
     set((state) => ({
-      images: state.images.filter((img) => img !== image),
+      images: state.images.filter((img, i) => i !== index),
     })),
 }));

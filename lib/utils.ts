@@ -1,4 +1,4 @@
-import { ImageFormData } from "@/app/interface/ImageData";
+import { FetchImageData, ImageFormData } from "@/app/interface/ImageData";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { styles } from "./constant";
@@ -29,7 +29,10 @@ function formatNegativePrompt(negativePrompt: string): string {
   return formattedWords;
 }
 
-export function generateFinalPrompt(values: ImageFormData) {
+export function generateFinalPrompt(
+  values: ImageFormData,
+  useStyleRow: boolean
+) {
   const {
     prompt,
     negativePrompt,
@@ -52,6 +55,10 @@ export function generateFinalPrompt(values: ImageFormData) {
 
   if (englishArtStyles !== "Empty") {
     finalPromptArray.push(`, ${englishArtStyles}`);
+  }
+
+  if (useStyleRow) {
+    finalPromptArray.push(" --style raw");
   }
 
   finalPromptArray.push(
@@ -170,3 +177,24 @@ export function convertStringToArray(input: string): string[] {
 
   return result;
 }
+
+export const handleGetSeed = async (taskId: string, setSeed: any) => {
+  try {
+    const response = await axios.post("/api/seed", { taskId });
+
+    const newTaskId = response.data.task_id;
+
+    const intervalId = setInterval(async () => {
+      const taskResult: FetchImageData = await axios.post("/api/fetchImage", {
+        taskId: newTaskId,
+      });
+
+      if (taskResult.data.status === "finished") {
+        clearInterval(intervalId);
+        setSeed(taskResult.data.task_result.seed);
+      }
+    }, 1000);
+  } catch (error) {
+    console.error("Error fetching seed:", error);
+  }
+};

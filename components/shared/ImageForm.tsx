@@ -6,8 +6,9 @@ import { ImageValidation } from "../../lib/validations";
 import {
   CopyIcon,
   EnterFullScreenIcon,
+  InfoCircledIcon,
   MagicWandIcon,
-  TrashIcon,
+  Pencil2Icon,
 } from "@radix-ui/react-icons";
 import {
   Form,
@@ -21,9 +22,7 @@ import * as z from "zod";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
@@ -33,7 +32,7 @@ import {
   generateFinalPrompt,
   handleCopy,
   handleDownload,
-  parseAspectRatio,
+  handleGetSeed,
 } from "@/lib/utils";
 import axios from "axios";
 import {
@@ -54,7 +53,7 @@ import {
 import { styles } from "@/lib/constant";
 import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
-import { CheckIcon, DownloadIcon, UploadCloudIcon } from "lucide-react";
+import { CheckIcon, DownloadIcon, UploadCloudIcon, X } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { FileUploader } from "react-drag-drop-files";
 
@@ -69,6 +68,21 @@ import { toast } from "sonner";
 import { useOriginImage } from "@/lib/store/useOriginImage";
 import { useVaryImage } from "@/lib/store/useVaryImage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { useIsExpanded } from "@/lib/store/useIsExpanded";
+import { useIsExpandUp } from "@/lib/store/useIsExpandUp";
+import { useIsExpandDown } from "@/lib/store/useIsExpandDown";
+import { useIsExpandLeft } from "@/lib/store/useIsExpandLeft";
+import { useIsExpandRight } from "@/lib/store/useIsExpandRight";
+import VaryRegion from "./VaryRegion";
+import { useIsInpainting } from "@/lib/store/useisInpainting";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
+import Link from "next/link";
 
 export const ImageForm = () => {
   const [imageDatas, setImageDatas] = useState<TaskResult | null>();
@@ -76,13 +90,13 @@ export const ImageForm = () => {
   const [isFetching, setIsFetching] = useState(false);
   const [imageArr, setImageArr] = useState<string[]>([]);
   const [taskId, setTaskId] = useState<string>("");
-  const [seed, setSeed] = useState<string>();
+  const [seed, setSeed] = useState<string>("");
   const [tempFormValue, setTempFormValue] = useState<ImageFormData>();
   const [finalPrompt, setFinalPrompt] = useState<string>();
   const [open, setOpen] = useState(false);
+  const [varyRegionOpen, setVaryRegionOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [aspectRatio, setAspectRatio] = useState("");
-  const [isASLessOne, setIsASLessOne] = useState<boolean>(false);
+
   const [describeImageUrl, setDescribeImageUrl] = useState<string>("");
   const [generatePrompts, setGeneratePrompts] = useState<string[]>([
     "",
@@ -101,7 +115,14 @@ export const ImageForm = () => {
   const [canBlend, setCanBlend] = useState(true);
 
   const [dimension, setDimension] = useState("square");
-  const [blendImg, setBlendImg] = useState("");
+  const [blendImgs, setBlendImgs] = useState<string[]>([]);
+  const [useFormData, setUseFormData] = useState(true);
+  const [useTurbo, setUseTurbo] = useState(false);
+  const [useStyleRow, setUseStyleRow] = useState(false);
+
+  const [isDescribe, setIsDescribe] = useState(false);
+
+  const [manualPrompt, setManualPrompt] = useState("");
 
   const fileTypes = ["png", "jpg", "jpeg", "webp"];
 
@@ -112,12 +133,16 @@ export const ImageForm = () => {
   const setOriginImages = useOriginImage((state) => state.setImages);
   const setVaryImages = useVaryImage((state) => state.setImages);
 
-  const testOriginImageList = [
-    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
-    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
-    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
-    "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
-  ];
+  const setIsExpanded = useIsExpanded((state) => state.setIsExpanded);
+
+  const setIsExpandUp = useIsExpandUp((state) => state.setIsExpandeUp);
+
+  const setIsExpandDown = useIsExpandDown((state) => state.setIsExpandeDown);
+
+  const setIsExpandLeft = useIsExpandLeft((state) => state.setIsExpandeLeft);
+  const setIsExpandRight = useIsExpandRight((state) => state.setIsExpandeRight);
+
+  const isInpainting = useIsInpainting((state) => state.isInpainting);
 
   const handleSelectImagUrl = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -186,11 +211,9 @@ export const ImageForm = () => {
       });
 
       const results = await Promise.all(uploadPromises);
-      console.log(results);
 
       results.map((res) => {
         uploadImages.push(res.data.url);
-        console.log("uploadImages", uploadImages);
       });
       const allSuccess = results.every((res) => res.data.success === true);
       if (allSuccess) {
@@ -211,9 +234,8 @@ export const ImageForm = () => {
       const response = await axios.post("/api/blend", {
         imageUrls: uploadImages,
         dimension,
+        useTurbo,
       });
-
-      console.log(response.data);
 
       const newTaskId = response.data.task_id;
 
@@ -226,9 +248,12 @@ export const ImageForm = () => {
         if (taskResult.data.status === "finished") {
           clearInterval(intervalId);
           uploadImages = [];
-          setBlendImg(taskResult.data.task_result.image_url);
+          setImageArr(taskResult.data.task_result.image_urls);
+          setBlendImgs(taskResult.data.task_result.image_urls);
           setIsBlending(false);
-          toast.success("blend成功");
+          toast.success("blend成功! 如需对blend图片进行操作,请到文生图区域。", {
+            duration: 4000,
+          });
         }
       }, 1000);
     } catch (error) {
@@ -240,8 +265,11 @@ export const ImageForm = () => {
 
   const handleDescribe = async (imageUrl: string) => {
     try {
-      setIsFetching(true);
-      const response = await axios.post("/api/describe", { imageUrl });
+      setIsDescribe(true);
+      const response = await axios.post("/api/describe", {
+        imageUrl,
+        useTurbo,
+      });
 
       const newTaskId = response.data.task_id;
 
@@ -256,34 +284,13 @@ export const ImageForm = () => {
           const prompts = taskResult.data.task_result.message;
           const promptStringArray = convertStringToArray(prompts);
           setGeneratePrompts(promptStringArray);
-          setIsFetching(false);
+          setIsDescribe(false);
         }
       }, 1000);
     } catch (error) {
       toast.error("请求失败，请查看图片地址格式是否正确");
-      setIsFetching(false);
+      setIsDescribe(false);
       console.error("Error handle describe:", error);
-    }
-  };
-
-  const handleGetSeed = async (taskId: string) => {
-    try {
-      const response = await axios.post("/api/seed", { taskId });
-
-      const newTaskId = response.data.task_id;
-
-      const intervalId = setInterval(async () => {
-        const taskResult: FetchImageData = await axios.post("/api/fetchImage", {
-          taskId: newTaskId,
-        });
-
-        if (taskResult.data.status === "finished") {
-          clearInterval(intervalId);
-          setSeed(taskResult.data.task_result.seed);
-        }
-      }, 1000);
-    } catch (error) {
-      console.error("Error fetching seed:", error);
     }
   };
 
@@ -314,14 +321,16 @@ export const ImageForm = () => {
             setImageArr(taskResult.data.task_result.image_urls);
             setVaryImages(taskResult.data.task_result.image_urls);
             setTaskId(taskResult.data.task_id);
-            await handleGetSeed(taskResult.data.task_id);
+            await handleGetSeed(taskResult.data.task_id, setSeed);
             setIsFetching(false);
           }
         } catch (error) {
           console.error("Error fetching image:", error);
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
+      toast.error("请求失败,请查看midjourney服务器状态或过一段时间重试");
+      setIsFetching(false);
       console.error("Error vary(strong) image:", error);
     }
   };
@@ -386,14 +395,16 @@ export const ImageForm = () => {
             setImageArr(taskResult.data.task_result.image_urls);
             setVaryImages(taskResult.data.task_result.image_urls);
             setTaskId(taskResult.data.task_id);
-            await handleGetSeed(taskResult.data.task_id);
+            await handleGetSeed(taskResult.data.task_id, setSeed);
             setIsFetching(false);
           }
         } catch (error) {
           console.error("Error fetch image:", error);
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
+      toast.error("请求失败,请查看midjourney服务器状态或过一段时间重试");
+      setIsFetching(false);
       console.error("Error vary(subtle) image:", error);
     }
   };
@@ -401,7 +412,10 @@ export const ImageForm = () => {
   const handleGenerateImage = debounce(async (prompt: string) => {
     try {
       setIsFetching(true);
-      const response = await axios.post("/api/imagine", { prompt });
+      const response = await axios.post("/api/imagine", {
+        prompt,
+        useTurbo,
+      });
       const taskId = response.data.task_id;
       setTaskId(taskId);
 
@@ -422,19 +436,30 @@ export const ImageForm = () => {
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
+
+            setIsExpanded(false);
+
+            setIsExpandDown(false);
+            setIsExpandUp(false);
+            setIsExpandRight(false);
+            setIsExpandLeft(false);
+
             setImageArr(taskResult.data.task_result.image_urls);
             setOriginImages(taskResult.data.task_result.image_urls);
-            await handleGetSeed(taskId);
+            await handleGetSeed(taskId, setSeed);
             setIsFetching(false);
           }
         } catch (error) {
           console.error("Error fetching image:", error);
           setIsFetching(false);
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
-      console.error("Error sending prompt:", error);
+      toast.error(
+        "请求失败,请检查prompt格式或查看midjourney服务器状态并过一段时间重试"
+      );
       setIsFetching(false);
+      console.error("Error sending prompt:", error);
     }
   }, 1000);
 
@@ -481,26 +506,24 @@ export const ImageForm = () => {
   }, [imageDatas]);
 
   useEffect(() => {
-    if (aspectRatio !== "") {
-      const { lessThanOne } = parseAspectRatio(aspectRatio);
-      console.log("lessThanOne", lessThanOne);
-      if (lessThanOne) {
-        setIsASLessOne(true);
-      } else {
-        setIsASLessOne(false);
-      }
+    if (useTurbo) {
+      toast.success("turbo模式开启");
     }
-  }, [aspectRatio]);
+  }, [useTurbo]);
 
   const onSubmit = (values: z.infer<typeof ImageValidation>) => {
     setImageDatas(null);
     setImageArr([]);
     setFetchTime(0);
-    setTempFormValue(values);
-    setAspectRatio(values.aspectRatio || "");
-    const finalPrompt = generateFinalPrompt(values);
-    setFinalPrompt(finalPrompt);
-    handleGenerateImage(finalPrompt);
+    setManualPrompt(values.prompt);
+    if (useFormData) {
+      setTempFormValue(values);
+      const finalPrompt = generateFinalPrompt(values, useStyleRow);
+      setFinalPrompt(finalPrompt);
+      handleGenerateImage(finalPrompt);
+    } else {
+      handleGenerateImage(values.prompt);
+    }
   };
 
   return (
@@ -513,9 +536,36 @@ export const ImageForm = () => {
               name="model"
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between  w-[200px]">
-                  <FormLabel className="text-white text-nowrap text-base">
-                    Models:
-                  </FormLabel>
+                  <div className=" flex gap-2 items-center">
+                    <FormLabel className="text-white text-nowrap text-base">
+                      Models:
+                    </FormLabel>
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon
+                          color="rgb(255,255,255,0.6)"
+                          className=" cursor-pointer hover:stroke-white/40"
+                        ></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          命令: --v 5.2<br></br>
+                          midjourney模型,目前提供v5.2, v6, niji 6 这3个模型,
+                          niji 6 用于生成动漫风格图片,默认为
+                          v5.2。如果你想使用其他模型,可以自己在prompt中添加命令,详情查看
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/model-versions"
+                          >
+                            官方文档
+                          </Link>
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+
                   <div className=" -translate-y-[3px]">
                     <Select
                       onValueChange={field.onChange}
@@ -544,9 +594,35 @@ export const ImageForm = () => {
               name="aspectRatio"
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between  w-[200px]">
-                  <FormLabel className="text-white text-nowrap text-base">
-                    AspectRatio:
-                  </FormLabel>
+                  <div className=" flex gap-2 items-center">
+                    <FormLabel className="text-white text-nowrap text-base">
+                      AspectRatio:
+                    </FormLabel>
+
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon
+                          color="rgb(255,255,255,0.6)"
+                          className=" cursor-pointer hover:stroke-white/40"
+                        ></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          命令: --aspect 或 --ar<br></br>
+                          生成图片的宽高比,默认为1:1。详情查看
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/aspect-ratios"
+                          >
+                            官方文档
+                          </Link>
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+
                   <div className="-translate-y-[3px]">
                     <Select
                       onValueChange={field.onChange}
@@ -577,9 +653,25 @@ export const ImageForm = () => {
               name="artStyles"
               render={({ field }) => (
                 <FormItem className=" flex flex-col w-[200px] ">
-                  <FormLabel className="text-white text-nowrap text-base">
-                    Add styles:
-                  </FormLabel>
+                  <div className="flex gap-2 items-center">
+                    <FormLabel className="text-white text-nowrap text-base">
+                      Add styles:
+                    </FormLabel>
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon
+                          color="rgb(255,255,255,0.6)"
+                          className=" cursor-pointer hover:stroke-white/40"
+                        ></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          图片的艺术风格,默认为无
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -643,9 +735,35 @@ export const ImageForm = () => {
               name="negativePrompt"
               render={({ field }) => (
                 <FormItem className="flex flex-col ">
-                  <FormLabel className="text-white text-nowrap text-base">
-                    Negative Words:
-                  </FormLabel>
+                  <div className=" flex gap-2 items-center">
+                    <FormLabel className="text-white text-nowrap text-base">
+                      Negative Words:
+                    </FormLabel>
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon
+                          color="rgb(255,255,255,0.6)"
+                          className=" cursor-pointer hover:stroke-white/40"
+                        ></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          命令: --no<br></br>
+                          不想图片中出现的元素(以空格分开),比如不想出现床,凳子,书桌,则输入:床
+                          凳子 书桌。详情查看
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/no"
+                          >
+                            官方文档
+                          </Link>
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+
                   <div className="-translate-y-[3px]">
                     <FormControl>
                       <Input
@@ -667,9 +785,35 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-4 ">
                   <div className="flex justify-between items-center">
-                    <FormLabel className="text-white text-nowrap text-base">
-                      Stylize:
-                    </FormLabel>
+                    <div className="flex gap-2 items-center">
+                      <FormLabel className="text-white text-nowrap text-base">
+                        Stylize:
+                      </FormLabel>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon
+                            color="rgb(255,255,255,0.6)"
+                            className=" cursor-pointer hover:stroke-white/40"
+                          ></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --stylize 或 --s<br></br>
+                            风格化程度:默认为100, 范围:
+                            0-1000,低风格化值生成的图像与prompt非常匹配,但艺术性较差。
+                            高风格化值创建的图像非常艺术,但与prompt的联系较少。详情查看
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/stylize"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
 
                     <FormControl>
                       <Input
@@ -708,9 +852,35 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col gap-4 ">
                   <div className="flex justify-between items-center">
-                    <FormLabel className="text-white text-nowrap text-base">
-                      Chaos:
-                    </FormLabel>
+                    <div className="flex gap-2 items-center">
+                      <FormLabel className="text-white text-nowrap text-base">
+                        Chaos:
+                      </FormLabel>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon
+                            color="rgb(255,255,255,0.6)"
+                            className=" cursor-pointer hover:stroke-white/40"
+                          ></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --chaos 或 --c<br></br>
+                            混乱程度: 默认为0, 范围:
+                            0-100,高混乱值将产生更多不寻常和意想不到的结果和构图。
+                            较低的混乱值具有更可靠、可重复的结果。详情查看
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/chaos"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
 
                     <FormControl>
                       <Input
@@ -748,9 +918,36 @@ export const ImageForm = () => {
               name="seeds"
               render={({ field }) => (
                 <FormItem className="flex flex-col ">
-                  <FormLabel className="text-white text-nowrap text-base">
-                    seeds:
-                  </FormLabel>
+                  <div className=" flex gap-2 items-center">
+                    <FormLabel className="text-white text-nowrap text-base">
+                      seeds:
+                    </FormLabel>
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon
+                          color="rgb(255,255,255,0.6)"
+                          className=" cursor-pointer hover:stroke-white/40"
+                        ></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          命令: --seed<br></br>
+                          范围:0-4294967295,是为每个图像随机生成的,但可以使用
+                          --seed
+                          参数指定。如果您使用相同的seed和prompt,您最终将获得相似的图像。
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/seeds"
+                          >
+                            官方文档
+                          </Link>
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+
                   <div className="-translate-y-[3px]">
                     <FormControl>
                       <Input
@@ -769,6 +966,102 @@ export const ImageForm = () => {
                 </FormItem>
               )}
             ></FormField>
+
+            <Separator className=" w-[75%]" />
+            <div className=" w-full flex gap-[89px] text-white items-center">
+              <Switch
+                id="use-form-data"
+                checked={useStyleRow}
+                onCheckedChange={(value) => setUseStyleRow(value)}
+              ></Switch>
+              <div className="flex gap-2 items-center">
+                <Label htmlFor="use-form-data" className=" text-md">
+                  style raw
+                </Label>
+                <HoverCard openDelay={300}>
+                  <HoverCardTrigger>
+                    <InfoCircledIcon
+                      color="rgb(255,255,255,0.6)"
+                      className=" cursor-pointer hover:stroke-white/40"
+                    ></InfoCircledIcon>
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <p className="text-white text-sm">
+                      命令: --style row<br></br>
+                      此项开启后,图像应用的自动美化较少,这可以在prompt特定样式时实现更准确的匹配。详情查看
+                      <Link
+                        target="_blank"
+                        rel="stylesheet"
+                        className=" text-blue-500 underline underline-offset-4"
+                        href="https://docs.midjourney.com/docs/style"
+                      >
+                        官方文档
+                      </Link>
+                    </p>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+            </div>
+            <div className=" w-full flex gap-[63.5px] text-white items-center">
+              <Switch
+                id="use-form-data"
+                checked={useFormData}
+                onCheckedChange={(value) => setUseFormData(value)}
+              ></Switch>
+              <div className="flex gap-2 items-center">
+                <Label htmlFor="use-form-data" className=" text-md">
+                  使用表格数据
+                </Label>
+                <HoverCard openDelay={300}>
+                  <HoverCardTrigger>
+                    <InfoCircledIcon
+                      color="rgb(255,255,255,0.6)"
+                      className=" cursor-pointer hover:stroke-white/40"
+                    ></InfoCircledIcon>
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <p className="text-white text-sm">
+                      此项开启后,表格中的数据会作为命令自动填写到prompt中,如果您想使用自己的prompt,可以关闭。
+                      如果表格中的数据和prompt中的数据有冲突,那么表格中的数据会覆盖prompt中的数据。
+                    </p>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+            </div>
+            <div className=" w-full flex gap-[88px] text-white items-center">
+              <Switch
+                checked={useTurbo}
+                onCheckedChange={(value) => setUseTurbo(value)}
+                id="use-turbo"
+              ></Switch>
+              <div className="flex gap-2 items-center">
+                <Label htmlFor="use-turbo" className=" text-md">
+                  turbo模式
+                </Label>
+                <HoverCard openDelay={300}>
+                  <HoverCardTrigger>
+                    <InfoCircledIcon
+                      color="rgb(255,255,255,0.6)"
+                      className=" cursor-pointer hover:stroke-white/40"
+                    ></InfoCircledIcon>
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <p className="text-white text-sm">
+                      此项开启后,文生图,图生文,图生图的速度会更快,但是会消耗更多的GPU算力。turbo比fast快四倍,但消耗的订阅GPU分钟数是fast的两倍。
+                      默认fast模式。详情查看
+                      <Link
+                        target="_blank"
+                        rel="stylesheet"
+                        className=" text-blue-500 underline underline-offset-4"
+                        href="https://docs.midjourney.com/docs/fast-relax"
+                      >
+                        官方文档
+                      </Link>
+                    </p>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+            </div>
           </div>
 
           <div className="styled-scrollbar bg-white/15 overflow-scroll rounded-xl p-8 flex-1 w-full min-w-[560px]  h-full  flex-center">
@@ -803,23 +1096,22 @@ export const ImageForm = () => {
                     </TabsList>
                     <TabsContent
                       value="textToImage"
-                      className=" w-[65%] h-full"
+                      className=" w-[75%] h-full"
                     >
                       <div
                         className={`w-full h-full gap-4 grid-cols-2 ${
-                          imageArr.length === 0 && "flex-center"
-                        } grid  items-center justify-center ${
-                          isASLessOne && `!flex`
-                        }`}
+                          (imageArr.length === 0 || isInpainting) &&
+                          "!flex-center"
+                        } grid  items-center justify-center`}
                       >
-                        {imageArr.length === 0 && (
+                        {(imageArr.length === 0 || isInpainting) && (
                           <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
                             {
                               <img
                                 src={"/pending2.png"}
                                 alt="midjourney image"
                                 className={`rounded-xl w-[65%]  aspect-square ${
-                                  isFetching && "flicker"
+                                  (isFetching || isInpainting) && "flicker"
                                 }`}
                               ></img>
                             }
@@ -827,16 +1119,17 @@ export const ImageForm = () => {
                         )}
 
                         {imageArr.length === 4 &&
+                          isInpainting === false &&
                           imageArr.map((imgUrl, index) => (
                             <div
                               key={index}
                               className=" flex-center relative  group"
                             >
-                              <div className="  min-w-[240px] max-w-[300px] w-full  relative">
+                              <div className="  w-[300px] h-[300px] bg-white/20 rounded-md p-2 relative flex-center">
                                 <img
                                   src={imgUrl}
                                   alt="midjourney image"
-                                  className={`rounded-xl min-w-[240px] max-w-[300px] w-full h-full`}
+                                  className={`rounded-xl max-w-[100%] max-h-[100%]`}
                                 ></img>
                                 <button
                                   type="button"
@@ -846,6 +1139,141 @@ export const ImageForm = () => {
                                     setOpen(true);
                                   }}
                                 ></button>
+                                <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0 right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleDownload(imgUrl, index)
+                                          }
+                                          className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                        >
+                                          <DownloadIcon
+                                            width={20}
+                                            height={20}
+                                            color="white"
+                                          ></DownloadIcon>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                          下载
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => setOpen(true)}
+                                          className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                        >
+                                          <EnterFullScreenIcon
+                                            width={20}
+                                            height={20}
+                                            color="white"
+                                          ></EnterFullScreenIcon>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                          放大
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <Separator className=" bg-gray-500/75"></Separator>
+
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            handleVaryStrong(
+                                              taskId,
+                                              index + 1 + ""
+                                            );
+                                          }}
+                                          className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                        >
+                                          <MagicWandIcon
+                                            width={20}
+                                            height={20}
+                                            color="white"
+                                          ></MagicWandIcon>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                          Vary(strong)
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            handleVarySubtle(
+                                              taskId,
+                                              index + 1 + ""
+                                            );
+                                          }}
+                                          className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                        >
+                                          <MagicWandIcon
+                                            width={15}
+                                            height={15}
+                                            color="white"
+                                          ></MagicWandIcon>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                          Vary(subtle)
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+
+                                  <Separator className=" bg-gray-500/75"></Separator>
+
+                                  <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setVaryRegionOpen(true);
+                                            setSelectedIndex(index);
+                                          }}
+                                          className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                        >
+                                          <Pencil2Icon
+                                            width={20}
+                                            height={20}
+                                            color="white"
+                                          ></Pencil2Icon>
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                          Vary(Region)
+                                        </p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>
                               </div>
 
                               <ImageFullView
@@ -855,142 +1283,25 @@ export const ImageForm = () => {
                                 parentimageArr={imageArr}
                                 selectedIndex={selectedIndex || 0}
                                 parentTaskId={taskId}
+                                setOriginTaskId={setTaskId}
                                 parentSeed={seed || ""}
                                 finalPrompt={finalPrompt || ""}
                                 setParentImgArr={setImageArr}
+                                setParentSeed={setSeed}
+                                manualPrompt = {manualPrompt}
                               ></ImageFullView>
 
-                              <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0  -right-2 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleDownload(imgUrl, index)
-                                        }
-                                        className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                      >
-                                        <DownloadIcon
-                                          width={20}
-                                          height={20}
-                                          color="white"
-                                        ></DownloadIcon>
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                        下载
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => setOpen(true)}
-                                        className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                      >
-                                        <EnterFullScreenIcon
-                                          width={20}
-                                          height={20}
-                                          color="white"
-                                        ></EnterFullScreenIcon>
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                        放大
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-
-                                <Separator className=" bg-gray-500/75"></Separator>
-
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          handleVaryStrong(
-                                            taskId,
-                                            index + 1 + ""
-                                          );
-                                        }}
-                                        className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                      >
-                                        <MagicWandIcon
-                                          width={20}
-                                          height={20}
-                                          color="white"
-                                        ></MagicWandIcon>
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                        Vary(strong)
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          handleVarySubtle(
-                                            taskId,
-                                            index + 1 + ""
-                                          );
-                                        }}
-                                        className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                      >
-                                        <MagicWandIcon
-                                          width={15}
-                                          height={15}
-                                          color="white"
-                                        ></MagicWandIcon>
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                        Vary(subtle)
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-
-                                <Separator className=" bg-gray-500/75"></Separator>
-
-                                <TooltipProvider delayDuration={200}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        className="active:translate-y-[1px] rounded-md hover:stroke-red-500 bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                      >
-                                        <TrashIcon
-                                          width={20}
-                                          height={20}
-                                          color="white"
-                                        ></TrashIcon>
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right">
-                                      <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                        删除
-                                      </p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
+                              <VaryRegion
+                                open={varyRegionOpen}
+                                originTaskId={taskId}
+                                setOriginTaskId={setTaskId}
+                                setParentSeed={setSeed}
+                                parentPrompt={finalPrompt || ""}
+                                setOpen={setVaryRegionOpen}
+                                parentimageArr={imageArr}
+                                setParentImageArr={setImageArr}
+                                selectedIndex={selectedIndex || 0}
+                              ></VaryRegion>
                             </div>
                           ))}
                       </div>
@@ -1007,8 +1318,11 @@ export const ImageForm = () => {
                             type="submit"
                             size="lg"
                             className="w-fit button-85 ml-2  text-lg"
-                            disabled={isFetching}
+                            disabled={isFetching || isInpainting}
                           >
+                            {isInpainting && (
+                              <span className="flicker">生成中...</span>
+                            )}
                             {isFetching ? (
                               <>
                                 <span className="flicker">
@@ -1018,7 +1332,7 @@ export const ImageForm = () => {
                                 </span>
                               </>
                             ) : (
-                              "生成"
+                              isInpainting === false && "生成"
                             )}
                           </Button>
                         </div>
@@ -1124,13 +1438,13 @@ export const ImageForm = () => {
                               type="button"
                               size="lg"
                               className="w-fit button-85 ml-2  text-lg"
-                              disabled={isFetching || describeImageUrl == ""}
+                              disabled={isDescribe || describeImageUrl == ""}
                               onClick={() => {
                                 setUploadImg("");
                                 handleDescribe(describeImageUrl);
                               }}
                             >
-                              {isFetching ? (
+                              {isDescribe ? (
                                 <>
                                   <span className="flicker">生成中...</span>
                                 </>
@@ -1148,14 +1462,32 @@ export const ImageForm = () => {
                     >
                       <div className=" w-full h-full bg-white/35 p-2 rounded-md">
                         <div className="flex-center w-full h-full gap-4">
-                          <div className=" w-[500px] h-[500px] flex-center">
-                            <img
-                              src={blendImg !== "" ? blendImg : "/pending2.png"}
-                              alt="blend image"
-                              className={`rounded-md max-w-[100%] max-h-[100%] ${
-                                isBlending && "flicker"
-                              }`}
-                            />
+                          <div
+                            className={` w-[500px] h-[500px] grid grid-cols-2 gap-2 ${
+                              blendImgs.length === 0 && `!flex-center`
+                            } `}
+                          >
+                            {blendImgs.length === 0 && (
+                              <img
+                                src={"/pending2.png"}
+                                alt="blend image"
+                                className={`rounded-md max-w-[100%] max-h-[100%] ${
+                                  isBlending && "flicker"
+                                }`}
+                              />
+                            )}
+                            {blendImgs.length === 4 &&
+                              blendImgs.map((img) => (
+                                <div className=" w-[220px] h-[220px] flex-center">
+                                  <img
+                                    src={img}
+                                    alt="blend image"
+                                    className={`rounded-md hover:scale-105 transition-all duration-200 max-w-[100%] max-h-[100%] ${
+                                      isBlending && "flicker"
+                                    }`}
+                                  />
+                                </div>
+                              ))}
                           </div>
 
                           <div className=" max-w-[350px] rounded-md h-full flex-center flex-col p-4 px-6 ">
@@ -1212,23 +1544,49 @@ export const ImageForm = () => {
                                 </div>
                               </div>
                             </FileUploader>
-                            <div className=" mt-4 relative flex flex-wrap w-full flex-center">
+                            <div className=" mt-4 relative flex flex-wrap gap-1 w-full flex-center">
                               {blendOrgins.map((image, index) =>
                                 index !== 4 ? (
-                                  <div className=" w-[120px] h-[120px] mb-2 flex-center">
+                                  <div className="p-[0.6rem] relative rounded-md group w-[130px] h-[130px] mb-2 flex-center border-[1px] border-black ">
                                     <img
                                       src={image.src}
-                                      alt="blend origin"
+                                      alt={image.name}
                                       className=" max-w-[100%] max-h-[100%]  rounded-md"
                                     />
+                                    <X
+                                      onClick={() => {
+                                        setBlendImages((pre) =>
+                                          pre.filter((file, i) => i !== index)
+                                        );
+                                        setBlendOrgins((pre) =>
+                                          pre.filter(
+                                            (old) => old.src !== image.src
+                                          )
+                                        );
+                                      }}
+                                      className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
+                                    ></X>
                                   </div>
                                 ) : (
-                                  <div className=" absolute translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[120px] h-[120px] mb-2 flex-center">
+                                  <div className="p-[0.6rem] absolute group rounded-md border-[1px] border-black translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[130px] h-[130px] mb-2 flex-center">
                                     <img
                                       src={image.src}
-                                      alt="blend origin"
+                                      alt={image.name}
                                       className=" max-w-[100%] max-h-[100%]  rounded-md"
                                     />
+                                    <X
+                                      onClick={() => {
+                                        setBlendImages((pre) =>
+                                          pre.filter((file, i) => i !== index)
+                                        );
+                                        setBlendOrgins((pre) =>
+                                          pre.filter(
+                                            (old) => old.src !== image.src
+                                          )
+                                        );
+                                      }}
+                                      className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
+                                    ></X>
                                   </div>
                                 )
                               )}

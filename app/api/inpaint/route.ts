@@ -1,17 +1,16 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const blendUrl = "https://api.midjourneyapi.xyz/mj/v2/blend";
+const inpaintUrl = "https://api.midjourneyapi.xyz/mj/v2/inpaint";
 
-const handleBlend = async (req: NextRequest) => {
+const handleInPaint = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    const useTurbo = body.useTurbo;
 
-    if (!body.imageUrls || !body.dimension) {
-      console.log("missing online image url or dimension");
+    if (!body.originTaskId || !body.mask) {
+      console.log("missing origin task id or mask");
       return NextResponse.json(
-        { error: "missing online image url or dimension" },
+        { error: "missing origin task id or mask" },
         {
           status: 400,
         }
@@ -21,15 +20,17 @@ const handleBlend = async (req: NextRequest) => {
     const options = {
       headers: {
         "X-API-KEY": process.env.GOAPI_KEY,
+        "Content-Type": "application/json",
       },
       data: {
-        image_urls: body.imageUrls,
-        dimension: body.dimension,
+        origin_task_id: body.originTaskId,
+        prompt: body.prompt,
+        mask: body.mask,
         notify_progress: true,
-        process_mode: useTurbo ? "turbo" : "fast",
       },
-      url: blendUrl,
+      url: inpaintUrl,
       method: "post",
+      maxBodyLength: Infinity,
     };
 
     const response = await axios(options);
@@ -47,4 +48,4 @@ const handleBlend = async (req: NextRequest) => {
   }
 };
 
-export const POST = handleBlend;
+export const POST = handleInPaint;

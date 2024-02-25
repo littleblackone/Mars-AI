@@ -6,10 +6,14 @@ interface ImageState {
   deleteImage: (index: number) => void;
 }
 
-export const useVaryImage = create<ImageState>()((set) => ({
+export const useInpaintImages = create<ImageState>()((set) => ({
   images: [],
   setImages: (images) =>
-    set((state) => ({ images: [...state.images, ...images] })),
+    set((state) => ({
+      images: [...state.images, ...images],
+    })),
   deleteImage: (index) =>
-    set((state) => ({ images: state.images.filter((img, i) => i !== index) })),
+    set((state) => ({
+      images: state.images.filter((img, i) => i !== index),
+    })),
 }));

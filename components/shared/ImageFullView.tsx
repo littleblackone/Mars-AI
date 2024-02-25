@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 
 import {
   CopyIcon,
@@ -21,10 +21,11 @@ import {
   extractArAndModel,
   handleCopy,
   handleDownload,
+  handleGetSeed,
 } from "@/lib/utils";
 
 import UpscaleSvg from "@/components/shared/UpscaleSvg";
-import { DownloadIcon, ZoomIn } from "lucide-react";
+import { DownloadIcon, X, ZoomIn } from "lucide-react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useUpscaleImage } from "@/lib/store/useUpscaleImage";
@@ -34,6 +35,11 @@ import { Label } from "../ui/label";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { useZoomImages } from "@/lib/store/useZoomImages";
 import { useExpandImages } from "@/lib/store/useExpandImages";
+import { useIsExpanded } from "@/lib/store/useIsExpanded";
+import { useIsExpandUp } from "@/lib/store/useIsExpandUp";
+import { useIsExpandDown } from "@/lib/store/useIsExpandDown";
+import { useIsExpandLeft } from "@/lib/store/useIsExpandLeft";
+import { useIsExpandRight } from "@/lib/store/useIsExpandRight";
 
 export function ImageFullView({
   selectedIndex,
@@ -45,6 +51,9 @@ export function ImageFullView({
   setOpen,
   parentimageArr,
   setParentImgArr,
+  setParentSeed,
+  setOriginTaskId,
+  manualPrompt,
 }: FullViewData) {
   const [isFetching, setIsFetching] = useState(false);
 
@@ -60,13 +69,7 @@ export function ImageFullView({
   const [isExpanding, setIsExpanding] = useState(false);
 
   const [isUpscaled, setIsUpscaled] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false); //global state
   const [isZoomed, setIsZoomed] = useState(false);
-
-  const [isExpandUp, setIsExpandUp] = useState(false);
-  const [isExpandDown, setIsExpandDown] = useState(false);
-  const [isExpandLeft, setIsExpandLeft] = useState(false);
-  const [isExpandRight, setIsExpandRight] = useState(false);
 
   const [imageDatas, setImageDatas] = useState<TaskResult | null>();
 
@@ -82,14 +85,36 @@ export function ImageFullView({
   const [zoomValue, setZoomValue] = useState<string>("");
 
   const negativeWords = tempFormValue?.negativePrompt?.split(" ");
-  tempFormValue?.model;
+
   let imgIndexList = [0, 1, 2, 3];
 
   const setUpscaleImages = useUpscaleImage((state) => state.setImages);
   const setZoomImages = useZoomImages((state) => state.setImages);
   const setExpandImages = useExpandImages((state) => state.setImages);
 
+  const setIsExpanded = useIsExpanded((state) => state.setIsExpanded);
+  const isExpanded = useIsExpanded((state) => state.isExpanded);
+
+  const setIsExpandUp = useIsExpandUp((state) => state.setIsExpandeUp);
+  const isExpandUp = useIsExpandUp((state) => state.isExpandeUp);
+
+  const setIsExpandDown = useIsExpandDown((state) => state.setIsExpandeDown);
+  const isExpandDown = useIsExpandDown((state) => state.isExpandeDown);
+
+  const setIsExpandLeft = useIsExpandLeft((state) => state.setIsExpandeLeft);
+  const isExpandLeft = useIsExpandLeft((state) => state.isExpandeLeft);
+
+  const setIsExpandRight = useIsExpandRight((state) => state.setIsExpandeRight);
+  const isExpandRight = useIsExpandRight((state) => state.isExpandeRight);
+
   const model = tempFormValue?.model?.split(" --")[1];
+
+  // parentimageArr = [
+  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
+  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
+  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
+  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
+  // ];
 
   const handleZoom = debounce(async (zoomValue: string) => {
     try {
@@ -100,7 +125,9 @@ export function ImageFullView({
 
       const response = await axios.post("/api/upscale", {
         originTaskId: parentTaskId,
-        index: selectedIndex + 1 + "",
+        index: mainImageIndex
+          ? mainImageIndex + 1 + ""
+          : selectedIndex + 1 + "",
       });
 
       const taskId = response.data.task_id;
@@ -143,8 +170,10 @@ export function ImageFullView({
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
+            setOriginTaskId(taskResult.data.task_id);
             setZoomImages(taskResult.data.task_result.image_urls);
             setParentImgArr(taskResult.data.task_result.image_urls);
+            await handleGetSeed(zoomId, setParentSeed);
             setImageDatas(taskResult.data.task_result);
             setIsZooming(false);
             setIsZoomed(true);
@@ -152,7 +181,7 @@ export function ImageFullView({
         } catch (error) {
           console.error("Error fetching image:", error);
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
       console.error("Error sending prompt:", error);
     }
@@ -167,7 +196,9 @@ export function ImageFullView({
 
       const response = await axios.post("/api/upscale", {
         originTaskId: parentTaskId,
-        index: selectedIndex + 1 + "",
+        index: mainImageIndex
+          ? mainImageIndex + 1 + ""
+          : selectedIndex + 1 + "",
       });
 
       const taskId = response.data.task_id;
@@ -210,8 +241,10 @@ export function ImageFullView({
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
+            setOriginTaskId(taskResult.data.task_id);
             setExpandImages(taskResult.data.task_result.image_urls);
             setParentImgArr(taskResult.data.task_result.image_urls);
+            await handleGetSeed(expandId, setParentSeed);
             setImageDatas(taskResult.data.task_result);
             setIsExpanding(false);
             setIsExpanded(true);
@@ -219,7 +252,7 @@ export function ImageFullView({
         } catch (error) {
           console.error("Error fetching image:", error);
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
       console.error("Error sending prompt:", error);
     }
@@ -234,7 +267,9 @@ export function ImageFullView({
 
       const response = await axios.post("/api/upscale", {
         originTaskId: parentTaskId,
-        index: selectedIndex + 1 + "",
+        index: mainImageIndex
+          ? mainImageIndex + 1 + ""
+          : selectedIndex + 1 + "",
       });
 
       const taskId = response.data.task_id;
@@ -294,7 +329,7 @@ export function ImageFullView({
         } catch (error) {
           console.error("Error fetching image:", error);
         }
-      }, 2000);
+      }, 1000);
     } catch (error) {
       console.error("Error sending prompt:", error);
     }
@@ -354,11 +389,6 @@ export function ImageFullView({
     setIsUpscaled(false);
     setIsZoomed(false);
 
-    setIsExpandDown(false);
-    setIsExpandUp(false);
-    setIsExpandRight(false);
-    setIsExpandLeft(false);
-
     setUpscale2x(false);
     setUpscale4x(false);
     setUpscaleCreative(false);
@@ -372,19 +402,23 @@ export function ImageFullView({
         if (open === false) {
           initializeValue();
         }
-        if (isFetching) {
-          setOpen(true);
-        } else {
-          setOpen(open);
-        }
+
+        setOpen(open);
       }}
     >
-      <DialogContent className=" !h-[800px]  min-w-[1260px]">
+      <DialogContent
+        onPointerDownOutside={(e) => {
+          if (isFetching) {
+            e.preventDefault();
+          }
+        }}
+        className=" !h-[800px]  min-w-[1260px]"
+      >
         <div className="flex w-full h-full">
           <div className=" relative flex-1 w-full h-full flex-center bg-gray-300/25 rounded-l-md">
             <Button
               type="button"
-              disabled={isUpscaling || isZooming || isExpanding}
+              disabled={isFetching}
               variant="outline"
               className="absolute px-2.5 right-2 top-2 active:translate-y-[1px] rounded-md"
               onClick={() => {
@@ -814,6 +848,12 @@ export function ImageFullView({
             </div>
           </div>
         </div>
+        <DialogClose
+          disabled={isFetching}
+          className="absolute right-2 top-2 rounded-sm opacity-70  transition-opacity hover:opacity-100  disabled:pointer-events-none "
+        >
+          <X className="h-5 w-5" />
+        </DialogClose>
       </DialogContent>
     </Dialog>
   );

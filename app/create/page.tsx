@@ -36,7 +36,7 @@ export default function Create() {
   return (
     <div className=" relative p-12 px-6 pr-0 flex form-shadow  items-start min-w-[1480px] w-full h-full bg-create-bg  rounded-xl ">
       <ImageForm></ImageForm>
-      <HistoryImage></HistoryImage>
+      {/* <HistoryImage></HistoryImage>
       <div
         className={` absolute w-8 h-8 bg-white/60 hover:bg-white/70 transition-all duration-200 cursor-pointer rounded-full -right-4 top-[50%] hidden ${
           isOpenHistoryArea && "flex-center"
@@ -44,7 +44,7 @@ export default function Create() {
         onClick={() => handleOpen()}
       >
         <ArrowSvg open={open}></ArrowSvg>
-      </div>
+      </div> */}
     </div>
   );
 }

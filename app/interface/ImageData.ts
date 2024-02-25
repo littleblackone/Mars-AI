@@ -91,12 +91,27 @@ export interface StyleStatus {
 
 export interface FullViewData {
   selectedIndex: number;
+  manualPrompt: string;
   parentTaskId: string;
   parentSeed: string;
   finalPrompt: string;
   tempFormValue: ImageFormData | undefined;
   open: boolean;
   parentimageArr: string[];
+  setOriginTaskId: React.Dispatch<React.SetStateAction<string>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setParentImgArr: React.Dispatch<React.SetStateAction<string[]>>;
+  setParentSeed: React.Dispatch<React.SetStateAction<string>>;
+}
+
+export interface InpaintData {
+  open: boolean;
+  originTaskId: string;
+  parentPrompt: string;
+  setParentSeed: React.Dispatch<React.SetStateAction<string>>;
+  setOriginTaskId: React.Dispatch<React.SetStateAction<string>>;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedIndex: number;
+  parentimageArr: string[];
+  setParentImageArr: React.Dispatch<React.SetStateAction<string[]>>;
 }
