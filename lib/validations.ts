@@ -2,7 +2,14 @@ import * as z from "zod";
 
 export const ImageValidation = z.object({
   aspectRatio: z
-    .enum([" --ar 1:1", " --ar 3:2", " --ar 4:3", " --ar 16:9", " --ar 9:16"])
+    .enum([
+      " --ar 1:1",
+      " --ar 3:2",
+      " --ar 4:3",
+      " --ar 16:9",
+      " --ar 9:16",
+      " ",
+    ])
     .optional(),
 
   model: z.enum([" --v 5.2", " --v 6", " --niji 6"]).optional(),

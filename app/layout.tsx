@@ -21,10 +21,8 @@ export default function RootLayout({
     <html lang="en">
       <link rel="icon" href="/logo.png" sizes="any" />
       <body className={`${inter.className}  bg-main-bg w-full min-h-screen`}>
-        <Header></Header>
-        <div className=" p-32">{children}</div>
+        {children}
         <Toaster position="top-center" duration={2000} richColors></Toaster>
-        <Footer></Footer>
       </body>
     </html>
   );

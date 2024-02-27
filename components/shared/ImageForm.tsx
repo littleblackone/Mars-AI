@@ -4,6 +4,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageValidation } from "../../lib/validations";
 import {
+  ArrowLeftIcon,
+  CodeIcon,
   CopyIcon,
   EnterFullScreenIcon,
   InfoCircledIcon,
@@ -28,6 +30,7 @@ import {
 } from "../ui/select";
 import {
   convertStringToArray,
+  cropImageIntoFour,
   debounce,
   generateFinalPrompt,
   handleCopy,
@@ -39,7 +42,7 @@ import {
   TaskResult,
   ImageFormData,
   FetchImageData,
-} from "@/app/interface/ImageData";
+} from "@/lib/interface/ImageData";
 
 import { Button } from "../ui/button";
 
@@ -60,11 +63,7 @@ import { toast } from "sonner";
 import { useOriginImage } from "@/lib/store/useOriginImage";
 import { useVaryImage } from "@/lib/store/useVaryImage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { useIsExpanded } from "@/lib/store/useIsExpanded";
-import { useIsExpandUp } from "@/lib/store/useIsExpandUp";
-import { useIsExpandDown } from "@/lib/store/useIsExpandDown";
-import { useIsExpandLeft } from "@/lib/store/useIsExpandLeft";
-import { useIsExpandRight } from "@/lib/store/useIsExpandRight";
+
 import VaryRegion from "./VaryRegion";
 import { useIsInpainting } from "@/lib/store/useisInpainting";
 import { Switch } from "../ui/switch";
@@ -75,9 +74,10 @@ import {
   HoverCardTrigger,
 } from "../ui/hover-card";
 import Link from "next/link";
+import HistoryImage from "./HistoryImage";
+import { useBlendImages } from "@/lib/store/useBlendImages";
 
 export const ImageForm = () => {
-  const [imageDatas, setImageDatas] = useState<TaskResult | null>();
   const [fetchTime, setFetchTime] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(false);
   const [imageArr, setImageArr] = useState<string[]>([]);
@@ -124,15 +124,7 @@ export const ImageForm = () => {
 
   const setOriginImages = useOriginImage((state) => state.setImages);
   const setVaryImages = useVaryImage((state) => state.setImages);
-
-  const setIsExpanded = useIsExpanded((state) => state.setIsExpanded);
-
-  const setIsExpandUp = useIsExpandUp((state) => state.setIsExpandeUp);
-
-  const setIsExpandDown = useIsExpandDown((state) => state.setIsExpandeDown);
-
-  const setIsExpandLeft = useIsExpandLeft((state) => state.setIsExpandeLeft);
-  const setIsExpandRight = useIsExpandRight((state) => state.setIsExpandeRight);
+  const setHistoryBlendImgs = useBlendImages((state) => state.setImages);
 
   const isInpainting = useIsInpainting((state) => state.isInpainting);
 
@@ -236,12 +228,16 @@ export const ImageForm = () => {
           taskId: newTaskId,
         });
 
-        setImageDatas(taskResult.data.task_result);
         if (taskResult.data.status === "finished") {
           clearInterval(intervalId);
           uploadImages = [];
-          setImageArr(taskResult.data.task_result.image_urls);
-          setBlendImgs(taskResult.data.task_result.image_urls);
+          const bast64ImgArr = await cropImageIntoFour(
+            taskResult.data.task_result.image_url
+          );
+
+          setImageArr(bast64ImgArr);
+          setBlendImgs(bast64ImgArr);
+          setHistoryBlendImgs(bast64ImgArr);
           setIsBlending(false);
           toast.success("blend成功! 如需对blend图片进行操作,请到文生图区域。", {
             duration: 4000,
@@ -289,7 +285,7 @@ export const ImageForm = () => {
   const handleVaryStrong = async (originTaskId: string, index: string) => {
     try {
       setImageArr([]);
-      setImageDatas(null);
+
       setFetchTime(0);
       setIsFetching(true);
       const response = await axios.post("/api/vary", { originTaskId, index });
@@ -304,14 +300,17 @@ export const ImageForm = () => {
             }
           );
 
-          setImageDatas(taskResult.data.task_result);
-
           setFetchTime((prev) => prev + 2);
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
-            setImageArr(taskResult.data.task_result.image_urls);
-            setVaryImages(taskResult.data.task_result.image_urls);
+
+            const bast64ImgArr = await cropImageIntoFour(
+              taskResult.data.task_result.image_url
+            );
+
+            setImageArr(bast64ImgArr);
+            setVaryImages(bast64ImgArr);
             setTaskId(taskResult.data.task_id);
             await handleGetSeed(taskResult.data.task_id, setSeed);
             setIsFetching(false);
@@ -331,10 +330,10 @@ export const ImageForm = () => {
     try {
       setImageArr([]);
       setFetchTime(0);
-      setImageDatas(null);
+
       setIsFetching(true);
 
-      let varySubId: string;
+      let varySubId: string = "";
       let isFirstIntervalCompleted: boolean = false;
 
       const response = await axios.post("/api/upscale", {
@@ -369,7 +368,7 @@ export const ImageForm = () => {
 
       const intervalId = setInterval(async () => {
         try {
-          if (!isFirstIntervalCompleted) return;
+          if (isFirstIntervalCompleted === false || varySubId === "") return;
 
           const taskResult: FetchImageData = await axios.post(
             "/api/fetchImage",
@@ -378,14 +377,16 @@ export const ImageForm = () => {
             }
           );
 
-          setImageDatas(taskResult.data.task_result);
-
           setFetchTime((prev) => prev + 2);
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
-            setImageArr(taskResult.data.task_result.image_urls);
-            setVaryImages(taskResult.data.task_result.image_urls);
+            const bast64ImgArr = await cropImageIntoFour(
+              taskResult.data.task_result.image_url
+            );
+
+            setImageArr(bast64ImgArr);
+            setVaryImages(bast64ImgArr);
             setTaskId(taskResult.data.task_id);
             await handleGetSeed(taskResult.data.task_id, setSeed);
             setIsFetching(false);
@@ -418,8 +419,6 @@ export const ImageForm = () => {
             { taskId }
           );
 
-          setImageDatas(taskResult.data.task_result);
-
           setFetchTime((prev) => prev + 2);
 
           if (fetchTime >= 120) {
@@ -442,16 +441,15 @@ export const ImageForm = () => {
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
+            console.log(taskResult.data.task_result.image_url);
 
-            setIsExpanded(false);
+            const bast64ImgArr = await cropImageIntoFour(
+              taskResult.data.task_result.image_url
+            );
 
-            setIsExpandDown(false);
-            setIsExpandUp(false);
-            setIsExpandRight(false);
-            setIsExpandLeft(false);
+            setImageArr(bast64ImgArr);
+            setOriginImages(bast64ImgArr);
 
-            setImageArr(taskResult.data.task_result.image_urls);
-            setOriginImages(taskResult.data.task_result.image_urls);
             await handleGetSeed(taskId, setSeed);
             setIsFetching(false);
           }
@@ -462,7 +460,8 @@ export const ImageForm = () => {
       }, 1000);
     } catch (error) {
       toast.error(
-        "请求失败,请检查prompt格式或查看midjourney服务器状态并过一段时间重试"
+        "请求失败,请检查prompt格式或查看midjourney服务器状态并过一段时间重试",
+        { duration: 5000 }
       );
       setIsFetching(false);
       console.error("Error sending prompt:", error);
@@ -506,22 +505,16 @@ export const ImageForm = () => {
   }, [blendImages]);
 
   useEffect(() => {
-    if (imageDatas?.task_progress === 100) {
-      form.resetField("prompt");
-    }
-  }, [imageDatas]);
-
-  useEffect(() => {
     if (useTurbo) {
       toast.success("turbo模式开启");
     }
   }, [useTurbo]);
 
   const onSubmit = (values: z.infer<typeof ImageValidation>) => {
-    setImageDatas(null);
     setImageArr([]);
     setFetchTime(0);
     setManualPrompt(values.prompt);
+
     if (useFormData) {
       setTempFormValue(values);
       const finalPrompt = generateFinalPrompt(values, useStyleRow);
@@ -535,24 +528,30 @@ export const ImageForm = () => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className=" w-full">
-        <div className=" flex items-center flex-1  w-full h-[80vh] hide-scroll">
-          <div className=" px-6 py-2 flex-shrink-0  w-[20rem] h-full flex flex-col justify-between items-start">
+      <form onSubmit={form.handleSubmit(onSubmit)} className=" w-full h-full">
+        <div className=" h-[5vh] w-full bg-white border-b flex p-2 px-[1.4rem] items-center">
+          <Link
+            href="/"
+            className=" w-fit active:translate-y-[1px] h-[30px] bg-gray-100 rounded-md hover:bg-gray-200 transition-all duration-200 p-2 flex-center"
+          >
+            <ArrowLeftIcon width={20} height={20}></ArrowLeftIcon>
+            <span>返回</span>
+          </Link>
+        </div>
+        <div className=" flex items-center flex-1  w-full h-[95vh]">
+          <div className="  flex-shrink-0 w-fit px-6 py-4 h-full flex flex-col gap-6 items-start">
             <FormField
               control={form.control}
               name="model"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between  w-[200px]">
+                <FormItem className="flex items-center justify-between w-[200px]">
                   <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-white text-nowrap text-base">
+                    <FormLabel className=" text-neutral-800 text-nowrap text-sm">
                       Models:
                     </FormLabel>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
-                        <InfoCircledIcon
-                          color="rgb(255,255,255,0.6)"
-                          className=" cursor-pointer hover:stroke-white/40"
-                        ></InfoCircledIcon>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
@@ -579,7 +578,7 @@ export const ImageForm = () => {
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="bg-white/60 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                        <SelectTrigger className=" bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                           <SelectValue placeholder="模型"></SelectValue>
                         </SelectTrigger>
                       </FormControl>
@@ -594,7 +593,7 @@ export const ImageForm = () => {
               )}
             ></FormField>
 
-            <Separator className=" w-[75%]" />
+            <Separator className=" w-full" />
 
             <FormField
               control={form.control}
@@ -602,21 +601,18 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between  w-[200px]">
                   <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-white text-nowrap text-base">
+                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
                       AspectRatio:
                     </FormLabel>
 
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
-                        <InfoCircledIcon
-                          color="rgb(255,255,255,0.6)"
-                          className=" cursor-pointer hover:stroke-white/40"
-                        ></InfoCircledIcon>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
                           命令: --aspect 或 --ar<br></br>
-                          生成图片的宽高比,默认为1:1。详情查看
+                          生成图片的宽高比,默认为1:1,如果你想自定义,请选择最后一个选项,然后在prompt中使用命令。详情查看
                           <Link
                             target="_blank"
                             rel="stylesheet"
@@ -636,16 +632,47 @@ export const ImageForm = () => {
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="bg-white/60 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                        <SelectTrigger className="bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                           <SelectValue placeholder="图片比例"></SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value=" --ar 1:1">1:1</SelectItem>
-                        <SelectItem value=" --ar 4:3">4:3</SelectItem>
-                        <SelectItem value=" --ar 3:2">3:2</SelectItem>
-                        <SelectItem value=" --ar 16:9">16:9</SelectItem>
-                        <SelectItem value=" --ar 9:16">9:16</SelectItem>
+                        <SelectItem value=" --ar 1:1">
+                          <div className="flex gap-1 items-center">
+                            <div className=" w-4 h-4 border-[1px] rounded-sm border-black"></div>
+                            <span>1:1</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value=" --ar 4:3">
+                          <div className="flex gap-1 items-center">
+                            <div className=" w-4 h-[12px] border-[1px] rounded-sm border-black"></div>
+                            <span>4:3</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value=" --ar 3:2">
+                          <div className="flex gap-1 items-center">
+                            <div className=" w-4 h-[10.6px] border-[1px] rounded-sm border-black"></div>
+                            <span>3:2</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value=" --ar 16:9">
+                          <div className="flex gap-1 items-center">
+                            <div className=" w-4 h-[9px] border-[1px] rounded-sm border-black"></div>
+                            <span>16:9</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value=" --ar 9:16">
+                          <div className="flex gap-1 items-center">
+                            <div className=" ml-1 mr-1.5 w-[9px] h-[16px] border-[1px] rounded-sm border-black"></div>
+                            <span>9:16</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value=" ">
+                          <div className="flex gap-1 items-center">
+                            <CodeIcon></CodeIcon>
+                            <span className=" text-xs">命令</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -653,23 +680,20 @@ export const ImageForm = () => {
               )}
             ></FormField>
 
-            <Separator className=" w-[75%]" />
+            <Separator className=" w-full" />
             <FormField
               control={form.control}
               name="quality"
               render={({ field }) => (
                 <FormItem className="flex items-center justify-between  w-[200px]">
                   <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-white text-nowrap text-base">
+                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
                       Quality:
                     </FormLabel>
 
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
-                        <InfoCircledIcon
-                          color="rgb(255,255,255,0.6)"
-                          className=" cursor-pointer hover:stroke-white/40"
-                        ></InfoCircledIcon>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
@@ -694,14 +718,20 @@ export const ImageForm = () => {
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="bg-white/60 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                        <SelectTrigger className="bg-gray-100 border-none py-1 text-xs px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                           <SelectValue placeholder="图片质量"></SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value=" --q .25">低质量</SelectItem>
-                        <SelectItem value=" --q .5">中质量</SelectItem>
-                        <SelectItem value=" --q 1">高质量</SelectItem>
+                        <SelectItem value=" --q .25" className=" text-xs">
+                          低质量
+                        </SelectItem>
+                        <SelectItem value=" --q .5" className=" text-xs">
+                          中质量
+                        </SelectItem>
+                        <SelectItem value=" --q 1" className=" text-xs">
+                          高质量
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -709,7 +739,7 @@ export const ImageForm = () => {
               )}
             ></FormField>
 
-            <Separator className=" w-[75%]" />
+            <Separator className=" w-full" />
 
             <FormField
               control={form.control}
@@ -717,15 +747,12 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col ">
                   <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-white text-nowrap text-base">
+                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
                       Negative Words:
                     </FormLabel>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
-                        <InfoCircledIcon
-                          color="rgb(255,255,255,0.6)"
-                          className=" cursor-pointer hover:stroke-white/40"
-                        ></InfoCircledIcon>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
@@ -749,7 +776,7 @@ export const ImageForm = () => {
                     <FormControl>
                       <Input
                         {...field}
-                        className="bg-white/60 border-none w-[90%] resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                        className="bg-gray-100 border-none w-[90%] resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
                         placeholder="不想出现的元素"
                       ></Input>
                     </FormControl>
@@ -758,7 +785,7 @@ export const ImageForm = () => {
               )}
             ></FormField>
 
-            <Separator className=" w-[75%]" />
+            <Separator className=" w-full" />
 
             <FormField
               control={form.control}
@@ -767,15 +794,12 @@ export const ImageForm = () => {
                 <FormItem className="flex flex-col gap-4 ">
                   <div className="flex justify-between items-center">
                     <div className="flex gap-2 items-center">
-                      <FormLabel className="text-white text-nowrap text-base">
+                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
                         Stylize:
                       </FormLabel>
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
-                          <InfoCircledIcon
-                            color="rgb(255,255,255,0.6)"
-                            className=" cursor-pointer hover:stroke-white/40"
-                          ></InfoCircledIcon>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
@@ -798,7 +822,7 @@ export const ImageForm = () => {
 
                     <FormControl>
                       <Input
-                        className="bg-white/60 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
                         max={1000}
                         min={0}
                         type="number"
@@ -816,7 +840,7 @@ export const ImageForm = () => {
                         value={[field.value]}
                         step={50}
                         onValueChange={(value) => field.onChange(value[0])}
-                        className=" w-[200px]"
+                        className=" w-[200px] cursor-pointer"
                       ></Slider>
                     </FormControl>
                   </div>
@@ -825,7 +849,7 @@ export const ImageForm = () => {
               )}
             ></FormField>
 
-            <Separator className=" w-[75%]" />
+            <Separator className=" w-full" />
 
             <FormField
               control={form.control}
@@ -834,15 +858,12 @@ export const ImageForm = () => {
                 <FormItem className="flex flex-col gap-4 ">
                   <div className="flex justify-between items-center">
                     <div className="flex gap-2 items-center">
-                      <FormLabel className="text-white text-nowrap text-base">
+                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
                         Chaos:
                       </FormLabel>
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
-                          <InfoCircledIcon
-                            color="rgb(255,255,255,0.6)"
-                            className=" cursor-pointer hover:stroke-white/40"
-                          ></InfoCircledIcon>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
@@ -865,7 +886,7 @@ export const ImageForm = () => {
 
                     <FormControl>
                       <Input
-                        className="bg-white/60 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent p-1 rounded-lg w-[60px] text-center"
+                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent p-1 rounded-lg w-[60px] text-center"
                         max={100}
                         min={0}
                         type="number"
@@ -883,7 +904,7 @@ export const ImageForm = () => {
                         value={[field.value]}
                         step={5}
                         onValueChange={(value) => field.onChange(value[0])}
-                        className=" w-[200px]"
+                        className=" w-[200px] cursor-pointer"
                       ></Slider>
                     </FormControl>
                   </div>
@@ -892,7 +913,7 @@ export const ImageForm = () => {
               )}
             ></FormField>
 
-            <Separator className=" w-[75%]" />
+            <Separator className=" w-full" />
 
             <FormField
               control={form.control}
@@ -900,15 +921,12 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col ">
                   <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-white text-nowrap text-base">
+                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
                       seeds:
                     </FormLabel>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
-                        <InfoCircledIcon
-                          color="rgb(255,255,255,0.6)"
-                          className=" cursor-pointer hover:stroke-white/40"
-                        ></InfoCircledIcon>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
@@ -932,7 +950,7 @@ export const ImageForm = () => {
                   <div className="-translate-y-[3px]">
                     <FormControl>
                       <Input
-                        className="bg-white/60 border-none w-[200px] focus-visible:ring-offset-transparent focus-visible:ring-transparent"
+                        className="bg-gray-100 border-none w-[200px] focus-visible:ring-offset-transparent focus-visible:ring-transparent"
                         type="number"
                         min={0}
                         max={4294967295}
@@ -948,104 +966,102 @@ export const ImageForm = () => {
               )}
             ></FormField>
 
-            <Separator className=" w-[75%]" />
-            <div className=" w-full flex gap-[89px] text-white items-center">
-              <Switch
-                id="use-form-data"
-                checked={useStyleRow}
-                onCheckedChange={(value) => setUseStyleRow(value)}
-              ></Switch>
-              <div className="flex gap-2 items-center">
-                <Label htmlFor="use-form-data" className=" text-md">
-                  style raw
-                </Label>
-                <HoverCard openDelay={300}>
-                  <HoverCardTrigger>
-                    <InfoCircledIcon
-                      color="rgb(255,255,255,0.6)"
-                      className=" cursor-pointer hover:stroke-white/40"
-                    ></InfoCircledIcon>
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <p className="text-white text-sm">
-                      命令: --style row<br></br>
-                      此项开启后,图像应用的自动美化较少,这可以在prompt特定样式时实现更准确的匹配。详情查看
-                      <Link
-                        target="_blank"
-                        rel="stylesheet"
-                        className=" text-blue-500 underline underline-offset-4"
-                        href="https://docs.midjourney.com/docs/style"
-                      >
-                        官方文档
-                      </Link>
-                    </p>
-                  </HoverCardContent>
-                </HoverCard>
+            <Separator className=" w-full" />
+            <div className="flex flex-col gap-3">
+              <div className=" w-full flex gap-[89px] text-black items-center">
+                <Switch
+                  id="use-form-data"
+                  className=" scale-[0.8]"
+                  checked={useStyleRow}
+                  onCheckedChange={(value) => setUseStyleRow(value)}
+                ></Switch>
+                <div className="flex gap-2 items-center">
+                  <Label htmlFor="use-form-data" className=" text-sm">
+                    style raw
+                  </Label>
+                  <HoverCard openDelay={300}>
+                    <HoverCardTrigger>
+                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                    </HoverCardTrigger>
+                    <HoverCardContent>
+                      <p className="text-white text-sm">
+                        命令: --style row<br></br>
+                        仅v5.2,v6,niji6可用;
+                        此项开启后,图像应用的自动美化较少,这可以在prompt特定样式时实现更准确的匹配。详情查看
+                        <Link
+                          target="_blank"
+                          rel="stylesheet"
+                          className=" text-blue-500 underline underline-offset-4"
+                          href="https://docs.midjourney.com/docs/style"
+                        >
+                          官方文档
+                        </Link>
+                      </p>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
               </div>
-            </div>
-            <div className=" w-full flex gap-[63.5px] text-white items-center">
-              <Switch
-                id="use-form-data"
-                checked={useFormData}
-                onCheckedChange={(value) => setUseFormData(value)}
-              ></Switch>
-              <div className="flex gap-2 items-center">
-                <Label htmlFor="use-form-data" className=" text-md">
-                  使用表格数据
-                </Label>
-                <HoverCard openDelay={300}>
-                  <HoverCardTrigger>
-                    <InfoCircledIcon
-                      color="rgb(255,255,255,0.6)"
-                      className=" cursor-pointer hover:stroke-white/40"
-                    ></InfoCircledIcon>
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <p className="text-white text-sm">
-                      此项开启后,表格中的数据会作为命令自动填写到prompt中,如果您想使用自己的prompt,可以关闭。
-                      如果表格中的数据和prompt中的数据有冲突,那么表格中的数据会覆盖prompt中的数据。
-                    </p>
-                  </HoverCardContent>
-                </HoverCard>
+              <div className=" w-full flex gap-[63.5px] text-black items-center">
+                <Switch
+                  className=" scale-[0.8]"
+                  id="use-form-data"
+                  checked={useFormData}
+                  onCheckedChange={(value) => setUseFormData(value)}
+                ></Switch>
+                <div className="flex gap-2 items-center">
+                  <Label htmlFor="use-form-data" className="text-sm">
+                    使用表格数据
+                  </Label>
+                  <HoverCard openDelay={300}>
+                    <HoverCardTrigger>
+                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                    </HoverCardTrigger>
+                    <HoverCardContent>
+                      <p className="text-white text-sm">
+                        此项开启后,表格中的数据会作为命令自动填写到prompt中,如果您想使用自己的prompt,可以关闭。
+                        如果表格中的数据和prompt中的数据有冲突,那么表格中的数据会覆盖prompt中的数据。
+                      </p>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
               </div>
-            </div>
-            <div className=" w-full flex gap-[88px] text-white items-center">
-              <Switch
-                checked={useTurbo}
-                onCheckedChange={(value) => setUseTurbo(value)}
-                id="use-turbo"
-              ></Switch>
-              <div className="flex gap-2 items-center">
-                <Label htmlFor="use-turbo" className=" text-md">
-                  turbo模式
-                </Label>
-                <HoverCard openDelay={300}>
-                  <HoverCardTrigger>
-                    <InfoCircledIcon
-                      color="rgb(255,255,255,0.6)"
-                      className=" cursor-pointer hover:stroke-white/40"
-                    ></InfoCircledIcon>
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <p className="text-white text-sm">
-                      此项开启后,文生图,图生文,图生图的速度会更快,但是会消耗更多的GPU算力。turbo比fast快四倍,但消耗的订阅GPU分钟数是fast的两倍。
-                      默认fast模式。详情查看
-                      <Link
-                        target="_blank"
-                        rel="stylesheet"
-                        className=" text-blue-500 underline underline-offset-4"
-                        href="https://docs.midjourney.com/docs/fast-relax"
-                      >
-                        官方文档
-                      </Link>
-                    </p>
-                  </HoverCardContent>
-                </HoverCard>
+              <div className=" w-full flex gap-[88px] text-black items-center">
+                <Switch
+                  checked={useTurbo}
+                  className=" scale-[0.8]"
+                  onCheckedChange={(value) => setUseTurbo(value)}
+                  id="use-turbo"
+                ></Switch>
+                <div className="flex gap-2 items-center">
+                  <Label htmlFor="use-turbo" className="text-sm">
+                    turbo模式
+                  </Label>
+                  <HoverCard openDelay={300}>
+                    <HoverCardTrigger>
+                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                    </HoverCardTrigger>
+                    <HoverCardContent>
+                      <p className="text-white text-sm">
+                        仅v5.2可用;
+                        此项开启后,文生图,图生文,图生图的速度会更快,但是会消耗更多的GPU算力。turbo比fast快四倍,但消耗的订阅GPU分钟数是fast的两倍。
+                        默认fast模式。详情查看
+                        <Link
+                          target="_blank"
+                          rel="stylesheet"
+                          className=" text-blue-500 underline underline-offset-4"
+                          href="https://docs.midjourney.com/docs/fast-relax"
+                        >
+                          官方文档
+                        </Link>
+                      </p>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="styled-scrollbar bg-white/15 overflow-scroll rounded-xl p-8 flex-1 w-full min-w-[560px]  h-full  flex-center">
+          <div className=" bg-gray-100  flex-1 w-full h-full flex-center">
             <FormField
               control={form.control}
               name="prompt"
@@ -1055,7 +1071,7 @@ export const ImageForm = () => {
                     defaultValue="textToImage"
                     className="flex flex-col h-full w-full items-center justify-between"
                   >
-                    <TabsList className=" shadow-md bg-white/40 my-2 mt-6 p-4 py-6 gap-2 text-gray-600 rounded-md">
+                    <TabsList className=" shadow-md bg-gray-200/20 my-2 p-4 py-6 gap-2 text-gray-600 rounded-md">
                       <TabsTrigger
                         value="textToImage"
                         className=" py-[0.4rem] rounded-md"
@@ -1077,21 +1093,21 @@ export const ImageForm = () => {
                     </TabsList>
                     <TabsContent
                       value="textToImage"
-                      className=" w-[75%] h-full"
+                      className=" w-full h-full p-4 px-8 overflow-y-scroll hide-scrollbar"
                     >
                       <div
-                        className={`w-full h-full gap-4 grid-cols-2 ${
+                        className={`w-full h-full ${
                           (imageArr.length === 0 || isInpainting) &&
-                          "!flex-center"
-                        } grid  items-center justify-center`}
+                          "!flex-center flex-col !justify-between"
+                        } grid items-center justify-center`}
                       >
                         {(imageArr.length === 0 || isInpainting) && (
-                          <div className="min-w-[240px] flex-center overflow-hidden w-fit h-full aspect-square">
+                          <div className="flex-center mt-[6rem] max-w-[450px] max-h-[450px] aspect-square">
                             {
                               <img
                                 src={"/pending2.png"}
                                 alt="midjourney image"
-                                className={`rounded-xl w-[65%]  aspect-square ${
+                                className={`rounded-xl max-w-[100%] max-h-[100%] aspect-square ${
                                   (isFetching || isInpainting) && "flicker"
                                 }`}
                               ></img>
@@ -1104,9 +1120,9 @@ export const ImageForm = () => {
                           imageArr.map((imgUrl, index) => (
                             <div
                               key={index}
-                              className=" flex-center relative  group"
+                              className=" flex-center relative group"
                             >
-                              <div className="  w-[300px] h-[300px] bg-white/20 rounded-md p-2 relative flex-center">
+                              <div className="  w-[400px] h-[400px] bg-white/20 rounded-md p-2 relative flex-center">
                                 <img
                                   src={imgUrl}
                                   alt="midjourney image"
@@ -1139,7 +1155,7 @@ export const ImageForm = () => {
                                         </button>
                                       </TooltipTrigger>
                                       <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
                                           下载
                                         </p>
                                       </TooltipContent>
@@ -1162,7 +1178,7 @@ export const ImageForm = () => {
                                         </button>
                                       </TooltipTrigger>
                                       <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
                                           放大
                                         </p>
                                       </TooltipContent>
@@ -1192,7 +1208,7 @@ export const ImageForm = () => {
                                         </button>
                                       </TooltipTrigger>
                                       <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
                                           Vary(strong)
                                         </p>
                                       </TooltipContent>
@@ -1220,7 +1236,7 @@ export const ImageForm = () => {
                                         </button>
                                       </TooltipTrigger>
                                       <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
                                           Vary(subtle)
                                         </p>
                                       </TooltipContent>
@@ -1248,7 +1264,7 @@ export const ImageForm = () => {
                                         </button>
                                       </TooltipTrigger>
                                       <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
                                           Vary(Region)
                                         </p>
                                       </TooltipContent>
@@ -1285,40 +1301,31 @@ export const ImageForm = () => {
                               ></VaryRegion>
                             </div>
                           ))}
-                      </div>
-                      <div className="flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-4">
-                        <div className="flex w-full flex-center">
-                          <FormControl>
-                            <Input
-                              className="bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                              placeholder="让你的想象变成事实......"
-                              {...field}
-                            ></Input>
-                          </FormControl>
-                          <Button
-                            type="submit"
-                            size="lg"
-                            className="w-fit button-85 ml-2  text-lg"
-                            disabled={isFetching || isInpainting}
-                          >
-                            {isInpainting && (
-                              <span className="flicker">生成中...</span>
-                            )}
-                            {isFetching ? (
-                              <>
-                                <span className="flicker">
-                                  {imageDatas && imageDatas.task_progress >= 0
-                                    ? imageDatas?.task_progress + "%"
-                                    : "0%"}
-                                </span>
-                              </>
-                            ) : (
-                              isInpainting === false && "生成"
-                            )}
-                          </Button>
+                        <FormMessage className="ml-4"></FormMessage>
+                        <div className="flex rounded-md w-full p-1 col-span-2 gap-2 flex-center bg-gray-100 mx-4 !mt-4">
+                          <div className="flex w-full flex-center p-2 bg-gray-200 rounded-md">
+                            <FormControl>
+                              <Input
+                                className="bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+                                placeholder="让你的想象变成事实......"
+                                {...field}
+                              ></Input>
+                            </FormControl>
+                            <Button
+                              type="submit"
+                              size="lg"
+                              className="w-fit button-85 ml-2  text-lg"
+                              disabled={isFetching || isInpainting}
+                            >
+                              {isInpainting || isFetching ? (
+                                <span className="flicker">生成中...</span>
+                              ) : (
+                                "生成"
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                      <FormMessage className="ml-4"></FormMessage>
                     </TabsContent>
                     <TabsContent value="ImageToText" className=" w-full h-full">
                       <div className=" w-full h-full flex flex-col items-center justify-center bordern">
@@ -1404,7 +1411,7 @@ export const ImageForm = () => {
                             </div>
                           </div>
                         </div>
-                        <div className=" w-full flex rounded-md p-1  gap-2 flex-center bg-white/60 mx-4 !mt-4">
+                        <div className=" w-full flex rounded-md p-1  gap-2 flex-center bg-gray-100 mx-4 !mt-4">
                           <div className="flex w-full flex-center">
                             <Input
                               value={describeImageUrl}
@@ -1480,7 +1487,7 @@ export const ImageForm = () => {
                                 }}
                                 defaultValue={"square"}
                               >
-                                <SelectTrigger className="bg-white/60 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                                <SelectTrigger className="bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                                   <SelectValue placeholder="dimension"></SelectValue>
                                 </SelectTrigger>
 
@@ -1582,13 +1589,7 @@ export const ImageForm = () => {
                               }}
                             >
                               {isBlending ? (
-                                <>
-                                  <span className="flicker">
-                                    {imageDatas && imageDatas.task_progress >= 0
-                                      ? imageDatas?.task_progress + "%"
-                                      : "0%"}
-                                  </span>
-                                </>
+                                <span className="flicker">生成中</span>
                               ) : (
                                 "确定"
                               )}
@@ -1601,6 +1602,11 @@ export const ImageForm = () => {
                 </FormItem>
               )}
             ></FormField>
+          </div>
+          <div
+            className={`hide-scrollbar p-2 px-4 w-[20rem] h-full flex flex-col overflow-y-scroll`}
+          >
+            <HistoryImage></HistoryImage>
           </div>
         </div>
       </form>

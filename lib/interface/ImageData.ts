@@ -66,16 +66,9 @@ export interface ImageFormData {
     | " --ar 3:2"
     | " --ar 4:3"
     | " --ar 16:9"
-    | " --ar 9:16";
-  model?:
-    | " --v 4"
-    | " --v 5"
-    | " --v 5.1"
-    | " --v 5.2"
-    | " --v 6"
-    | " --niji 4"
-    | " --niji 5"
-    | " --niji 6";
+    | " --ar 9:16"
+    | " ";
+  model?: " --v 5.2" | " --v 6" | " --niji 6";
   quality: " --q .25" | " --q .5" | " --q 1";
   negativePrompt?: string;
   seeds?: number;

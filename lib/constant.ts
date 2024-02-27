@@ -1,4 +1,4 @@
-import { StyleStatus } from "@/app/interface/ImageData";
+import { StyleStatus } from "@/lib/interface/ImageData";
 
 export const styles: StyleStatus[] = [
   { value: "Empty", label: "无" },

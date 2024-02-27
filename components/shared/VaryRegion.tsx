@@ -9,7 +9,7 @@ import {
   FetchImageData,
   InpaintData,
   TaskResult,
-} from "@/app/interface/ImageData";
+} from "@/lib/interface/ImageData";
 import axios from "axios";
 import { useInpaintImages } from "@/lib/store/useInpaintImages";
 import { toast } from "sonner";

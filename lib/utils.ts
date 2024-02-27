@@ -2,7 +2,7 @@ import {
   FetchImageData,
   ImageFormData,
   Options,
-} from "@/app/interface/ImageData";
+} from "@/lib/interface/ImageData";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { styles } from "./constant";
@@ -57,11 +57,14 @@ export function generateFinalPrompt(
     finalPromptArray.push(handledNegativePrompt);
   }
 
+  if (aspectRatio !== " ") {
+    finalPromptArray.push(aspectRatio);
+  }
+
   finalPromptArray.push(
     quality,
     ` --stylize ${stylize}`,
     ` --chaos ${chaos}`,
-    aspectRatio,
     model
   );
 
@@ -260,4 +263,108 @@ export function extractOptions(inputString: string): Options {
   });
 
   return options;
+}
+
+export async function cropImageIntoFour(imageUrl: string): Promise<string[]> {
+  return new Promise<string[]>((resolve, reject) => {
+    // 创建一个 Image 元素
+    const img = new Image();
+    img.crossOrigin = "Anonymous"; // 设置跨域请求
+    img.src = imageUrl;
+
+    // 在图片加载完成后执行裁剪操作
+    img.onload = function () {
+      const fullWidth = img.width;
+      const fullHeight = img.height;
+
+      // 计算裁剪后每张图片的尺寸
+      const croppedWidth = fullWidth / 2;
+      const croppedHeight = fullHeight / 2;
+
+      // 创建一个 Canvas 元素
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      if (ctx) {
+        canvas.width = croppedWidth;
+        canvas.height = croppedHeight;
+
+        const imagesBase64: string[] = [];
+
+        // 循环裁剪四张图片
+        for (let i = 0; i < 2; i++) {
+          for (let j = 0; j < 2; j++) {
+            const startX = j * croppedWidth;
+            const startY = i * croppedHeight;
+
+            // 在 Canvas 上绘制裁剪后的图片
+            ctx.drawImage(
+              img,
+              startX,
+              startY,
+              croppedWidth,
+              croppedHeight,
+              0,
+              0,
+              croppedWidth,
+              croppedHeight
+            );
+
+            // 将 Canvas 转换为 base64 格式的图片数据并存储到数组中
+            const croppedImageBase64 = canvas.toDataURL();
+            imagesBase64.push(croppedImageBase64);
+          }
+        }
+
+        // 返回裁剪后的图片数据数组
+        resolve(imagesBase64);
+      } else {
+        reject(new Error("Canvas context is not supported"));
+      }
+    };
+
+    // 图片加载失败时的错误处理
+    img.onerror = function (error) {
+      reject(new Error("Failed to load image: " + error));
+    };
+  });
+}
+
+
+export const handleDownloadBase64 = (base64Data: string, index: number) => {
+  try {
+    // 将 base64 数据转换为 Blob 对象
+    const blob = base64toBlob(base64Data);
+
+    // 创建 blob 对象的 URL
+    const blobUrl = URL.createObjectURL(blob);
+
+    // 创建一个 <a> 元素并设置下载属性
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `midjourney${index}.png`;
+
+    // 将 <a> 元素添加到文档中，模拟点击下载
+    document.body.appendChild(link);
+    link.click();
+
+    // 清理
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    toast.error("服务器繁忙，请稍后重试");
+    console.error("Error downloading image:", error);
+  }
+};
+
+// 辅助函数：将 base64 数据转换为 Blob 对象
+function base64toBlob(base64Data: string): Blob {
+  const byteString = atob(base64Data.split(",")[1]);
+  const mimeString = base64Data.split(",")[0].split(":")[1].split(";")[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
 }

@@ -15,14 +15,15 @@ import {
   FullViewData,
   Options,
   TaskResult,
-} from "@/app/interface/ImageData";
+} from "@/lib/interface/ImageData";
 import { Badge } from "../ui/badge";
 import {
+  cropImageIntoFour,
   debounce,
   extractArAndModel,
   extractOptions,
   handleCopy,
-  handleDownload,
+  handleDownloadBase64,
   handleGetSeed,
 } from "@/lib/utils";
 
@@ -37,11 +38,7 @@ import { Label } from "../ui/label";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { useZoomImages } from "@/lib/store/useZoomImages";
 import { useExpandImages } from "@/lib/store/useExpandImages";
-import { useIsExpanded } from "@/lib/store/useIsExpanded";
-import { useIsExpandUp } from "@/lib/store/useIsExpandUp";
-import { useIsExpandDown } from "@/lib/store/useIsExpandDown";
-import { useIsExpandLeft } from "@/lib/store/useIsExpandLeft";
-import { useIsExpandRight } from "@/lib/store/useIsExpandRight";
+import { useIsUpscaled } from "@/lib/store/useIsUpscaled";
 
 export function ImageFullView({
   selectedIndex,
@@ -59,21 +56,9 @@ export function ImageFullView({
 }: FullViewData) {
   const [isFetching, setIsFetching] = useState(false);
 
-  const [isDisabledUpscale, setIsDisabledUpscale] = useState(false);
-  const [isDisabledZoom, setIsDisabledZoom] = useState(false);
-  const [isDisabledExpandLeftAndRight, setIsDisabledExpandLeftAndRight] =
-    useState(false);
-  const [isDisabledExpandUpAndDown, setIsDisabledExpandUpAndDown] =
-    useState(false);
-
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [isZooming, setIsZooming] = useState(false);
   const [isExpanding, setIsExpanding] = useState(false);
-
-  const [isUpscaled, setIsUpscaled] = useState(false);
-  const [isZoomed, setIsZoomed] = useState(false);
-
-  const [imageDatas, setImageDatas] = useState<TaskResult | null>();
 
   const [upscale2x, setUpscale2x] = useState<boolean>(false);
   const [upscale4x, setUpscale4x] = useState<boolean>(false);
@@ -92,20 +77,8 @@ export function ImageFullView({
   const setZoomImages = useZoomImages((state) => state.setImages);
   const setExpandImages = useExpandImages((state) => state.setImages);
 
-  const setIsExpanded = useIsExpanded((state) => state.setIsExpanded);
-  const isExpanded = useIsExpanded((state) => state.isExpanded);
-
-  const setIsExpandUp = useIsExpandUp((state) => state.setIsExpandeUp);
-  const isExpandUp = useIsExpandUp((state) => state.isExpandeUp);
-
-  const setIsExpandDown = useIsExpandDown((state) => state.setIsExpandeDown);
-  const isExpandDown = useIsExpandDown((state) => state.isExpandeDown);
-
-  const setIsExpandLeft = useIsExpandLeft((state) => state.setIsExpandeLeft);
-  const isExpandLeft = useIsExpandLeft((state) => state.isExpandeLeft);
-
-  const setIsExpandRight = useIsExpandRight((state) => state.setIsExpandeRight);
-  const isExpandRight = useIsExpandRight((state) => state.isExpandeRight);
+  const isUpscaled = useIsUpscaled((state) => state.isUpscaled);
+  const setIsUpscaled = useIsUpscaled((state) => state.setIsUpscaled);
 
   const model = tempFormValue?.model?.split(" --")[1];
   const option: Options = extractOptions(manualPrompt);
@@ -122,8 +95,8 @@ export function ImageFullView({
   const handleZoom = debounce(async (zoomValue: string) => {
     try {
       setIsZooming(true);
-      setImageDatas(null);
-      let zoomId: string;
+
+      let zoomId: string = "";
       let isFirstIntervalCompleted: boolean = false;
 
       const response = await axios.post("/api/upscale", {
@@ -160,7 +133,7 @@ export function ImageFullView({
 
       const intervalId = setInterval(async () => {
         try {
-          if (!isFirstIntervalCompleted) return;
+          if (isFirstIntervalCompleted === false || zoomId === "") return;
 
           const taskResult: FetchImageData = await axios.post(
             "/api/fetchImage",
@@ -169,17 +142,19 @@ export function ImageFullView({
             }
           );
 
-          setImageDatas(taskResult.data.task_result);
-
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
             setOriginTaskId(taskResult.data.task_id);
-            setZoomImages(taskResult.data.task_result.image_urls);
-            setParentImgArr(taskResult.data.task_result.image_urls);
+            const bast64ImgArr = await cropImageIntoFour(
+              taskResult.data.task_result.image_url
+            );
+
+            setParentImgArr(bast64ImgArr);
+            setZoomImages(bast64ImgArr);
+
             await handleGetSeed(zoomId, setParentSeed);
-            setImageDatas(taskResult.data.task_result);
+
             setIsZooming(false);
-            setIsZoomed(true);
           }
         } catch (error) {
           console.error("Error fetching image:", error);
@@ -193,8 +168,8 @@ export function ImageFullView({
   const handleExpand = debounce(async (expandValue: string) => {
     try {
       setIsExpanding(true);
-      setImageDatas(null);
-      let expandId: string;
+
+      let expandId: string = "";
       let isFirstIntervalCompleted: boolean = false;
 
       const response = await axios.post("/api/upscale", {
@@ -231,7 +206,7 @@ export function ImageFullView({
 
       const intervalId = setInterval(async () => {
         try {
-          if (!isFirstIntervalCompleted) return;
+          if (isFirstIntervalCompleted === false || expandId === "") return;
 
           const taskResult: FetchImageData = await axios.post(
             "/api/fetchImage",
@@ -240,17 +215,19 @@ export function ImageFullView({
             }
           );
 
-          setImageDatas(taskResult.data.task_result);
-
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
             setOriginTaskId(taskResult.data.task_id);
-            setExpandImages(taskResult.data.task_result.image_urls);
-            setParentImgArr(taskResult.data.task_result.image_urls);
+            const bast64ImgArr = await cropImageIntoFour(
+              taskResult.data.task_result.image_url
+            );
+
+            setParentImgArr(bast64ImgArr);
+            setExpandImages(bast64ImgArr);
+
             await handleGetSeed(expandId, setParentSeed);
-            setImageDatas(taskResult.data.task_result);
+
             setIsExpanding(false);
-            setIsExpanded(true);
           }
         } catch (error) {
           console.error("Error fetching image:", error);
@@ -264,7 +241,7 @@ export function ImageFullView({
   const handleUpscaleImage = debounce(async () => {
     try {
       setIsUpscaling(true);
-      setImageDatas(null);
+
       let upscaleId: string;
       let isFirstIntervalCompleted: boolean = false;
 
@@ -311,7 +288,7 @@ export function ImageFullView({
 
       const intervalId = setInterval(async () => {
         try {
-          if (!isFirstIntervalCompleted) return;
+          if (isFirstIntervalCompleted === false) return;
 
           const taskResult: FetchImageData = await axios.post(
             "/api/fetchImage",
@@ -320,14 +297,12 @@ export function ImageFullView({
             }
           );
 
-          setImageDatas(taskResult.data.task_result);
-
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
-            setUpscaleImages(taskResult.data.task_result.image_url);
-            setImageDatas(taskResult.data.task_result);
-            setIsUpscaling(false);
             setIsUpscaled(true);
+            setUpscaleImages(taskResult.data.task_result.image_url);
+
+            setIsUpscaling(false);
           }
         } catch (error) {
           console.error("Error fetching image:", error);
@@ -340,27 +315,7 @@ export function ImageFullView({
 
   useEffect(() => {
     setIsFetching(isUpscaling || isZooming || isExpanding);
-    setIsDisabledUpscale(isFetching || isExpanded);
-    setIsDisabledZoom(isFetching || isUpscaled);
-    setIsDisabledExpandLeftAndRight(
-      isDisabledZoom || isExpandUp || isExpandDown
-    );
-    setIsDisabledExpandUpAndDown(
-      isDisabledZoom || isExpandLeft || isExpandRight
-    );
-  }, [
-    isUpscaling,
-    isZooming,
-    isExpanding,
-    isExpanded,
-    isUpscaled,
-    isExpandDown,
-    isExpandLeft,
-    isExpandRight,
-    isExpandUp,
-    isFetching,
-    isDisabledZoom,
-  ]);
+  }, [isUpscaling, isZooming, isExpanding]);
 
   useEffect(() => {
     if (expandDirction !== "") {
@@ -387,10 +342,6 @@ export function ImageFullView({
     setMainImageIndex(undefined);
 
     setExpandDirction("");
-    setImageDatas(null);
-
-    setIsUpscaled(false);
-    setIsZoomed(false);
 
     setUpscale2x(false);
     setUpscale4x(false);
@@ -425,7 +376,7 @@ export function ImageFullView({
               variant="outline"
               className="absolute px-2.5 right-2 top-2 active:translate-y-[1px] rounded-md"
               onClick={() => {
-                handleDownload(
+                handleDownloadBase64(
                   parentimageArr[
                     mainImageIndex !== undefined
                       ? mainImageIndex
@@ -438,16 +389,6 @@ export function ImageFullView({
               <DownloadIcon width={20} height={20} color="black"></DownloadIcon>
             </Button>
 
-            <span
-              className={`${
-                (isUpscaling || isZooming || isExpanding) && "flicker"
-              } absolute p-2.5 right-0 top-10`}
-            >
-              {imageDatas
-                ? imageDatas?.task_progress >= 0 &&
-                  imageDatas?.task_progress + "%"
-                : ""}
-            </span>
             <div
               className={` w-[712px] h-[712px] flex-center ${
                 isFetching && "hidden"
@@ -542,7 +483,7 @@ export function ImageFullView({
                   <CopyIcon height={12} width={12}></CopyIcon>
                 </Button>
               </div>
-              <p className=" text-sm text-gray-600 leading-5 line-clamp-3">
+              <p className=" text-sm text-gray-600 leading-5 line-clamp-4">
                 {tempFormValue?.prompt || manualPrompt}
               </p>
 
@@ -576,7 +517,9 @@ export function ImageFullView({
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">chaos</span>
                   <span className="ml-1 text-gray-800">
-                    {tempFormValue?.chaos || option.Chaos}
+                    {tempFormValue?.chaos || tempFormValue?.chaos === 0
+                      ? tempFormValue?.chaos
+                      : option.Chaos}
                   </span>
                 </Badge>
 
@@ -627,15 +570,13 @@ export function ImageFullView({
               </div>
             </div>
             <div
-              className={`flex flex-col gap-2 w-full justify-between h-fit bg-white p-4 mt-4 rounded-md ${
-                isExpanded && `hidden`
-              }`}
+              className={`flex flex-col gap-2 w-full justify-between h-fit bg-white p-4 mt-4 rounded-md `}
             >
               <Button
                 type="button"
                 variant="outline"
                 className="px-2"
-                disabled={isDisabledUpscale}
+                disabled={isFetching}
                 onClick={() => {
                   if (model == "v 5.2") {
                     setUpscale2x(true);
@@ -662,7 +603,7 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2"
-                disabled={isDisabledUpscale}
+                disabled={isFetching}
                 onClick={() => {
                   if (model == "v 5.2") {
                     setUpscale4x(true);
@@ -692,7 +633,7 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2"
-                disabled={isDisabledZoom}
+                disabled={isFetching || isUpscaled}
                 onClick={() => {
                   handleZoom("1.5");
                 }}
@@ -713,7 +654,7 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2"
-                disabled={isDisabledZoom}
+                disabled={isFetching || isUpscaled}
                 onClick={() => {
                   handleZoom("2");
                 }}
@@ -734,8 +675,8 @@ export function ImageFullView({
               <Button
                 type="button"
                 variant="outline"
-                className={`px-2 hidden ${isExpanded && "flex"}`}
-                disabled={isDisabledZoom}
+                className={`px-2 flex`}
+                disabled={isFetching || isUpscaled}
                 onClick={() => {
                   handleZoom("1");
                 }}
@@ -759,7 +700,7 @@ export function ImageFullView({
                     type="button"
                     variant="outline"
                     className="px-2 w-full"
-                    disabled={isDisabledZoom}
+                    disabled={isFetching || isUpscaled}
                   >
                     {isZooming ? (
                       <>
@@ -798,16 +739,15 @@ export function ImageFullView({
             </div>
 
             <div
-              className={`flex flex-col gap-2 w-full  h-fit bg-white p-4 mt-4 rounded-md `}
+              className={`grid grid-cols-2 gap-2 w-full  h-fit bg-white p-4 mt-4 rounded-md `}
             >
               <Button
                 type="button"
                 variant="outline"
                 className="px-2"
-                disabled={isDisabledExpandUpAndDown}
+                disabled={isFetching || isUpscaled}
                 onClick={() => {
                   setExpandDirction("up");
-                  setIsExpandUp(true);
                 }}
               >
                 {isExpanding ? (
@@ -826,10 +766,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2"
-                disabled={isDisabledExpandUpAndDown}
+                disabled={isFetching || isUpscaled}
                 onClick={() => {
                   setExpandDirction("down");
-                  setIsExpandDown(true);
                 }}
               >
                 {isExpanding ? (
@@ -848,10 +787,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2"
-                disabled={isDisabledExpandLeftAndRight}
+                disabled={isFetching || isUpscaled}
                 onClick={() => {
                   setExpandDirction("right");
-                  setIsExpandRight(true);
                 }}
               >
                 {isExpanding ? (
@@ -870,10 +808,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2"
-                disabled={isDisabledExpandLeftAndRight}
+                disabled={isFetching || isUpscaled}
                 onClick={() => {
                   setExpandDirction("left");
-                  setIsExpandLeft(true);
                 }}
               >
                 {isExpanding ? (

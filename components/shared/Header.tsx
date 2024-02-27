@@ -17,8 +17,6 @@ export default function Header() {
           <CustomLink href="/order" text="订 阅"></CustomLink>
         </ul>
       </div>
-
-      {/* <div className="text-xl">登&nbsp;&nbsp;录</div> */}
     </div>
   );
 }

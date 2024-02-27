@@ -16,7 +16,6 @@ const handleFetch = async (req: NextRequest) => {
     }
 
     const taskResult = await axios.post(fetchUrl, { task_id: taskId });
-    console.log(taskResult.data.task_result.error_messages);
 
     return NextResponse.json(taskResult.data, {
       status: taskResult.status,
