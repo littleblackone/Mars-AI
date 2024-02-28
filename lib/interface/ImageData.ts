@@ -75,6 +75,10 @@ export interface ImageFormData {
   stylize: number;
   chaos: number;
   prompt: string;
+  imageWeight: number;
+  stop: number;
+
+  weird: number;
 }
 
 export interface StyleStatus {

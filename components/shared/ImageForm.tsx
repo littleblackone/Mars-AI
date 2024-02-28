@@ -8,9 +8,12 @@ import {
   CodeIcon,
   CopyIcon,
   EnterFullScreenIcon,
+  GearIcon,
   InfoCircledIcon,
   MagicWandIcon,
+  MinusIcon,
   Pencil2Icon,
+  PlusIcon,
 } from "@radix-ui/react-icons";
 import {
   Form,
@@ -48,7 +51,13 @@ import { Button } from "../ui/button";
 
 import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
-import { DownloadIcon, UploadCloudIcon, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  DownloadIcon,
+  UploadCloudIcon,
+  X,
+} from "lucide-react";
 import { Separator } from "../ui/separator";
 import { FileUploader } from "react-drag-drop-files";
 
@@ -107,14 +116,23 @@ export const ImageForm = () => {
   const [canBlend, setCanBlend] = useState(true);
 
   const [dimension, setDimension] = useState("square");
-  const [blendImgs, setBlendImgs] = useState<string[]>([]);
-  const [useFormData, setUseFormData] = useState(true);
+  // const [blendImgs, setBlendImgs] = useState<string[]>([]);
+  const [useTile, setUseTile] = useState(false);
   const [useTurbo, setUseTurbo] = useState(false);
   const [useStyleRow, setUseStyleRow] = useState(false);
 
   const [isDescribe, setIsDescribe] = useState(false);
 
   const [manualPrompt, setManualPrompt] = useState("");
+  const [imgPromptUrls, setImgPromptUrls] = useState([""]);
+  const [sreftUrl, setSrefUrl] = useState("");
+  const [asRatio, setAsRatio] = useState("");
+  const [customAs, setCustomAs] = useState(false);
+  const [customASW, setCustomASW] = useState(1);
+  const [customASH, setCustomASH] = useState(1);
+
+  const [useDefaultModel, setUseDefaultModel] = useState(true);
+  const [model, setModel] = useState(" --v 5.2");
 
   const fileTypes = ["png", "jpg", "jpeg", "webp"];
 
@@ -127,6 +145,85 @@ export const ImageForm = () => {
   const setHistoryBlendImgs = useBlendImages((state) => state.setImages);
 
   const isInpainting = useIsInpainting((state) => state.isInpainting);
+
+  // 添加输入框
+  const handleAddInput = () => {
+    if (imgPromptUrls.length < 5) {
+      setImgPromptUrls([...imgPromptUrls, ""]);
+    }
+  };
+
+  // 删除输入框
+  const handleRemoveInput = (indexToRemove: number) => {
+    setImgPromptUrls(
+      imgPromptUrls.filter((_, index) => index !== indexToRemove)
+    );
+  };
+
+  // 处理输入框变化
+  const handleInputChange = (index: number, value: string) => {
+    const newImageUrls = [...imgPromptUrls];
+    newImageUrls[index] = value;
+    setImgPromptUrls(newImageUrls);
+  };
+
+  // 处理输入框失焦事件
+  const handleInputBlur = async (index: number, type: string) => {
+    if (type === "imageUrls" && index !== -1) {
+      const url = imgPromptUrls[index];
+      const canAccessImg = await isUrlAccessible(url);
+      if (!isValidImageUrl(url) || canAccessImg === false) {
+        toast.error(`Image Urls ${index + 1} 格式错误或图片地址不存在`, {
+          duration: 3500,
+        });
+        const newImageUrls = [...imgPromptUrls];
+        newImageUrls[index] = ""; // 清空输入框
+        setImgPromptUrls(newImageUrls);
+      }
+    }
+    if (type === "srefUrls") {
+      const canAccessImg = await isUrlAccessible(sreftUrl);
+      if (!isValidImageUrl(sreftUrl) || canAccessImg === false) {
+        toast.error(`Style references Images Url 格式错误或图片地址不存在`, {
+          duration: 3500,
+        });
+        setSrefUrl(""); // 清空输入框
+      }
+    }
+  };
+
+  //检查图片地址是否能正常访问
+  const isUrlAccessible = async (url: string) => {
+    try {
+      const isWebp = url.endsWith(".webp");
+
+      if (isWebp) {
+        toast.error("不支持webp结尾的图片,请下载后本地上传。", {
+          duration: 3500,
+        });
+        return false;
+      }
+      const response = await fetch(url, { method: "HEAD" });
+      if (response.ok === false) {
+        toast.error("图片地址无法访问", {
+          duration: 3500,
+        });
+      }
+      return response.ok;
+    } catch (error) {
+      console.error("Error checking URL accessibility:", error);
+      return false;
+    }
+  };
+
+  // 检查URL格式是否有效
+  const isValidImageUrl = (url: string) => {
+    if (url === "") return true;
+    // const regex = /^https:\/\/.*\.(png|jpg|jpeg|webp)$/i;
+    const regex =
+      /^https:\/\/(?:[\w-]+\.)+[\w-]+(?:\/[\w-./?%&=]*)?(?:\.png|\.jpg|\.jpeg|\.webp)$/i;
+    return regex.test(url);
+  };
 
   const handleSelectImagUrl = (e: ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -236,11 +333,10 @@ export const ImageForm = () => {
           );
 
           setImageArr(bast64ImgArr);
-          setBlendImgs(bast64ImgArr);
           setHistoryBlendImgs(bast64ImgArr);
           setIsBlending(false);
           toast.success("blend成功! 如需对blend图片进行操作,请到文生图区域。", {
-            duration: 4000,
+            duration: 3500,
           });
         }
       }, 1000);
@@ -254,6 +350,14 @@ export const ImageForm = () => {
   const handleDescribe = async (imageUrl: string) => {
     try {
       setIsDescribe(true);
+      console.log(imageUrl);
+
+      const canAccess = await isUrlAccessible(imageUrl);
+      if (canAccess === false) {
+        setIsDescribe(false);
+        return;
+      }
+
       const response = await axios.post("/api/describe", {
         imageUrl,
         useTurbo,
@@ -479,8 +583,28 @@ export const ImageForm = () => {
       aspectRatio: " --ar 1:1",
       model: " --v 5.2",
       stylize: 100,
+      imageWeight: 1,
+      stop: 100,
+      weird: 0,
     },
   });
+
+  useEffect(() => {
+    if (model === " --v 5.2") {
+      setUseDefaultModel(true);
+    } else {
+      setUseDefaultModel(false);
+      setUseTurbo(false);
+    }
+  }, [model]);
+
+  useEffect(() => {
+    if (asRatio === " ") {
+      setCustomAs(true);
+    } else {
+      setCustomAs(false);
+    }
+  }, [asRatio]);
 
   useEffect(() => {
     if (blendImages.length >= 2 && blendImages.length <= 5) {
@@ -510,20 +634,30 @@ export const ImageForm = () => {
     }
   }, [useTurbo]);
 
-  const onSubmit = (values: z.infer<typeof ImageValidation>) => {
+  const onSubmit = async (values: z.infer<typeof ImageValidation>) => {
+    if (customASW / customASH < 0.5 || customASW / customASH > 2) {
+      toast.error("请输入合理比例的AspectRatio(0.5-2)", { duration: 3500 });
+      return;
+    }
     setImageArr([]);
     setFetchTime(0);
     setManualPrompt(values.prompt);
 
-    if (useFormData) {
-      setTempFormValue(values);
-      const finalPrompt = generateFinalPrompt(values, useStyleRow);
-      setFinalPrompt(finalPrompt);
-      handleGenerateImage(finalPrompt);
-    } else {
-      setTempFormValue(undefined);
-      handleGenerateImage(values.prompt);
-    }
+    setTempFormValue(values);
+    console.log(values);
+
+    const finalPrompt = await generateFinalPrompt(
+      values,
+      useStyleRow,
+      useTile,
+      imgPromptUrls,
+      sreftUrl,
+      customASW,
+      customASH
+    );
+    console.log(finalPrompt);
+
+    handleGenerateImage(finalPrompt);
   };
 
   return (
@@ -539,7 +673,7 @@ export const ImageForm = () => {
           </Link>
         </div>
         <div className=" flex items-center flex-1  w-full h-[95vh]">
-          <div className="  flex-shrink-0 w-fit px-6 py-4 h-full flex flex-col gap-6 items-start">
+          <div className="overflow-y-scroll styled-scrollbar  flex-shrink-0 w-fit px-6 py-4 h-full flex flex-col gap-4 items-start">
             <FormField
               control={form.control}
               name="model"
@@ -574,7 +708,11 @@ export const ImageForm = () => {
 
                   <div className=" -translate-y-[3px]">
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        setModel(value);
+
+                        field.onChange(value);
+                      }}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -599,83 +737,119 @@ export const ImageForm = () => {
               control={form.control}
               name="aspectRatio"
               render={({ field }) => (
-                <FormItem className="flex items-center justify-between  w-[200px]">
-                  <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                      AspectRatio:
-                    </FormLabel>
+                <FormItem className="flex flex-col items-center justify-between  w-[200px]">
+                  <div className=" flex justify-between items-center w-full">
+                    <div className=" flex gap-2 items-center">
+                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        AspectRatio:
+                      </FormLabel>
 
-                    <HoverCard openDelay={300}>
-                      <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                      </HoverCardTrigger>
-                      <HoverCardContent>
-                        <p className="text-white text-sm">
-                          命令: --aspect 或 --ar<br></br>
-                          生成图片的宽高比,默认为1:1,如果你想自定义,请选择最后一个选项,然后在prompt中使用命令。详情查看
-                          <Link
-                            target="_blank"
-                            rel="stylesheet"
-                            className=" text-blue-500 underline underline-offset-4"
-                            href="https://docs.midjourney.com/docs/aspect-ratios"
-                          >
-                            官方文档
-                          </Link>
-                        </p>
-                      </HoverCardContent>
-                    </HoverCard>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --aspect 或 --ar<br></br>
+                            生成图片的宽高比,默认为1:1,如果你想自定义,请选择最后一个选项(限制长宽比在
+                            0.5-2 之间),然后在prompt中使用命令。详情查看
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/aspect-ratios"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+
+                    <div className="-translate-y-[3px]">
+                      <Select
+                        onValueChange={(value) => {
+                          setAsRatio(value);
+                          field.onChange(value);
+                        }}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                            <SelectValue placeholder="图片比例"></SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value=" --ar 1:1">
+                            <div className="flex gap-1 items-center">
+                              <div className=" w-4 h-4 border-[1px] rounded-sm border-black"></div>
+                              <span>1:1</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value=" --ar 4:3">
+                            <div className="flex gap-1 items-center">
+                              <div className=" w-4 h-[12px] border-[1px] rounded-sm border-black"></div>
+                              <span>4:3</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value=" --ar 3:2">
+                            <div className="flex gap-1 items-center">
+                              <div className=" w-4 h-[10.6px] border-[1px] rounded-sm border-black"></div>
+                              <span>3:2</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value=" --ar 16:9">
+                            <div className="flex gap-1 items-center">
+                              <div className=" w-4 h-[9px] border-[1px] rounded-sm border-black"></div>
+                              <span>16:9</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value=" --ar 9:16">
+                            <div className="flex gap-1 items-center">
+                              <div className=" ml-1 mr-1.5 w-[9px] h-[16px] border-[1px] rounded-sm border-black"></div>
+                              <span>9:16</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value=" ">
+                            <div className="flex gap-1 items-center">
+                              <GearIcon></GearIcon>
+                              <span className=" text-xs">自定义</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
-                  <div className="-translate-y-[3px]">
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
-                          <SelectValue placeholder="图片比例"></SelectValue>
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value=" --ar 1:1">
-                          <div className="flex gap-1 items-center">
-                            <div className=" w-4 h-4 border-[1px] rounded-sm border-black"></div>
-                            <span>1:1</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value=" --ar 4:3">
-                          <div className="flex gap-1 items-center">
-                            <div className=" w-4 h-[12px] border-[1px] rounded-sm border-black"></div>
-                            <span>4:3</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value=" --ar 3:2">
-                          <div className="flex gap-1 items-center">
-                            <div className=" w-4 h-[10.6px] border-[1px] rounded-sm border-black"></div>
-                            <span>3:2</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value=" --ar 16:9">
-                          <div className="flex gap-1 items-center">
-                            <div className=" w-4 h-[9px] border-[1px] rounded-sm border-black"></div>
-                            <span>16:9</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value=" --ar 9:16">
-                          <div className="flex gap-1 items-center">
-                            <div className=" ml-1 mr-1.5 w-[9px] h-[16px] border-[1px] rounded-sm border-black"></div>
-                            <span>9:16</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value=" ">
-                          <div className="flex gap-1 items-center">
-                            <CodeIcon></CodeIcon>
-                            <span className=" text-xs">命令</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {customAs && (
+                    <div className="flex items-center text-xs text-neutral-800 font-medium justify-between">
+                      <div className="flex items-center  gap-1 mr-[1.1rem]">
+                        <span className=" text-base font-medium">长</span>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={customASW}
+                          onChange={(e) => setCustomASW(+e.target.value)}
+                          step={1}
+                          className=" w-[60px]"
+                        ></Input>
+                      </div>
+
+                      <span>:</span>
+
+                      <div className="flex items-center  gap-1 ml-[1rem]">
+                        <span className=" text-base font-medium">宽</span>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={customASH}
+                          onChange={(e) => setCustomASH(+e.target.value)}
+                          step={1}
+                          className=" w-[60px]"
+                        ></Input>
+                      </div>
+                    </div>
+                  )}
                 </FormItem>
               )}
             ></FormField>
@@ -734,52 +908,6 @@ export const ImageForm = () => {
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                </FormItem>
-              )}
-            ></FormField>
-
-            <Separator className=" w-full" />
-
-            <FormField
-              control={form.control}
-              name="negativePrompt"
-              render={({ field }) => (
-                <FormItem className="flex flex-col ">
-                  <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                      Negative Words:
-                    </FormLabel>
-                    <HoverCard openDelay={300}>
-                      <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                      </HoverCardTrigger>
-                      <HoverCardContent>
-                        <p className="text-white text-sm">
-                          命令: --no<br></br>
-                          不想图片中出现的元素(以逗号分开),比如:床,凳子,书桌
-                          详情查看
-                          <Link
-                            target="_blank"
-                            rel="stylesheet"
-                            className=" text-blue-500 underline underline-offset-4"
-                            href="https://docs.midjourney.com/docs/no"
-                          >
-                            官方文档
-                          </Link>
-                        </p>
-                      </HoverCardContent>
-                    </HoverCard>
-                  </div>
-
-                  <div className="-translate-y-[3px]">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-gray-100 border-none w-[90%] resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
-                        placeholder="不想出现的元素"
-                      ></Input>
-                    </FormControl>
                   </div>
                 </FormItem>
               )}
@@ -915,6 +1043,189 @@ export const ImageForm = () => {
 
             <Separator className=" w-full" />
 
+            <Separator className=" w-full" />
+            <FormField
+              control={form.control}
+              name="imageWeight"
+              render={({ field }) => (
+                <FormItem className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <div className=" flex gap-2 items-center">
+                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        Image Weight:
+                      </FormLabel>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --iw<br></br>
+                            范围:v5.2: 0-2, v6和niji 6: 0-3。当使用image
+                            prompt时,此项越高,图片对最终结果的影响权重越高,默认为1。
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/image-prompts"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                    <FormControl>
+                      <Input
+                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                        max={useDefaultModel ? 2 : 3}
+                        min={0}
+                        step={0.1}
+                        type="number"
+                        value={field.value}
+                        onChange={(e) => field.onChange(+e.target.value)}
+                      ></Input>
+                    </FormControl>
+                  </div>
+
+                  <div className="-translate-y-[3px]">
+                    <FormControl>
+                      <Slider
+                        defaultValue={[1]}
+                        max={useDefaultModel ? 2 : 3}
+                        value={[field.value]}
+                        step={0.1}
+                        onValueChange={(value) => field.onChange(value[0])}
+                        className=" w-[200px] cursor-pointer"
+                      ></Slider>
+                    </FormControl>
+                  </div>
+                  <FormMessage></FormMessage>
+                </FormItem>
+              )}
+            ></FormField>
+            <Separator className=" w-full" />
+            <FormField
+              control={form.control}
+              name="stop"
+              render={({ field }) => (
+                <FormItem className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <div className=" flex gap-2 items-center">
+                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        Stop:
+                      </FormLabel>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --stop<br></br>
+                            范围:10-100, 默认为100,
+                            调整此项将提前停止图像的生成,以较早的百分比停止作业可能会产生更模糊、不太详细的结果。
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/stop"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                    <FormControl>
+                      <Input
+                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                        max={100}
+                        min={10}
+                        step={1}
+                        type="number"
+                        value={field.value}
+                        onChange={(e) => field.onChange(+e.target.value)}
+                      ></Input>
+                    </FormControl>
+                  </div>
+                  <div className="-translate-y-[3px]">
+                    <FormControl>
+                      <Slider
+                        defaultValue={[10]}
+                        max={100}
+                        value={[field.value]}
+                        step={10}
+                        onValueChange={(value) => field.onChange(value[0])}
+                        className=" w-[200px] cursor-pointer"
+                      ></Slider>
+                    </FormControl>
+                  </div>
+                  <FormMessage></FormMessage>
+                </FormItem>
+              )}
+            ></FormField>
+            <Separator className=" w-full" />
+            <FormField
+              control={form.control}
+              name="weird"
+              render={({ field }) => (
+                <FormItem className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <div className=" flex gap-2 items-center">
+                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        Weird:
+                      </FormLabel>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --weird 或 --w<br></br>
+                            范围:0-3000, 默认为0,
+                            抽象程度,此参数为生成的图像引入了古怪和另类的品质,从而产生独特和意想不到的结果。
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/weird"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                    <FormControl>
+                      <Input
+                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                        max={3000}
+                        min={0}
+                        step={10}
+                        type="number"
+                        value={field.value}
+                        onChange={(e) => field.onChange(+e.target.value)}
+                      ></Input>
+                    </FormControl>
+                  </div>
+
+                  <div className="-translate-y-[3px]">
+                    <FormControl>
+                      <Slider
+                        defaultValue={[0]}
+                        max={3000}
+                        value={[field.value]}
+                        step={100}
+                        onValueChange={(value) => field.onChange(value[0])}
+                        className=" w-[200px] cursor-pointer"
+                      ></Slider>
+                    </FormControl>
+                  </div>
+                  <FormMessage></FormMessage>
+                </FormItem>
+              )}
+            ></FormField>
+            <Separator className=" w-full" />
             <FormField
               control={form.control}
               name="seeds"
@@ -922,7 +1233,7 @@ export const ImageForm = () => {
                 <FormItem className="flex flex-col ">
                   <div className=" flex gap-2 items-center">
                     <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                      seeds:
+                      Seeds:
                     </FormLabel>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
@@ -965,7 +1276,142 @@ export const ImageForm = () => {
                 </FormItem>
               )}
             ></FormField>
+            <Separator className=" w-full" />
+            <FormField
+              control={form.control}
+              name="negativePrompt"
+              render={({ field }) => (
+                <FormItem className="flex flex-col ">
+                  <div className=" flex gap-2 items-center">
+                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                      Negative Words:
+                    </FormLabel>
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          命令: --no<br></br>
+                          不想图片中出现的元素(以逗号分开),比如:床,凳子,书桌
+                          详情查看
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/no"
+                          >
+                            官方文档
+                          </Link>
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
 
+                  <div className="">
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className="bg-gray-100 border-none w-[90%] resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                        placeholder="不想出现的元素"
+                      ></Input>
+                    </FormControl>
+                  </div>
+                </FormItem>
+              )}
+            ></FormField>
+            <Separator className=" w-full" />
+
+            <div className="flex flex-col gap-2">
+              <div className=" flex gap-2 items-center">
+                <p className="text-neutral-800 font-medium text-nowrap text-sm">
+                  Image Urls:
+                </p>
+                <HoverCard openDelay={300}>
+                  <HoverCardTrigger>
+                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <p className="text-white text-sm">
+                      Image prompt中的image url,以 png, jpg, jpeg, webp 结尾,
+                      在prompt的最前面,
+                      您可以添加图像作为prompt的一部分来影响作业的构图、风格和颜色。
+                    </p>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+
+              <div className="flex gap-2 flex-col">
+                {imgPromptUrls.map((url, index) => (
+                  <div
+                    key={index}
+                    className=" flex gap-2 w-[212.92px] flex-col items-center"
+                  >
+                    <Input
+                      value={url}
+                      onBlur={() => handleInputBlur(index, "imageUrls")}
+                      onChange={(e) => handleInputChange(index, e.target.value)}
+                      className="bg-gray-100 border-none text-xs placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                      placeholder="https://example.com/image.png"
+                    ></Input>
+
+                    <div className=" self-end flex gap-2">
+                      <Button
+                        onClick={() => handleAddInput()}
+                        disabled={imgPromptUrls.length === 5}
+                        type="button"
+                        variant="outline"
+                        className=" px-1.5 py-0 h-8"
+                      >
+                        <PlusIcon width={15} height={15}></PlusIcon>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={imgPromptUrls.length === 1}
+                        className=" px-1.5 py-0 h-8"
+                        onClick={() => handleRemoveInput(index)}
+                      >
+                        <MinusIcon width={15} height={15}></MinusIcon>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <Separator className=" w-full" />
+
+            <div className="flex flex-col gap-2">
+              <div className=" flex gap-2 items-center">
+                <p className="text-neutral-800 font-medium text-nowrap text-sm">
+                  Style References Image Urls:
+                </p>
+                <HoverCard openDelay={300}>
+                  <HoverCardTrigger>
+                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    <p className="text-white text-sm">
+                      命令: --sref<br></br>
+                      仅适用于v 6, niji 6, 风格参考的image urls,以 png, jpg,
+                      jpeg, webp 结尾,
+                      在prompt的后面,可以得到与输入的图像非常相似的图像,可以与image
+                      prompt搭配使用。
+                    </p>
+                  </HoverCardContent>
+                </HoverCard>
+              </div>
+
+              <Input
+                value={sreftUrl}
+                disabled={useDefaultModel}
+                onBlur={() => handleInputBlur(-1, "srefUrls")}
+                onChange={(e) => setSrefUrl(e.target.value)}
+                className="bg-gray-100 border-none text-xs  placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                placeholder="https://example.com/image.png"
+              ></Input>
+            </div>
             <Separator className=" w-full" />
             <div className="flex flex-col gap-3">
               <div className=" w-full flex gap-[89px] text-black items-center">
@@ -976,8 +1422,11 @@ export const ImageForm = () => {
                   onCheckedChange={(value) => setUseStyleRow(value)}
                 ></Switch>
                 <div className="flex gap-2 items-center">
-                  <Label htmlFor="use-form-data" className=" text-sm">
-                    style raw
+                  <Label
+                    htmlFor="use-form-data"
+                    className=" text-sm cursor-pointer"
+                  >
+                    Style Raw
                   </Label>
                   <HoverCard openDelay={300}>
                     <HoverCardTrigger>
@@ -986,7 +1435,6 @@ export const ImageForm = () => {
                     <HoverCardContent>
                       <p className="text-white text-sm">
                         命令: --style row<br></br>
-                        仅v5.2,v6,niji6可用;
                         此项开启后,图像应用的自动美化较少,这可以在prompt特定样式时实现更准确的匹配。详情查看
                         <Link
                           target="_blank"
@@ -1001,16 +1449,16 @@ export const ImageForm = () => {
                   </HoverCard>
                 </div>
               </div>
-              <div className=" w-full flex gap-[63.5px] text-black items-center">
+              <div className=" w-full flex gap-[131px] text-black items-center">
                 <Switch
                   className=" scale-[0.8]"
-                  id="use-form-data"
-                  checked={useFormData}
-                  onCheckedChange={(value) => setUseFormData(value)}
+                  id="use-tile"
+                  checked={useTile}
+                  onCheckedChange={(value) => setUseTile(value)}
                 ></Switch>
                 <div className="flex gap-2 items-center">
-                  <Label htmlFor="use-form-data" className="text-sm">
-                    使用表格数据
+                  <Label htmlFor="use-tile" className="text-sm cursor-pointer">
+                    Tile
                   </Label>
                   <HoverCard openDelay={300}>
                     <HoverCardTrigger>
@@ -1018,23 +1466,32 @@ export const ImageForm = () => {
                     </HoverCardTrigger>
                     <HoverCardContent>
                       <p className="text-white text-sm">
-                        此项开启后,表格中的数据会作为命令自动填写到prompt中,如果您想使用自己的prompt,可以关闭。
-                        如果表格中的数据和prompt中的数据有冲突,那么表格中的数据会覆盖prompt中的数据。
+                        命令:--tile<br></br>
+                        此项开启可以生成重复的无缝图案,类似地板砖。详情查看
+                        <Link
+                          target="_blank"
+                          rel="stylesheet"
+                          className=" text-blue-500 underline underline-offset-4"
+                          href="https://docs.midjourney.com/docs/tile"
+                        >
+                          官方文档
+                        </Link>
                       </p>
                     </HoverCardContent>
                   </HoverCard>
                 </div>
               </div>
-              <div className=" w-full flex gap-[88px] text-black items-center">
+              <div className=" w-full flex gap-[87px] text-black items-center">
                 <Switch
                   checked={useTurbo}
+                  disabled={useDefaultModel === false}
                   className=" scale-[0.8]"
                   onCheckedChange={(value) => setUseTurbo(value)}
                   id="use-turbo"
                 ></Switch>
                 <div className="flex gap-2 items-center">
-                  <Label htmlFor="use-turbo" className="text-sm">
-                    turbo模式
+                  <Label htmlFor="use-turbo" className="text-sm cursor-pointer">
+                    Turbo模式
                   </Label>
                   <HoverCard openDelay={300}>
                     <HoverCardTrigger>
@@ -1068,7 +1525,7 @@ export const ImageForm = () => {
               render={({ field }) => (
                 <FormItem className="flex flex-col  w-full h-full">
                   <Tabs
-                    defaultValue="textToImage"
+                    defaultValue="ImageToImage"
                     className="flex flex-col h-full w-full items-center justify-between"
                   >
                     <TabsList className=" shadow-md bg-gray-200/20 my-2 p-4 py-6 gap-2 text-gray-600 rounded-md">
@@ -1301,16 +1758,31 @@ export const ImageForm = () => {
                               ></VaryRegion>
                             </div>
                           ))}
-                        <FormMessage className="ml-4"></FormMessage>
+                        <FormMessage className="ml-4 absolute bottom-[96px] left-[323px]"></FormMessage>
                         <div className="flex rounded-md w-full p-1 col-span-2 gap-2 flex-center bg-gray-100 mx-4 !mt-4">
+                          <HoverCard openDelay={300}>
+                            <HoverCardTrigger>
+                              <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                            </HoverCardTrigger>
+                            <HoverCardContent>
+                              <p className="text-white text-sm">
+                                1.暂时不支持中译英功能,请输入英文。<br></br>
+                                2.为了避免模型版本和命令参数冲突引发错误,请不要输入命令和图片地址,会被屏蔽。
+                                <br></br>
+                                3.请勿输入敏感内容,会被屏蔽。<br></br>
+                                4.左边的参数都是midjourney的默认值。
+                              </p>
+                            </HoverCardContent>
+                          </HoverCard>
                           <div className="flex w-full flex-center p-2 bg-gray-200 rounded-md">
                             <FormControl>
                               <Input
                                 className="bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                                placeholder="让你的想象变成事实......"
+                                placeholder="使用英文短语描述你的想象, 使用逗号分隔"
                                 {...field}
                               ></Input>
                             </FormControl>
+
                             <Button
                               type="submit"
                               size="lg"
@@ -1327,15 +1799,18 @@ export const ImageForm = () => {
                         </div>
                       </div>
                     </TabsContent>
-                    <TabsContent value="ImageToText" className=" w-full h-full">
+                    <TabsContent
+                      value="ImageToText"
+                      className=" w-full h-full p-4"
+                    >
                       <div className=" w-full h-full flex flex-col items-center justify-center bordern">
-                        <div className="w-full h-full rounded-md flex bg-white/35">
+                        <div className="w-full h-full rounded-md flex ">
                           <div className=" w-full h-full rounded-md gap-4 p-6 flex flex-col items-center justify-center">
                             {generatePrompts &&
                               generatePrompts.length === 4 &&
                               generatePrompts.map((prompt, index) => (
                                 <div
-                                  className=" flex gap-2 w-full h-full"
+                                  className=" flex gap-2 border-2 border-gray-500 rounded w-full h-full"
                                   key={index}
                                 >
                                   <div className="leading-6 h-[120px] overflow-y-scroll hide-scrollbar w-full  px-4 text-sm  font-medium text-gray-600 bg-white/30  p-2 rounded-md">
@@ -1364,7 +1839,21 @@ export const ImageForm = () => {
                           </div>
                           <div className=" w-full h-full flex-center">
                             <div className=" flex flex-col gap-4 items-center">
-                              <div className=" w-[350px] h-[350px] flex-center">
+                              <div className="flex gap-1 items-center self-start -mb-3 text-zinc-900 text-[1rem] font-medium">
+                                本地上传 :
+                                <HoverCard openDelay={300}>
+                                  <HoverCardTrigger>
+                                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent>
+                                    <p className="text-white text-sm">
+                                      上传您本地的图片文件,上传后会自动触发生成按钮,并返回您上传图片的在线地址在输入框中。
+                                      下面的图片是您本地上传的图片或是您输入的在线图片地址的图片。
+                                    </p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              </div>
+                              <div className=" w-[450px] h-[450px] flex-center">
                                 <img
                                   src={
                                     uploadImg !== ""
@@ -1376,14 +1865,15 @@ export const ImageForm = () => {
                                   className=" rounded-md max-w-[100%] max-h-[100%]"
                                   alt="describe image"
                                 ></img>
+                                a
                               </div>
 
                               <Input
                                 type="file"
                                 placeholder="Upload Image"
                                 accept="image/*"
-                                className="cursor-pointer bg-white/55 border-none"
-                                disabled={isFetching}
+                                className="cursor-pointer border-gray-600 border-2 bg-white/55 "
+                                disabled={isDescribe}
                                 onChange={(e) => {
                                   handleSelectImagUrl(e);
                                 }}
@@ -1393,12 +1883,13 @@ export const ImageForm = () => {
                                 size="lg"
                                 className="w-full flex gap-2 button-85 text-lg"
                                 disabled={
-                                  isFetching || selectImageFile == undefined
+                                  isDescribe || selectImageFile === undefined
                                 }
                                 onClick={() => {
                                   handleUploadImage();
                                 }}
                               >
+                                {selectImageFile?.name}
                                 <UploadCloudIcon></UploadCloudIcon>
                                 {isUploading ? (
                                   <>
@@ -1411,7 +1902,11 @@ export const ImageForm = () => {
                             </div>
                           </div>
                         </div>
-                        <div className=" w-full flex rounded-md p-1  gap-2 flex-center bg-gray-100 mx-4 !mt-4">
+
+                        <p className=" self-start -mb-3 text-[1rem] font-medium text-zinc-900">
+                          在线图片地址上传 :
+                        </p>
+                        <div className=" w-full flex rounded-md p-2 gap-2 flex-center bg-gray-200 mx-4 !mt-4">
                           <div className="flex w-full flex-center">
                             <Input
                               value={describeImageUrl}
@@ -1419,7 +1914,7 @@ export const ImageForm = () => {
                                 setDescribeImageUrl(e.target.value)
                               }
                               className=" bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                              placeholder="在线图片地址(格式后缀结尾,如:https://example.com/image.jpg,不支持webp,如果想描述midjourney官网的图片,请下载后再上传)"
+                              placeholder="在线图片地址,png, jpg, jpeg后缀结尾,如:https://example.com/image.jpg,不支持webp,如果想描述midjourney官网的图片,请下载后再上传)"
                             ></Input>
 
                             <Button
@@ -1427,7 +1922,7 @@ export const ImageForm = () => {
                               size="lg"
                               className="w-fit button-85 ml-2  text-lg"
                               disabled={isDescribe || describeImageUrl == ""}
-                              onClick={() => {
+                              onClick={async () => {
                                 setUploadImg("");
                                 handleDescribe(describeImageUrl);
                               }}
@@ -1446,48 +1941,89 @@ export const ImageForm = () => {
                     </TabsContent>
                     <TabsContent
                       value="ImageToImage"
-                      className=" w-[90%] h-full"
+                      className="w-full h-full p-4"
                     >
                       <div className=" w-full h-full bg-white/35 p-2 rounded-md">
-                        <div className="flex-center w-full h-full gap-4">
-                          <div
-                            className={` w-[500px] h-[500px] grid grid-cols-2 gap-2 ${
-                              blendImgs.length === 0 && `!flex-center`
-                            } `}
-                          >
-                            {blendImgs.length === 0 && (
-                              <img
-                                src={"/pending2.png"}
-                                alt="blend image"
-                                className={`rounded-md max-w-[100%] max-h-[100%] ${
-                                  isBlending && "flicker"
-                                }`}
-                              />
-                            )}
-                            {blendImgs.length === 4 &&
-                              blendImgs.map((img) => (
-                                <div className=" w-[220px] h-[220px] flex-center">
+                        <div className="flex flex-col items-center w-full h-full gap-4">
+                          <div className=" mt-10 relative w-[480px] h-[480px] border-dashed border-2 border-gray-800 flex flex-wrap gap-1 flex-center">
+                            {blendOrgins.map((image, index) =>
+                              index !== 4 ? (
+                                <div className="p-[0.6rem] relative rounded-md group w-[220px] h-[220px] mb-2 flex-center border-[1px] border-black ">
                                   <img
-                                    src={img}
-                                    alt="blend image"
-                                    className={`rounded-md hover:scale-105 transition-all duration-200 max-w-[100%] max-h-[100%] ${
-                                      isBlending && "flicker"
-                                    }`}
+                                    src={image.src}
+                                    alt={image.name}
+                                    className=" max-w-[100%] max-h-[100%]  rounded-md"
                                   />
+                                  <X
+                                    onClick={() => {
+                                      setBlendImages((pre) =>
+                                        pre.filter((file, i) => i !== index)
+                                      );
+                                      setBlendOrgins((pre) =>
+                                        pre.filter(
+                                          (old) => old.src !== image.src
+                                        )
+                                      );
+                                    }}
+                                    className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
+                                  ></X>
                                 </div>
-                              ))}
+                              ) : (
+                                <div className="p-[0.6rem] absolute group rounded-md border-[1px] border-black translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[220px] h-[220px] mb-2 flex-center">
+                                  <img
+                                    src={image.src}
+                                    alt={image.name}
+                                    className=" max-w-[100%] max-h-[100%]  rounded-md"
+                                  />
+                                  <X
+                                    onClick={() => {
+                                      setBlendImages((pre) =>
+                                        pre.filter((file, i) => i !== index)
+                                      );
+                                      setBlendOrgins((pre) =>
+                                        pre.filter(
+                                          (old) => old.src !== image.src
+                                        )
+                                      );
+                                    }}
+                                    className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
+                                  ></X>
+                                </div>
+                              )
+                            )}
                           </div>
 
-                          <div className=" max-w-[350px] rounded-md h-full flex-center flex-col p-4 px-6 ">
+                          <div className="  max-w-[350px] rounded-md  h-fit mb-10 flex-center flex-col p-4 px-6">
                             <div className="mb-4 self-start flex gap-2 items-center">
-                              <p className="text-md font-medium">dimension:</p>
+                              <p className="text-md flex gap-2 justify-center items-center font-medium">
+                                dimension:
+                                <HoverCard openDelay={300}>
+                                  <HoverCardTrigger>
+                                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent>
+                                    <p className="text-white text-sm">
+                                      blend图片的aspect
+                                      ratio值,默认为square(1:1)
+                                      <Link
+                                        target="_blank"
+                                        rel="stylesheet"
+                                        className=" text-blue-500 underline underline-offset-4"
+                                        href="https://docs.midjourney.com/docs/blend-1"
+                                      >
+                                        官方文档
+                                      </Link>
+                                    </p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              </p>
                               <Select
                                 onValueChange={(value) => {
                                   setDimension(value);
                                 }}
                                 defaultValue={"square"}
                               >
-                                <SelectTrigger className="bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                                <SelectTrigger className="bg-gray-100 border border-gray-800 py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                                   <SelectValue placeholder="dimension"></SelectValue>
                                 </SelectTrigger>
 
@@ -1532,57 +2068,11 @@ export const ImageForm = () => {
                                 </div>
                               </div>
                             </FileUploader>
-                            <div className=" mt-4 relative flex flex-wrap gap-1 w-full flex-center">
-                              {blendOrgins.map((image, index) =>
-                                index !== 4 ? (
-                                  <div className="p-[0.6rem] relative rounded-md group w-[130px] h-[130px] mb-2 flex-center border-[1px] border-black ">
-                                    <img
-                                      src={image.src}
-                                      alt={image.name}
-                                      className=" max-w-[100%] max-h-[100%]  rounded-md"
-                                    />
-                                    <X
-                                      onClick={() => {
-                                        setBlendImages((pre) =>
-                                          pre.filter((file, i) => i !== index)
-                                        );
-                                        setBlendOrgins((pre) =>
-                                          pre.filter(
-                                            (old) => old.src !== image.src
-                                          )
-                                        );
-                                      }}
-                                      className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
-                                    ></X>
-                                  </div>
-                                ) : (
-                                  <div className="p-[0.6rem] absolute group rounded-md border-[1px] border-black translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[130px] h-[130px] mb-2 flex-center">
-                                    <img
-                                      src={image.src}
-                                      alt={image.name}
-                                      className=" max-w-[100%] max-h-[100%]  rounded-md"
-                                    />
-                                    <X
-                                      onClick={() => {
-                                        setBlendImages((pre) =>
-                                          pre.filter((file, i) => i !== index)
-                                        );
-                                        setBlendOrgins((pre) =>
-                                          pre.filter(
-                                            (old) => old.src !== image.src
-                                          )
-                                        );
-                                      }}
-                                      className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
-                                    ></X>
-                                  </div>
-                                )
-                              )}
-                            </div>
+
                             <Button
                               type="button"
                               size="lg"
-                              className="w-full  flex gap-2 button-85 text-lg"
+                              className="w-full mt-2 flex gap-2 button-85 text-lg"
                               disabled={isBlending || canBlend === false}
                               onClick={() => {
                                 handleBlend();

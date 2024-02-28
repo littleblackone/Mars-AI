@@ -279,21 +279,17 @@
 
 /* 定义滚动条轨道的样式 */
 .styled-scrollbar::-webkit-scrollbar-track {
-  background: transparent; /* 设置滚动条轨道的背景色 */
+  background: #f1f1f1; /* 设置滚动条轨道的背景色 */
 }
 
 /* 定义滚动条滑块的样式 */
 .styled-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(241, 239, 239, 0.2); /* 设置滚动条滑块的背景色 */
-  border-radius: 5px; /* 设置滚动条滑块的圆角 */
+  background: #c7c5c5; /* 设置滚动条滑块的背景色 */
 }
 
 /* 鼠标悬停在滚动条滑块上时的样式 */
 .styled-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgb(241, 239, 239, 0.5); /* 设置鼠标悬停时滚动条滑块的背景色 */
-}
-.styled-scrollbar::-webkit-scrollbar-corner {
-  display: none;
+  background: #b4b3b3; /* 设置鼠标悬停时滚动条滑块的背景色 */
 }
 
 /* 隐藏滚动条 */

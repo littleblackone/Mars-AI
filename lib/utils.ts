@@ -5,7 +5,7 @@ import {
 } from "@/lib/interface/ImageData";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { styles } from "./constant";
+
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -27,9 +27,39 @@ export function generateRandomInteger() {
   return Math.floor(Math.random() * 4294967295);
 }
 
-export function generateFinalPrompt(
+const handleIw = (iw: number) => {
+  if (iw > 0 && iw < 1) {
+    return (iw + "").split("0")[1];
+  } else {
+    return iw;
+  }
+};
+
+function cleanInput(input: string) {
+  // 替换连字符 -- 及其后面的内容为空字符串
+  input = input.replace(/--.*/, "");
+
+  // 去除图片地址
+  // input = input.replace(/\bhttps?:\/\/\S+/gi, "");
+  input = input.replace(/\//g, "");
+
+  // 使用正则表达式保留英文、中文和常用标点符号
+  input = input.replace(
+    /[^\u0020-\u007E\uFF00-\uFFEF\u3000-\u303F\uFF00-\uFFEF\u2000-\u206F]+/g,
+    ""
+  );
+
+  return input;
+}
+
+export async function generateFinalPrompt(
   values: ImageFormData,
-  useStyleRow: boolean
+  useStyleRow: boolean,
+  useTile: boolean,
+  imageUrls: string[],
+  srefUrl: string,
+  customASW: number,
+  customASH: number
 ) {
   const {
     prompt,
@@ -40,17 +70,46 @@ export function generateFinalPrompt(
     aspectRatio,
     model,
     quality,
+    stop,
+    weird,
+    imageWeight,
   } = values;
 
   const handledNegativePrompt =
-    " --no " + negativePrompt?.replace(/，/g, ",").replace(/\s+/g, "").trim();
+    " --no " +
+    negativePrompt
+      ?.replace(/[^a-zA-Z,]+/g, "")
+      .replace(/,{2,}/g, ",")
+      .replace(/^,|,$/g, "")
+      .trim();
 
   const finalPromptArray = [];
 
-  finalPromptArray.push(prompt);
+  imageUrls.map((url) => {
+    if (url != "") {
+      finalPromptArray.push(url + " ");
+    }
+  });
+
+  const handledPrompt = cleanInput(prompt);
+
+  const response = await axios.post(
+    "https://api.midjourneyapi.xyz/mj/v2/validation",
+    { prompt: handledPrompt }
+  );
+
+  if (response.data.ErrorMessage !== "") {
+    toast.error(response.data.ErrorMessage, { duration: 3500 });
+    return "a cute cat";
+  }
+
+  finalPromptArray.push(handledPrompt);
 
   if (useStyleRow) {
     finalPromptArray.push(" --style raw");
+  }
+  if (useTile) {
+    finalPromptArray.push(" --tile");
   }
 
   if (handledNegativePrompt !== " --no ") {
@@ -59,14 +118,25 @@ export function generateFinalPrompt(
 
   if (aspectRatio !== " ") {
     finalPromptArray.push(aspectRatio);
+  } else {
+    finalPromptArray.push(` --ar ${customASW + ":" + customASH}`);
   }
+
+  const newIw = handleIw(imageWeight);
 
   finalPromptArray.push(
     quality,
     ` --stylize ${stylize}`,
     ` --chaos ${chaos}`,
+    ` --w ${weird}`,
+    ` --stop ${stop}`,
+    ` --iw ${newIw}`,
     model
   );
+
+  if (srefUrl !== "") {
+    finalPromptArray.push(` --sref ${srefUrl}`);
+  }
 
   if (seeds !== 0) {
     finalPromptArray.push(` --seed ${seeds}`);
@@ -329,7 +399,6 @@ export async function cropImageIntoFour(imageUrl: string): Promise<string[]> {
     };
   });
 }
-
 
 export const handleDownloadBase64 = (base64Data: string, index: number) => {
   try {
