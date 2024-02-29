@@ -27,7 +27,7 @@ export function generateRandomInteger() {
   return Math.floor(Math.random() * 4294967295);
 }
 
-const handleIw = (iw: number) => {
+export const handleIw = (iw: number) => {
   if (iw > 0 && iw < 1) {
     return (iw + "").split("0")[1];
   } else {
@@ -35,7 +35,20 @@ const handleIw = (iw: number) => {
   }
 };
 
-function cleanInput(input: string) {
+export const handleQuality = (q: string) => {
+  // " --q .25" | " --q .5" | " --q 1"
+  if (q === " --q .25") {
+    return ".25";
+  }
+  if (q === " --q .5") {
+    return ".5";
+  }
+  if (q === " --q 1") {
+    return "1";
+  }
+};
+
+export function cleanInput(input: string) {
   // 替换连字符 -- 及其后面的内容为空字符串
   input = input.replace(/--.*/, "");
 
@@ -323,9 +336,9 @@ export function extractOptions(inputString: string): Options {
       case "seed":
         options.Seed = value;
         break;
-      case "version":
       case "v":
-        options.Version = value;
+      case "niji":
+        options.Version = `${key} ${value}`;
         break;
       default:
         break;

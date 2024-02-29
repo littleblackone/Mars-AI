@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { ThickArrowRightIcon } from "@radix-ui/react-icons";
+import { InfoCircledIcon, ThickArrowRightIcon } from "@radix-ui/react-icons";
 import Cropper, { ReactCropperElement } from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import {
@@ -11,12 +11,21 @@ import {
   TaskResult,
 } from "@/lib/interface/ImageData";
 import axios from "axios";
-import { useInpaintImages } from "@/lib/store/useInpaintImages";
+import { useInpaintImages } from "@/lib/store/ImagesList/useInpaintImages";
 import { toast } from "sonner";
-import { handleGetSeed } from "@/lib/utils";
+import {
+  cleanInput,
+  cropImageIntoFour,
+  debounce,
+  handleGetSeed,
+} from "@/lib/utils";
 import { X } from "lucide-react";
 import { useIsInpainting } from "@/lib/store/useisInpainting";
-import { useIsCropLoading } from "@/lib/store/useIsCropLoading";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
 
 export default function VaryRegion({
   open,
@@ -46,6 +55,7 @@ export default function VaryRegion({
   const isInpainting = useIsInpainting((state) => state.isInpainting);
   const setIsInpainting = useIsInpainting((state) => state.setIsInpainting);
   const setInpaintImages = useInpaintImages((state) => state.setImages);
+  const setInpaintPrompts = useInpaintImages((state) => state.setPrompts);
 
   // parentimageArr = [
   //   "https://cdn.midjourney.com/b4637836-433c-4e39-bbbd-2d42df177832/0_3.webp",
@@ -147,11 +157,11 @@ export default function VaryRegion({
 
           if (taskResult.data.status === "finished") {
             clearInterval(upscaleIntervalId);
-
+            const cleanedPrompt = cleanInput(prompt);
             const response = await axios.post("/api/inpaint", {
               mask: blackWhiteImg,
               originTaskId: taskId,
-              prompt,
+              cleanedPrompt,
             });
 
             inpaintId = response.data.task_id;
@@ -164,7 +174,7 @@ export default function VaryRegion({
       }, 1000);
 
       const intervalId = setInterval(async () => {
-        if (isFirstIntervalCompleted === false) return;
+        if (isFirstIntervalCompleted === false || inpaintId === "") return;
 
         const taskResult: FetchImageData = await axios.post("/api/fetchImage", {
           taskId: inpaintId,
@@ -173,9 +183,14 @@ export default function VaryRegion({
         if (taskResult.data.status === "finished") {
           clearInterval(intervalId);
           setIsInpainting(false);
+          const prompt = taskResult.data.meta.task_param.prompt;
+          setInpaintPrompts(prompt);
+          const bast64ImgArr = await cropImageIntoFour(
+            taskResult.data.task_result.image_url
+          );
+          setParentImageArr(bast64ImgArr);
+          setInpaintImages(bast64ImgArr);
           setOriginTaskId(taskResult.data.task_id);
-          setParentImageArr(taskResult.data.task_result.image_urls);
-          setInpaintImages(taskResult.data.task_result.image_urls);
           await handleGetSeed(inpaintId, setParentSeed);
           toast.success("Vary(Region)成功!");
         }
@@ -212,7 +227,8 @@ export default function VaryRegion({
           <Input
             type="text"
             autoFocus={true}
-            // value={prompt}
+            value={prompt}
+            maxLength={3000}
             placeholder="描述你选择的区域"
             onChange={(e) => setPrompt(e.target.value)}
             className=" self-center  rounded-xl bg-transparent p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
@@ -221,7 +237,7 @@ export default function VaryRegion({
             type="button"
             className=" rounded-xl mr-2"
             onClick={() => {
-              handleInpaint();
+              debounce(handleInpaint, 1000)();
               setOpen(false);
             }}
           >

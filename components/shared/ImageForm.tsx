@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ImageValidation } from "../../lib/validations";
 import {
   ArrowLeftIcon,
-  CodeIcon,
   CopyIcon,
   EnterFullScreenIcon,
   GearIcon,
@@ -41,23 +40,13 @@ import {
   handleGetSeed,
 } from "@/lib/utils";
 import axios from "axios";
-import {
-  TaskResult,
-  ImageFormData,
-  FetchImageData,
-} from "@/lib/interface/ImageData";
+import { ImageFormData, FetchImageData } from "@/lib/interface/ImageData";
 
 import { Button } from "../ui/button";
 
 import { Slider } from "../ui/slider";
 import { Input } from "../ui/input";
-import {
-  ArrowDown,
-  ArrowRight,
-  DownloadIcon,
-  UploadCloudIcon,
-  X,
-} from "lucide-react";
+import { DownloadIcon, UploadCloudIcon, X } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { FileUploader } from "react-drag-drop-files";
 
@@ -69,8 +58,8 @@ import {
 } from "../ui/tooltip";
 import { ImageFullView } from "./ImageFullView";
 import { toast } from "sonner";
-import { useOriginImage } from "@/lib/store/useOriginImage";
-import { useVaryImage } from "@/lib/store/useVaryImage";
+import { useOriginImage } from "@/lib/store/ImagesList/useOriginImage";
+import { useVaryImage } from "@/lib/store/ImagesList/useVaryImage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 import VaryRegion from "./VaryRegion";
@@ -84,12 +73,19 @@ import {
 } from "../ui/hover-card";
 import Link from "next/link";
 import HistoryImage from "./HistoryImage";
-import { useBlendImages } from "@/lib/store/useBlendImages";
+import { useBlendImages } from "@/lib/store/ImagesList/useBlendImages";
+import FullViewImg from "./FullViewImg";
+import { useFullViewImage } from "@/lib/store/useFullViewImage";
 
 export const ImageForm = () => {
   const [fetchTime, setFetchTime] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(false);
-  const [imageArr, setImageArr] = useState<string[]>([]);
+  const [imageArr, setImageArr] = useState<string[]>([
+    "https://cdn.midjourney.com/6ea0861e-c03f-46f4-a898-000d6dd2c801/0_2.webp",
+    "https://cdn.midjourney.com/6ea0861e-c03f-46f4-a898-000d6dd2c801/0_2.webp",
+    "https://cdn.midjourney.com/6ea0861e-c03f-46f4-a898-000d6dd2c801/0_2.webp",
+    "https://cdn.midjourney.com/6ea0861e-c03f-46f4-a898-000d6dd2c801/0_2.webp",
+  ]);
   const [taskId, setTaskId] = useState<string>("");
   const [seed, setSeed] = useState<string>("");
   const [tempFormValue, setTempFormValue] = useState<ImageFormData>();
@@ -116,7 +112,7 @@ export const ImageForm = () => {
   const [canBlend, setCanBlend] = useState(true);
 
   const [dimension, setDimension] = useState("square");
-  // const [blendImgs, setBlendImgs] = useState<string[]>([]);
+
   const [useTile, setUseTile] = useState(false);
   const [useTurbo, setUseTurbo] = useState(false);
   const [useStyleRow, setUseStyleRow] = useState(false);
@@ -141,10 +137,18 @@ export const ImageForm = () => {
   const IMGBB_KEY = "bf349c2c6056943bee6bc4a507958c22";
 
   const setOriginImages = useOriginImage((state) => state.setImages);
+  const setOriginPrompts = useOriginImage((state) => state.setPrompts);
   const setVaryImages = useVaryImage((state) => state.setImages);
+  const setVaryPrompts = useVaryImage((state) => state.setPrompts);
   const setHistoryBlendImgs = useBlendImages((state) => state.setImages);
 
   const isInpainting = useIsInpainting((state) => state.isInpainting);
+
+  const fullImgIndex = useFullViewImage((state) => state.index);
+  const fullImgOpen = useFullViewImage((state) => state.open);
+  const fullImgImgUrl = useFullViewImage((state) => state.imgUrl);
+  const fullImgListName = useFullViewImage((state) => state.imgListName);
+  const setFullImgOpen = useFullViewImage((state) => state.setOpen);
 
   // 添加输入框
   const handleAddInput = () => {
@@ -171,7 +175,7 @@ export const ImageForm = () => {
   const handleInputBlur = async (index: number, type: string) => {
     if (type === "imageUrls" && index !== -1) {
       const url = imgPromptUrls[index];
-      const canAccessImg = await isUrlAccessible(url);
+      const canAccessImg = await isUrlAccessibleImgPrompt(url);
       if (!isValidImageUrl(url) || canAccessImg === false) {
         toast.error(`Image Urls ${index + 1} 格式错误或图片地址不存在`, {
           duration: 3500,
@@ -182,13 +186,23 @@ export const ImageForm = () => {
       }
     }
     if (type === "srefUrls") {
-      const canAccessImg = await isUrlAccessible(sreftUrl);
+      const canAccessImg = await isUrlAccessibleImgPrompt(sreftUrl);
       if (!isValidImageUrl(sreftUrl) || canAccessImg === false) {
         toast.error(`Style references Images Url 格式错误或图片地址不存在`, {
           duration: 3500,
         });
         setSrefUrl(""); // 清空输入框
       }
+    }
+  };
+
+  const isUrlAccessibleImgPrompt = async (url: string) => {
+    try {
+      const response = await fetch(url, { method: "HEAD" });
+      return response.ok;
+    } catch (error) {
+      console.error("Error checking URL accessibility:", error);
+      return false;
     }
   };
 
@@ -412,7 +426,8 @@ export const ImageForm = () => {
             const bast64ImgArr = await cropImageIntoFour(
               taskResult.data.task_result.image_url
             );
-
+            const prompt = taskResult.data.meta.task_param.prompt;
+            setVaryPrompts(prompt);
             setImageArr(bast64ImgArr);
             setVaryImages(bast64ImgArr);
             setTaskId(taskResult.data.task_id);
@@ -488,7 +503,8 @@ export const ImageForm = () => {
             const bast64ImgArr = await cropImageIntoFour(
               taskResult.data.task_result.image_url
             );
-
+            const prompt = taskResult.data.meta.task_param.prompt;
+            setVaryPrompts(prompt);
             setImageArr(bast64ImgArr);
             setVaryImages(bast64ImgArr);
             setTaskId(taskResult.data.task_id);
@@ -551,7 +567,10 @@ export const ImageForm = () => {
               taskResult.data.task_result.image_url
             );
 
+            const prompt = taskResult.data.meta.task_param.prompt;
+            setOriginPrompts(prompt);
             setImageArr(bast64ImgArr);
+
             setOriginImages(bast64ImgArr);
 
             await handleGetSeed(taskId, setSeed);
@@ -656,92 +675,221 @@ export const ImageForm = () => {
       customASH
     );
     console.log(finalPrompt);
-
-    handleGenerateImage(finalPrompt);
+    setFinalPrompt(finalPrompt);
+    debounce(handleGenerateImage(finalPrompt), 1000)();
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className=" w-full h-full">
-        <div className=" h-[5vh] w-full bg-white border-b flex p-2 px-[1.4rem] items-center">
-          <Link
-            href="/"
-            className=" w-fit active:translate-y-[1px] h-[30px] bg-gray-100 rounded-md hover:bg-gray-200 transition-all duration-200 p-2 flex-center"
-          >
-            <ArrowLeftIcon width={20} height={20}></ArrowLeftIcon>
-            <span>返回</span>
-          </Link>
-        </div>
-        <div className=" flex items-center flex-1  w-full h-[95vh]">
-          <div className="overflow-y-scroll styled-scrollbar  flex-shrink-0 w-fit px-6 py-4 h-full flex flex-col gap-4 items-start">
-            <FormField
-              control={form.control}
-              name="model"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between w-[200px]">
-                  <div className=" flex gap-2 items-center">
-                    <FormLabel className=" text-neutral-800 text-nowrap text-sm">
-                      Models:
-                    </FormLabel>
-                    <HoverCard openDelay={300}>
-                      <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                      </HoverCardTrigger>
-                      <HoverCardContent>
-                        <p className="text-white text-sm">
-                          命令: --v 5.2<br></br>
-                          midjourney模型,目前提供v5.2, v6, niji 6 这3个模型,
-                          niji 6 用于生成动漫风格图片,默认为
-                          v5.2。如果你想使用其他模型,可以自己在prompt中添加命令,详情查看
-                          <Link
-                            target="_blank"
-                            rel="stylesheet"
-                            className=" text-blue-500 underline underline-offset-4"
-                            href="https://docs.midjourney.com/docs/model-versions"
-                          >
-                            官方文档
-                          </Link>
-                        </p>
-                      </HoverCardContent>
-                    </HoverCard>
-                  </div>
+    <>
+      <FullViewImg
+        index={fullImgIndex}
+        open={fullImgOpen}
+        imgUrl={fullImgImgUrl}
+        imgListName={fullImgListName}
+        setOpen={setFullImgOpen}
+      ></FullViewImg>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className=" w-full h-full">
+          <div className=" h-[5vh] w-full bg-white border-b flex p-2 px-[1.4rem] items-center">
+            <Link
+              href="/"
+              className=" w-fit active:translate-y-[1px] h-[30px] bg-gray-100 rounded-md hover:bg-gray-200 transition-all duration-200 p-2 flex-center"
+            >
+              <ArrowLeftIcon width={20} height={20}></ArrowLeftIcon>
+              <span>返回</span>
+            </Link>
+          </div>
+          <div className=" flex items-center flex-1  w-full h-[95vh]">
+            <div className="overflow-y-scroll styled-scrollbar  flex-shrink-0 w-fit px-6 py-4 h-full flex flex-col gap-4 items-start">
+              <FormField
+                control={form.control}
+                name="model"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between w-[200px]">
+                    <div className=" flex gap-2 items-center">
+                      <FormLabel className=" text-neutral-800 text-nowrap text-sm">
+                        Models:
+                      </FormLabel>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --v 5.2<br></br>
+                            midjourney模型,目前提供v5.2, v6, niji 6 这3个模型,
+                            niji 6 用于生成动漫风格图片,默认为
+                            v5.2。如果你想使用其他模型,可以自己在prompt中添加命令,详情查看
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/model-versions"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
 
-                  <div className=" -translate-y-[3px]">
-                    <Select
-                      onValueChange={(value) => {
-                        setModel(value);
+                    <div className=" -translate-y-[3px]">
+                      <Select
+                        onValueChange={(value) => {
+                          setModel(value);
 
-                        field.onChange(value);
-                      }}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className=" bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
-                          <SelectValue placeholder="模型"></SelectValue>
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className=" focus:ring-transparent">
-                        <SelectItem value=" --v 5.2">v5.2</SelectItem>
-                        <SelectItem value=" --v 6">v6</SelectItem>
-                        <SelectItem value=" --niji 6">niji 6</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </FormItem>
-              )}
-            ></FormField>
+                          field.onChange(value);
+                        }}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className=" bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                            <SelectValue placeholder="模型"></SelectValue>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className=" focus:ring-transparent">
+                          <SelectItem value=" --v 5.2">v5.2</SelectItem>
+                          <SelectItem value=" --v 6">v6</SelectItem>
+                          <SelectItem value=" --niji 6">niji 6</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </FormItem>
+                )}
+              ></FormField>
 
-            <Separator className=" w-full" />
+              <Separator className=" w-full" />
 
-            <FormField
-              control={form.control}
-              name="aspectRatio"
-              render={({ field }) => (
-                <FormItem className="flex flex-col items-center justify-between  w-[200px]">
-                  <div className=" flex justify-between items-center w-full">
+              <FormField
+                control={form.control}
+                name="aspectRatio"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col items-center justify-between  w-[200px]">
+                    <div className=" flex justify-between items-center w-full">
+                      <div className=" flex gap-2 items-center">
+                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                          AspectRatio:
+                        </FormLabel>
+
+                        <HoverCard openDelay={300}>
+                          <HoverCardTrigger>
+                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <p className="text-white text-sm">
+                              命令: --aspect 或 --ar<br></br>
+                              生成图片的宽高比,默认为1:1,如果你想自定义,请选择最后一个选项(限制长宽比在
+                              0.5-2 之间)。详情查看
+                              <Link
+                                target="_blank"
+                                rel="stylesheet"
+                                className=" text-blue-500 underline underline-offset-4"
+                                href="https://docs.midjourney.com/docs/aspect-ratios"
+                              >
+                                官方文档
+                              </Link>
+                            </p>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
+
+                      <div className="-translate-y-[3px]">
+                        <Select
+                          onValueChange={(value) => {
+                            setAsRatio(value);
+                            field.onChange(value);
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                              <SelectValue placeholder="图片比例"></SelectValue>
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value=" --ar 1:1">
+                              <div className="flex gap-1 items-center">
+                                <div className=" w-4 h-4 border-[1px] rounded-sm border-black"></div>
+                                <span>1:1</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value=" --ar 4:3">
+                              <div className="flex gap-1 items-center">
+                                <div className=" w-4 h-[12px] border-[1px] rounded-sm border-black"></div>
+                                <span>4:3</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value=" --ar 3:2">
+                              <div className="flex gap-1 items-center">
+                                <div className=" w-4 h-[10.6px] border-[1px] rounded-sm border-black"></div>
+                                <span>3:2</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value=" --ar 16:9">
+                              <div className="flex gap-1 items-center">
+                                <div className=" w-4 h-[9px] border-[1px] rounded-sm border-black"></div>
+                                <span>16:9</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value=" --ar 9:16">
+                              <div className="flex gap-1 items-center">
+                                <div className=" ml-1 mr-1.5 w-[9px] h-[16px] border-[1px] rounded-sm border-black"></div>
+                                <span>9:16</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value=" ">
+                              <div className="flex gap-1 items-center">
+                                <GearIcon></GearIcon>
+                                <span className=" text-xs">自定义</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {customAs && (
+                      <div className="flex items-center text-xs text-neutral-800 font-medium justify-between">
+                        <div className="flex items-center  gap-1 mr-[1.1rem]">
+                          <span className=" text-base font-medium">宽</span>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={customASW}
+                            onChange={(e) => setCustomASW(+e.target.value)}
+                            step={1}
+                            className=" w-[60px]"
+                          ></Input>
+                        </div>
+
+                        <span>:</span>
+
+                        <div className="flex items-center  gap-1 ml-[1rem]">
+                          <span className=" text-base font-medium">高</span>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={customASH}
+                            onChange={(e) => setCustomASH(+e.target.value)}
+                            step={1}
+                            className=" w-[60px]"
+                          ></Input>
+                        </div>
+                      </div>
+                    )}
+                  </FormItem>
+                )}
+              ></FormField>
+
+              <Separator className=" w-full" />
+              <FormField
+                control={form.control}
+                name="quality"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between  w-[200px]">
                     <div className=" flex gap-2 items-center">
                       <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                        AspectRatio:
+                        Quality:
                       </FormLabel>
 
                       <HoverCard openDelay={300}>
@@ -750,14 +898,13 @@ export const ImageForm = () => {
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
-                            命令: --aspect 或 --ar<br></br>
-                            生成图片的宽高比,默认为1:1,如果你想自定义,请选择最后一个选项(限制长宽比在
-                            0.5-2 之间),然后在prompt中使用命令。详情查看
+                            命令: --quality 或 --q<br></br>
+                            quality参数会更改生成图像所花费的时间。更高质量的设置需要更长的时间来处理和生成更多的细节,值越高也意味着每个作业使用的GPU分钟数越多,质量设置不会影响分辨率,默认为高质量。
                             <Link
                               target="_blank"
                               rel="stylesheet"
                               className=" text-blue-500 underline underline-offset-4"
-                              href="https://docs.midjourney.com/docs/aspect-ratios"
+                              href="https://docs.midjourney.com/docs/quality"
                             >
                               官方文档
                             </Link>
@@ -768,1338 +915,1245 @@ export const ImageForm = () => {
 
                     <div className="-translate-y-[3px]">
                       <Select
-                        onValueChange={(value) => {
-                          setAsRatio(value);
-                          field.onChange(value);
-                        }}
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
-                            <SelectValue placeholder="图片比例"></SelectValue>
+                          <SelectTrigger className="bg-gray-100 border-none py-1 text-xs px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                            <SelectValue placeholder="图片质量"></SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value=" --ar 1:1">
-                            <div className="flex gap-1 items-center">
-                              <div className=" w-4 h-4 border-[1px] rounded-sm border-black"></div>
-                              <span>1:1</span>
-                            </div>
+                          <SelectItem value=" --q .25" className=" text-xs">
+                            低质量
                           </SelectItem>
-                          <SelectItem value=" --ar 4:3">
-                            <div className="flex gap-1 items-center">
-                              <div className=" w-4 h-[12px] border-[1px] rounded-sm border-black"></div>
-                              <span>4:3</span>
-                            </div>
+                          <SelectItem value=" --q .5" className=" text-xs">
+                            中质量
                           </SelectItem>
-                          <SelectItem value=" --ar 3:2">
-                            <div className="flex gap-1 items-center">
-                              <div className=" w-4 h-[10.6px] border-[1px] rounded-sm border-black"></div>
-                              <span>3:2</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value=" --ar 16:9">
-                            <div className="flex gap-1 items-center">
-                              <div className=" w-4 h-[9px] border-[1px] rounded-sm border-black"></div>
-                              <span>16:9</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value=" --ar 9:16">
-                            <div className="flex gap-1 items-center">
-                              <div className=" ml-1 mr-1.5 w-[9px] h-[16px] border-[1px] rounded-sm border-black"></div>
-                              <span>9:16</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value=" ">
-                            <div className="flex gap-1 items-center">
-                              <GearIcon></GearIcon>
-                              <span className=" text-xs">自定义</span>
-                            </div>
+                          <SelectItem value=" --q 1" className=" text-xs">
+                            高质量
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
+                  </FormItem>
+                )}
+              ></FormField>
 
-                  {customAs && (
-                    <div className="flex items-center text-xs text-neutral-800 font-medium justify-between">
-                      <div className="flex items-center  gap-1 mr-[1.1rem]">
-                        <span className=" text-base font-medium">长</span>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={customASW}
-                          onChange={(e) => setCustomASW(+e.target.value)}
-                          step={1}
-                          className=" w-[60px]"
-                        ></Input>
+              <Separator className=" w-full" />
+
+              <FormField
+                control={form.control}
+                name="stylize"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-4 ">
+                    <div className="flex justify-between items-center">
+                      <div className="flex gap-2 items-center">
+                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                          Stylize:
+                        </FormLabel>
+                        <HoverCard openDelay={300}>
+                          <HoverCardTrigger>
+                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <p className="text-white text-sm">
+                              命令: --stylize 或 --s<br></br>
+                              风格化程度:默认为100, 范围:
+                              0-1000,低风格化值生成的图像与prompt非常匹配,但艺术性较差。
+                              高风格化值创建的图像非常艺术,但与prompt的联系较少。详情查看
+                              <Link
+                                target="_blank"
+                                rel="stylesheet"
+                                className=" text-blue-500 underline underline-offset-4"
+                                href="https://docs.midjourney.com/docs/stylize"
+                              >
+                                官方文档
+                              </Link>
+                            </p>
+                          </HoverCardContent>
+                        </HoverCard>
                       </div>
 
-                      <span>:</span>
-
-                      <div className="flex items-center  gap-1 ml-[1rem]">
-                        <span className=" text-base font-medium">宽</span>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={customASH}
-                          onChange={(e) => setCustomASH(+e.target.value)}
-                          step={1}
-                          className=" w-[60px]"
-                        ></Input>
-                      </div>
-                    </div>
-                  )}
-                </FormItem>
-              )}
-            ></FormField>
-
-            <Separator className=" w-full" />
-            <FormField
-              control={form.control}
-              name="quality"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between  w-[200px]">
-                  <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                      Quality:
-                    </FormLabel>
-
-                    <HoverCard openDelay={300}>
-                      <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                      </HoverCardTrigger>
-                      <HoverCardContent>
-                        <p className="text-white text-sm">
-                          命令: --quality 或 --q<br></br>
-                          quality参数会更改生成图像所花费的时间。更高质量的设置需要更长的时间来处理和生成更多的细节,值越高也意味着每个作业使用的GPU分钟数越多,质量设置不会影响分辨率,默认为高质量。
-                          <Link
-                            target="_blank"
-                            rel="stylesheet"
-                            className=" text-blue-500 underline underline-offset-4"
-                            href="https://docs.midjourney.com/docs/quality"
-                          >
-                            官方文档
-                          </Link>
-                        </p>
-                      </HoverCardContent>
-                    </HoverCard>
-                  </div>
-
-                  <div className="-translate-y-[3px]">
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
                       <FormControl>
-                        <SelectTrigger className="bg-gray-100 border-none py-1 text-xs px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
-                          <SelectValue placeholder="图片质量"></SelectValue>
-                        </SelectTrigger>
+                        <Input
+                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                          max={1000}
+                          min={0}
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        ></Input>
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value=" --q .25" className=" text-xs">
-                          低质量
-                        </SelectItem>
-                        <SelectItem value=" --q .5" className=" text-xs">
-                          中质量
-                        </SelectItem>
-                        <SelectItem value=" --q 1" className=" text-xs">
-                          高质量
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </FormItem>
-              )}
-            ></FormField>
-
-            <Separator className=" w-full" />
-
-            <FormField
-              control={form.control}
-              name="stylize"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-4 ">
-                  <div className="flex justify-between items-center">
-                    <div className="flex gap-2 items-center">
-                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                        Stylize:
-                      </FormLabel>
-                      <HoverCard openDelay={300}>
-                        <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                          <p className="text-white text-sm">
-                            命令: --stylize 或 --s<br></br>
-                            风格化程度:默认为100, 范围:
-                            0-1000,低风格化值生成的图像与prompt非常匹配,但艺术性较差。
-                            高风格化值创建的图像非常艺术,但与prompt的联系较少。详情查看
-                            <Link
-                              target="_blank"
-                              rel="stylesheet"
-                              className=" text-blue-500 underline underline-offset-4"
-                              href="https://docs.midjourney.com/docs/stylize"
-                            >
-                              官方文档
-                            </Link>
-                          </p>
-                        </HoverCardContent>
-                      </HoverCard>
                     </div>
 
-                    <FormControl>
-                      <Input
-                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
-                        max={1000}
-                        min={0}
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(+e.target.value)}
-                      ></Input>
-                    </FormControl>
-                  </div>
-
-                  <div className="-translate-y-[3px]">
-                    <FormControl>
-                      <Slider
-                        defaultValue={[100]}
-                        max={1000}
-                        value={[field.value]}
-                        step={50}
-                        onValueChange={(value) => field.onChange(value[0])}
-                        className=" w-[200px] cursor-pointer"
-                      ></Slider>
-                    </FormControl>
-                  </div>
-                  <FormMessage></FormMessage>
-                </FormItem>
-              )}
-            ></FormField>
-
-            <Separator className=" w-full" />
-
-            <FormField
-              control={form.control}
-              name="chaos"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-4 ">
-                  <div className="flex justify-between items-center">
-                    <div className="flex gap-2 items-center">
-                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                        Chaos:
-                      </FormLabel>
-                      <HoverCard openDelay={300}>
-                        <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                          <p className="text-white text-sm">
-                            命令: --chaos 或 --c<br></br>
-                            混乱程度: 默认为0, 范围:
-                            0-100,高混乱值将产生更多不寻常和意想不到的结果和构图。
-                            较低的混乱值具有更可靠、可重复的结果。详情查看
-                            <Link
-                              target="_blank"
-                              rel="stylesheet"
-                              className=" text-blue-500 underline underline-offset-4"
-                              href="https://docs.midjourney.com/docs/chaos"
-                            >
-                              官方文档
-                            </Link>
-                          </p>
-                        </HoverCardContent>
-                      </HoverCard>
+                    <div className="-translate-y-[3px]">
+                      <FormControl>
+                        <Slider
+                          defaultValue={[100]}
+                          max={1000}
+                          value={[field.value]}
+                          step={50}
+                          onValueChange={(value) => field.onChange(value[0])}
+                          className=" w-[200px] cursor-pointer"
+                        ></Slider>
+                      </FormControl>
                     </div>
+                    <FormMessage></FormMessage>
+                  </FormItem>
+                )}
+              ></FormField>
 
-                    <FormControl>
-                      <Input
-                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent p-1 rounded-lg w-[60px] text-center"
-                        max={100}
-                        min={0}
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(+e.target.value)}
-                      ></Input>
-                    </FormControl>
-                  </div>
+              <Separator className=" w-full" />
 
-                  <div className="-translate-y-[3px]">
-                    <FormControl>
-                      <Slider
-                        defaultValue={[100]}
-                        max={100}
-                        value={[field.value]}
-                        step={5}
-                        onValueChange={(value) => field.onChange(value[0])}
-                        className=" w-[200px] cursor-pointer"
-                      ></Slider>
-                    </FormControl>
-                  </div>
-                  <FormMessage></FormMessage>
-                </FormItem>
-              )}
-            ></FormField>
-
-            <Separator className=" w-full" />
-
-            <Separator className=" w-full" />
-            <FormField
-              control={form.control}
-              name="imageWeight"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center">
-                    <div className=" flex gap-2 items-center">
-                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                        Image Weight:
-                      </FormLabel>
-                      <HoverCard openDelay={300}>
-                        <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                          <p className="text-white text-sm">
-                            命令: --iw<br></br>
-                            范围:v5.2: 0-2, v6和niji 6: 0-3。当使用image
-                            prompt时,此项越高,图片对最终结果的影响权重越高,默认为1。
-                            <Link
-                              target="_blank"
-                              rel="stylesheet"
-                              className=" text-blue-500 underline underline-offset-4"
-                              href="https://docs.midjourney.com/docs/image-prompts"
-                            >
-                              官方文档
-                            </Link>
-                          </p>
-                        </HoverCardContent>
-                      </HoverCard>
-                    </div>
-                    <FormControl>
-                      <Input
-                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
-                        max={useDefaultModel ? 2 : 3}
-                        min={0}
-                        step={0.1}
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(+e.target.value)}
-                      ></Input>
-                    </FormControl>
-                  </div>
-
-                  <div className="-translate-y-[3px]">
-                    <FormControl>
-                      <Slider
-                        defaultValue={[1]}
-                        max={useDefaultModel ? 2 : 3}
-                        value={[field.value]}
-                        step={0.1}
-                        onValueChange={(value) => field.onChange(value[0])}
-                        className=" w-[200px] cursor-pointer"
-                      ></Slider>
-                    </FormControl>
-                  </div>
-                  <FormMessage></FormMessage>
-                </FormItem>
-              )}
-            ></FormField>
-            <Separator className=" w-full" />
-            <FormField
-              control={form.control}
-              name="stop"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center">
-                    <div className=" flex gap-2 items-center">
-                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                        Stop:
-                      </FormLabel>
-                      <HoverCard openDelay={300}>
-                        <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                          <p className="text-white text-sm">
-                            命令: --stop<br></br>
-                            范围:10-100, 默认为100,
-                            调整此项将提前停止图像的生成,以较早的百分比停止作业可能会产生更模糊、不太详细的结果。
-                            <Link
-                              target="_blank"
-                              rel="stylesheet"
-                              className=" text-blue-500 underline underline-offset-4"
-                              href="https://docs.midjourney.com/docs/stop"
-                            >
-                              官方文档
-                            </Link>
-                          </p>
-                        </HoverCardContent>
-                      </HoverCard>
-                    </div>
-                    <FormControl>
-                      <Input
-                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
-                        max={100}
-                        min={10}
-                        step={1}
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(+e.target.value)}
-                      ></Input>
-                    </FormControl>
-                  </div>
-                  <div className="-translate-y-[3px]">
-                    <FormControl>
-                      <Slider
-                        defaultValue={[10]}
-                        max={100}
-                        value={[field.value]}
-                        step={10}
-                        onValueChange={(value) => field.onChange(value[0])}
-                        className=" w-[200px] cursor-pointer"
-                      ></Slider>
-                    </FormControl>
-                  </div>
-                  <FormMessage></FormMessage>
-                </FormItem>
-              )}
-            ></FormField>
-            <Separator className=" w-full" />
-            <FormField
-              control={form.control}
-              name="weird"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-4">
-                  <div className="flex justify-between items-center">
-                    <div className=" flex gap-2 items-center">
-                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                        Weird:
-                      </FormLabel>
-                      <HoverCard openDelay={300}>
-                        <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                          <p className="text-white text-sm">
-                            命令: --weird 或 --w<br></br>
-                            范围:0-3000, 默认为0,
-                            抽象程度,此参数为生成的图像引入了古怪和另类的品质,从而产生独特和意想不到的结果。
-                            <Link
-                              target="_blank"
-                              rel="stylesheet"
-                              className=" text-blue-500 underline underline-offset-4"
-                              href="https://docs.midjourney.com/docs/weird"
-                            >
-                              官方文档
-                            </Link>
-                          </p>
-                        </HoverCardContent>
-                      </HoverCard>
-                    </div>
-                    <FormControl>
-                      <Input
-                        className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
-                        max={3000}
-                        min={0}
-                        step={10}
-                        type="number"
-                        value={field.value}
-                        onChange={(e) => field.onChange(+e.target.value)}
-                      ></Input>
-                    </FormControl>
-                  </div>
-
-                  <div className="-translate-y-[3px]">
-                    <FormControl>
-                      <Slider
-                        defaultValue={[0]}
-                        max={3000}
-                        value={[field.value]}
-                        step={100}
-                        onValueChange={(value) => field.onChange(value[0])}
-                        className=" w-[200px] cursor-pointer"
-                      ></Slider>
-                    </FormControl>
-                  </div>
-                  <FormMessage></FormMessage>
-                </FormItem>
-              )}
-            ></FormField>
-            <Separator className=" w-full" />
-            <FormField
-              control={form.control}
-              name="seeds"
-              render={({ field }) => (
-                <FormItem className="flex flex-col ">
-                  <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                      Seeds:
-                    </FormLabel>
-                    <HoverCard openDelay={300}>
-                      <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                      </HoverCardTrigger>
-                      <HoverCardContent>
-                        <p className="text-white text-sm">
-                          命令: --seed<br></br>
-                          范围:0-4294967295,是为每个图像随机生成的,但可以使用
-                          --seed
-                          参数指定。如果您使用相同的seed和prompt,您最终将获得相似的图像。
-                          <Link
-                            target="_blank"
-                            rel="stylesheet"
-                            className=" text-blue-500 underline underline-offset-4"
-                            href="https://docs.midjourney.com/docs/seeds"
-                          >
-                            官方文档
-                          </Link>
-                        </p>
-                      </HoverCardContent>
-                    </HoverCard>
-                  </div>
-
-                  <div className="-translate-y-[3px]">
-                    <FormControl>
-                      <Input
-                        className="bg-gray-100 border-none w-[200px] focus-visible:ring-offset-transparent focus-visible:ring-transparent"
-                        type="number"
-                        min={0}
-                        max={4294967295}
-                        value={field.value}
-                        onChange={(e) => {
-                          field.onChange(+e.target.value);
-                        }}
-                      />
-                    </FormControl>
-                  </div>
-                  <FormMessage></FormMessage>
-                </FormItem>
-              )}
-            ></FormField>
-            <Separator className=" w-full" />
-            <FormField
-              control={form.control}
-              name="negativePrompt"
-              render={({ field }) => (
-                <FormItem className="flex flex-col ">
-                  <div className=" flex gap-2 items-center">
-                    <FormLabel className="text-neutral-800 text-nowrap text-sm">
-                      Negative Words:
-                    </FormLabel>
-                    <HoverCard openDelay={300}>
-                      <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                      </HoverCardTrigger>
-                      <HoverCardContent>
-                        <p className="text-white text-sm">
-                          命令: --no<br></br>
-                          不想图片中出现的元素(以逗号分开),比如:床,凳子,书桌
-                          详情查看
-                          <Link
-                            target="_blank"
-                            rel="stylesheet"
-                            className=" text-blue-500 underline underline-offset-4"
-                            href="https://docs.midjourney.com/docs/no"
-                          >
-                            官方文档
-                          </Link>
-                        </p>
-                      </HoverCardContent>
-                    </HoverCard>
-                  </div>
-
-                  <div className="">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        className="bg-gray-100 border-none w-[90%] resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
-                        placeholder="不想出现的元素"
-                      ></Input>
-                    </FormControl>
-                  </div>
-                </FormItem>
-              )}
-            ></FormField>
-            <Separator className=" w-full" />
-
-            <div className="flex flex-col gap-2">
-              <div className=" flex gap-2 items-center">
-                <p className="text-neutral-800 font-medium text-nowrap text-sm">
-                  Image Urls:
-                </p>
-                <HoverCard openDelay={300}>
-                  <HoverCardTrigger>
-                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <p className="text-white text-sm">
-                      Image prompt中的image url,以 png, jpg, jpeg, webp 结尾,
-                      在prompt的最前面,
-                      您可以添加图像作为prompt的一部分来影响作业的构图、风格和颜色。
-                    </p>
-                  </HoverCardContent>
-                </HoverCard>
-              </div>
-
-              <div className="flex gap-2 flex-col">
-                {imgPromptUrls.map((url, index) => (
-                  <div
-                    key={index}
-                    className=" flex gap-2 w-[212.92px] flex-col items-center"
-                  >
-                    <Input
-                      value={url}
-                      onBlur={() => handleInputBlur(index, "imageUrls")}
-                      onChange={(e) => handleInputChange(index, e.target.value)}
-                      className="bg-gray-100 border-none text-xs placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
-                      placeholder="https://example.com/image.png"
-                    ></Input>
-
-                    <div className=" self-end flex gap-2">
-                      <Button
-                        onClick={() => handleAddInput()}
-                        disabled={imgPromptUrls.length === 5}
-                        type="button"
-                        variant="outline"
-                        className=" px-1.5 py-0 h-8"
-                      >
-                        <PlusIcon width={15} height={15}></PlusIcon>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={imgPromptUrls.length === 1}
-                        className=" px-1.5 py-0 h-8"
-                        onClick={() => handleRemoveInput(index)}
-                      >
-                        <MinusIcon width={15} height={15}></MinusIcon>
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <Separator className=" w-full" />
-
-            <div className="flex flex-col gap-2">
-              <div className=" flex gap-2 items-center">
-                <p className="text-neutral-800 font-medium text-nowrap text-sm">
-                  Style References Image Urls:
-                </p>
-                <HoverCard openDelay={300}>
-                  <HoverCardTrigger>
-                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                  </HoverCardTrigger>
-                  <HoverCardContent>
-                    <p className="text-white text-sm">
-                      命令: --sref<br></br>
-                      仅适用于v 6, niji 6, 风格参考的image urls,以 png, jpg,
-                      jpeg, webp 结尾,
-                      在prompt的后面,可以得到与输入的图像非常相似的图像,可以与image
-                      prompt搭配使用。
-                    </p>
-                  </HoverCardContent>
-                </HoverCard>
-              </div>
-
-              <Input
-                value={sreftUrl}
-                disabled={useDefaultModel}
-                onBlur={() => handleInputBlur(-1, "srefUrls")}
-                onChange={(e) => setSrefUrl(e.target.value)}
-                className="bg-gray-100 border-none text-xs  placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
-                placeholder="https://example.com/image.png"
-              ></Input>
-            </div>
-            <Separator className=" w-full" />
-            <div className="flex flex-col gap-3">
-              <div className=" w-full flex gap-[89px] text-black items-center">
-                <Switch
-                  id="use-form-data"
-                  className=" scale-[0.8]"
-                  checked={useStyleRow}
-                  onCheckedChange={(value) => setUseStyleRow(value)}
-                ></Switch>
-                <div className="flex gap-2 items-center">
-                  <Label
-                    htmlFor="use-form-data"
-                    className=" text-sm cursor-pointer"
-                  >
-                    Style Raw
-                  </Label>
-                  <HoverCard openDelay={300}>
-                    <HoverCardTrigger>
-                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                    </HoverCardTrigger>
-                    <HoverCardContent>
-                      <p className="text-white text-sm">
-                        命令: --style row<br></br>
-                        此项开启后,图像应用的自动美化较少,这可以在prompt特定样式时实现更准确的匹配。详情查看
-                        <Link
-                          target="_blank"
-                          rel="stylesheet"
-                          className=" text-blue-500 underline underline-offset-4"
-                          href="https://docs.midjourney.com/docs/style"
-                        >
-                          官方文档
-                        </Link>
-                      </p>
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
-              </div>
-              <div className=" w-full flex gap-[131px] text-black items-center">
-                <Switch
-                  className=" scale-[0.8]"
-                  id="use-tile"
-                  checked={useTile}
-                  onCheckedChange={(value) => setUseTile(value)}
-                ></Switch>
-                <div className="flex gap-2 items-center">
-                  <Label htmlFor="use-tile" className="text-sm cursor-pointer">
-                    Tile
-                  </Label>
-                  <HoverCard openDelay={300}>
-                    <HoverCardTrigger>
-                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                    </HoverCardTrigger>
-                    <HoverCardContent>
-                      <p className="text-white text-sm">
-                        命令:--tile<br></br>
-                        此项开启可以生成重复的无缝图案,类似地板砖。详情查看
-                        <Link
-                          target="_blank"
-                          rel="stylesheet"
-                          className=" text-blue-500 underline underline-offset-4"
-                          href="https://docs.midjourney.com/docs/tile"
-                        >
-                          官方文档
-                        </Link>
-                      </p>
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
-              </div>
-              <div className=" w-full flex gap-[87px] text-black items-center">
-                <Switch
-                  checked={useTurbo}
-                  disabled={useDefaultModel === false}
-                  className=" scale-[0.8]"
-                  onCheckedChange={(value) => setUseTurbo(value)}
-                  id="use-turbo"
-                ></Switch>
-                <div className="flex gap-2 items-center">
-                  <Label htmlFor="use-turbo" className="text-sm cursor-pointer">
-                    Turbo模式
-                  </Label>
-                  <HoverCard openDelay={300}>
-                    <HoverCardTrigger>
-                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                    </HoverCardTrigger>
-                    <HoverCardContent>
-                      <p className="text-white text-sm">
-                        仅v5.2可用;
-                        此项开启后,文生图,图生文,图生图的速度会更快,但是会消耗更多的GPU算力。turbo比fast快四倍,但消耗的订阅GPU分钟数是fast的两倍。
-                        默认fast模式。详情查看
-                        <Link
-                          target="_blank"
-                          rel="stylesheet"
-                          className=" text-blue-500 underline underline-offset-4"
-                          href="https://docs.midjourney.com/docs/fast-relax"
-                        >
-                          官方文档
-                        </Link>
-                      </p>
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className=" bg-gray-100  flex-1 w-full h-full flex-center">
-            <FormField
-              control={form.control}
-              name="prompt"
-              render={({ field }) => (
-                <FormItem className="flex flex-col  w-full h-full">
-                  <Tabs
-                    defaultValue="ImageToImage"
-                    className="flex flex-col h-full w-full items-center justify-between"
-                  >
-                    <TabsList className=" shadow-md bg-gray-200/20 my-2 p-4 py-6 gap-2 text-gray-600 rounded-md">
-                      <TabsTrigger
-                        value="textToImage"
-                        className=" py-[0.4rem] rounded-md"
-                      >
-                        文生图
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="ImageToText"
-                        className=" py-[0.4rem] rounded-md"
-                      >
-                        图生文
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="ImageToImage"
-                        className=" py-[0.4rem] rounded-md"
-                      >
-                        图生图
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent
-                      value="textToImage"
-                      className=" w-full h-full p-4 px-8 overflow-y-scroll hide-scrollbar"
-                    >
-                      <div
-                        className={`w-full h-full ${
-                          (imageArr.length === 0 || isInpainting) &&
-                          "!flex-center flex-col !justify-between"
-                        } grid items-center justify-center`}
-                      >
-                        {(imageArr.length === 0 || isInpainting) && (
-                          <div className="flex-center mt-[6rem] max-w-[450px] max-h-[450px] aspect-square">
-                            {
-                              <img
-                                src={"/pending2.png"}
-                                alt="midjourney image"
-                                className={`rounded-xl max-w-[100%] max-h-[100%] aspect-square ${
-                                  (isFetching || isInpainting) && "flicker"
-                                }`}
-                              ></img>
-                            }
-                          </div>
-                        )}
-
-                        {imageArr.length === 4 &&
-                          isInpainting === false &&
-                          imageArr.map((imgUrl, index) => (
-                            <div
-                              key={index}
-                              className=" flex-center relative group"
-                            >
-                              <div className="  w-[400px] h-[400px] bg-white/20 rounded-md p-2 relative flex-center">
-                                <img
-                                  src={imgUrl}
-                                  alt="midjourney image"
-                                  className={`rounded-xl max-w-[100%] max-h-[100%]`}
-                                ></img>
-                                <button
-                                  type="button"
-                                  className="absolute min-w-[240px] h-full rounded-xl inset-0 bg-transparent hover:bg-transparent"
-                                  onClick={() => {
-                                    setSelectedIndex(index);
-                                    setOpen(true);
-                                  }}
-                                ></button>
-                                <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0 right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
-                                  <TooltipProvider delayDuration={200}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleDownload(imgUrl, index)
-                                          }
-                                          className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                        >
-                                          <DownloadIcon
-                                            width={20}
-                                            height={20}
-                                            color="white"
-                                          ></DownloadIcon>
-                                        </button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
-                                          下载
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-
-                                  <TooltipProvider delayDuration={200}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <button
-                                          type="button"
-                                          onClick={() => setOpen(true)}
-                                          className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                        >
-                                          <EnterFullScreenIcon
-                                            width={20}
-                                            height={20}
-                                            color="white"
-                                          ></EnterFullScreenIcon>
-                                        </button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
-                                          放大
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-
-                                  <Separator className=" bg-gray-500/75"></Separator>
-
-                                  <TooltipProvider delayDuration={200}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            handleVaryStrong(
-                                              taskId,
-                                              index + 1 + ""
-                                            );
-                                          }}
-                                          className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                        >
-                                          <MagicWandIcon
-                                            width={20}
-                                            height={20}
-                                            color="white"
-                                          ></MagicWandIcon>
-                                        </button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
-                                          Vary(strong)
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-
-                                  <TooltipProvider delayDuration={200}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            handleVarySubtle(
-                                              taskId,
-                                              index + 1 + ""
-                                            );
-                                          }}
-                                          className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                        >
-                                          <MagicWandIcon
-                                            width={15}
-                                            height={15}
-                                            color="white"
-                                          ></MagicWandIcon>
-                                        </button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
-                                          Vary(subtle)
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-
-                                  <Separator className=" bg-gray-500/75"></Separator>
-
-                                  <TooltipProvider delayDuration={200}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setVaryRegionOpen(true);
-                                            setSelectedIndex(index);
-                                          }}
-                                          className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
-                                        >
-                                          <Pencil2Icon
-                                            width={20}
-                                            height={20}
-                                            color="white"
-                                          ></Pencil2Icon>
-                                        </button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="right">
-                                        <p className=" bg-black/70 py-1.5 px-2.5 text-black rounded-md">
-                                          Vary(Region)
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </div>
-                              </div>
-
-                              <ImageFullView
-                                open={open}
-                                setOpen={setOpen}
-                                tempFormValue={tempFormValue}
-                                parentimageArr={imageArr}
-                                selectedIndex={selectedIndex || 0}
-                                parentTaskId={taskId}
-                                setOriginTaskId={setTaskId}
-                                parentSeed={seed || ""}
-                                finalPrompt={finalPrompt || ""}
-                                setParentImgArr={setImageArr}
-                                setParentSeed={setSeed}
-                                manualPrompt={manualPrompt}
-                              ></ImageFullView>
-
-                              <VaryRegion
-                                open={varyRegionOpen}
-                                originTaskId={taskId}
-                                setOriginTaskId={setTaskId}
-                                setParentSeed={setSeed}
-                                parentPrompt={finalPrompt || ""}
-                                setOpen={setVaryRegionOpen}
-                                parentimageArr={imageArr}
-                                setParentImageArr={setImageArr}
-                                selectedIndex={selectedIndex || 0}
-                              ></VaryRegion>
-                            </div>
-                          ))}
-                        <FormMessage className="ml-4 absolute bottom-[96px] left-[323px]"></FormMessage>
-                        <div className="flex rounded-md w-full p-1 col-span-2 gap-2 flex-center bg-gray-100 mx-4 !mt-4">
-                          <HoverCard openDelay={300}>
-                            <HoverCardTrigger>
-                              <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                            </HoverCardTrigger>
-                            <HoverCardContent>
-                              <p className="text-white text-sm">
-                                1.暂时不支持中译英功能,请输入英文。<br></br>
-                                2.为了避免模型版本和命令参数冲突引发错误,请不要输入命令和图片地址,会被屏蔽。
-                                <br></br>
-                                3.请勿输入敏感内容,会被屏蔽。<br></br>
-                                4.左边的参数都是midjourney的默认值。
-                              </p>
-                            </HoverCardContent>
-                          </HoverCard>
-                          <div className="flex w-full flex-center p-2 bg-gray-200 rounded-md">
-                            <FormControl>
-                              <Input
-                                className="bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                                placeholder="使用英文短语描述你的想象, 使用逗号分隔"
-                                {...field}
-                              ></Input>
-                            </FormControl>
-
-                            <Button
-                              type="submit"
-                              size="lg"
-                              className="w-fit button-85 ml-2  text-lg"
-                              disabled={isFetching || isInpainting}
-                            >
-                              {isInpainting || isFetching ? (
-                                <span className="flicker">生成中...</span>
-                              ) : (
-                                "生成"
-                              )}
-                            </Button>
-                          </div>
-                        </div>
+              <FormField
+                control={form.control}
+                name="chaos"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-4 ">
+                    <div className="flex justify-between items-center">
+                      <div className="flex gap-2 items-center">
+                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                          Chaos:
+                        </FormLabel>
+                        <HoverCard openDelay={300}>
+                          <HoverCardTrigger>
+                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <p className="text-white text-sm">
+                              命令: --chaos 或 --c<br></br>
+                              混乱程度: 默认为0, 范围:
+                              0-100,高混乱值将产生更多不寻常和意想不到的结果和构图。
+                              较低的混乱值具有更可靠、可重复的结果。详情查看
+                              <Link
+                                target="_blank"
+                                rel="stylesheet"
+                                className=" text-blue-500 underline underline-offset-4"
+                                href="https://docs.midjourney.com/docs/chaos"
+                              >
+                                官方文档
+                              </Link>
+                            </p>
+                          </HoverCardContent>
+                        </HoverCard>
                       </div>
-                    </TabsContent>
-                    <TabsContent
-                      value="ImageToText"
-                      className=" w-full h-full p-4"
+
+                      <FormControl>
+                        <Input
+                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent p-1 rounded-lg w-[60px] text-center"
+                          max={100}
+                          min={0}
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        ></Input>
+                      </FormControl>
+                    </div>
+
+                    <div className="-translate-y-[3px]">
+                      <FormControl>
+                        <Slider
+                          defaultValue={[100]}
+                          max={100}
+                          value={[field.value]}
+                          step={5}
+                          onValueChange={(value) => field.onChange(value[0])}
+                          className=" w-[200px] cursor-pointer"
+                        ></Slider>
+                      </FormControl>
+                    </div>
+                    <FormMessage></FormMessage>
+                  </FormItem>
+                )}
+              ></FormField>
+
+              <Separator className=" w-full" />
+
+              <Separator className=" w-full" />
+              <FormField
+                control={form.control}
+                name="imageWeight"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                      <div className=" flex gap-2 items-center">
+                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                          Image Weight:
+                        </FormLabel>
+                        <HoverCard openDelay={300}>
+                          <HoverCardTrigger>
+                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <p className="text-white text-sm">
+                              命令: --iw<br></br>
+                              范围:v5.2: 0-2, v6和niji 6: 0-3。当使用image
+                              prompt时,此项越高,图片对最终结果的影响权重越高,默认为1。
+                              <Link
+                                target="_blank"
+                                rel="stylesheet"
+                                className=" text-blue-500 underline underline-offset-4"
+                                href="https://docs.midjourney.com/docs/image-prompts"
+                              >
+                                官方文档
+                              </Link>
+                            </p>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
+                      <FormControl>
+                        <Input
+                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                          max={useDefaultModel ? 2 : 3}
+                          min={0}
+                          step={0.1}
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        ></Input>
+                      </FormControl>
+                    </div>
+
+                    <div className="-translate-y-[3px]">
+                      <FormControl>
+                        <Slider
+                          defaultValue={[1]}
+                          max={useDefaultModel ? 2 : 3}
+                          value={[field.value]}
+                          step={0.1}
+                          onValueChange={(value) => field.onChange(value[0])}
+                          className=" w-[200px] cursor-pointer"
+                        ></Slider>
+                      </FormControl>
+                    </div>
+                    <FormMessage></FormMessage>
+                  </FormItem>
+                )}
+              ></FormField>
+              <Separator className=" w-full" />
+              <FormField
+                control={form.control}
+                name="stop"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                      <div className=" flex gap-2 items-center">
+                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                          Stop:
+                        </FormLabel>
+                        <HoverCard openDelay={300}>
+                          <HoverCardTrigger>
+                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <p className="text-white text-sm">
+                              命令: --stop<br></br>
+                              范围:10-100, 默认为100,
+                              调整此项将提前停止图像的生成,以较早的百分比停止作业可能会产生更模糊、不太详细的结果。
+                              <Link
+                                target="_blank"
+                                rel="stylesheet"
+                                className=" text-blue-500 underline underline-offset-4"
+                                href="https://docs.midjourney.com/docs/stop"
+                              >
+                                官方文档
+                              </Link>
+                            </p>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
+                      <FormControl>
+                        <Input
+                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                          max={100}
+                          min={10}
+                          step={1}
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        ></Input>
+                      </FormControl>
+                    </div>
+                    <div className="-translate-y-[3px]">
+                      <FormControl>
+                        <Slider
+                          defaultValue={[10]}
+                          max={100}
+                          value={[field.value]}
+                          step={10}
+                          onValueChange={(value) => field.onChange(value[0])}
+                          className=" w-[200px] cursor-pointer"
+                        ></Slider>
+                      </FormControl>
+                    </div>
+                    <FormMessage></FormMessage>
+                  </FormItem>
+                )}
+              ></FormField>
+              <Separator className=" w-full" />
+              <FormField
+                control={form.control}
+                name="weird"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                      <div className=" flex gap-2 items-center">
+                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                          Weird:
+                        </FormLabel>
+                        <HoverCard openDelay={300}>
+                          <HoverCardTrigger>
+                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          </HoverCardTrigger>
+                          <HoverCardContent>
+                            <p className="text-white text-sm">
+                              命令: --weird 或 --w<br></br>
+                              范围:0-3000, 默认为0,
+                              抽象程度,此参数为生成的图像引入了古怪和另类的品质,从而产生独特和意想不到的结果。
+                              <Link
+                                target="_blank"
+                                rel="stylesheet"
+                                className=" text-blue-500 underline underline-offset-4"
+                                href="https://docs.midjourney.com/docs/weird"
+                              >
+                                官方文档
+                              </Link>
+                            </p>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </div>
+                      <FormControl>
+                        <Input
+                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                          max={3000}
+                          min={0}
+                          step={10}
+                          type="number"
+                          value={field.value}
+                          onChange={(e) => field.onChange(+e.target.value)}
+                        ></Input>
+                      </FormControl>
+                    </div>
+
+                    <div className="-translate-y-[3px]">
+                      <FormControl>
+                        <Slider
+                          defaultValue={[0]}
+                          max={3000}
+                          value={[field.value]}
+                          step={100}
+                          onValueChange={(value) => field.onChange(value[0])}
+                          className=" w-[200px] cursor-pointer"
+                        ></Slider>
+                      </FormControl>
+                    </div>
+                    <FormMessage></FormMessage>
+                  </FormItem>
+                )}
+              ></FormField>
+              <Separator className=" w-full" />
+              <FormField
+                control={form.control}
+                name="seeds"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col ">
+                    <div className=" flex gap-2 items-center">
+                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        Seeds:
+                      </FormLabel>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --seed<br></br>
+                            范围:0-4294967295,是为每个图像随机生成的,但可以使用
+                            --seed
+                            参数指定。如果您使用相同的seed和prompt,您最终将获得相似的图像。
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/seeds"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+
+                    <div className="-translate-y-[3px]">
+                      <FormControl>
+                        <Input
+                          className="bg-gray-100 border-none w-[200px] focus-visible:ring-offset-transparent focus-visible:ring-transparent"
+                          type="number"
+                          min={0}
+                          max={4294967295}
+                          value={field.value}
+                          onChange={(e) => {
+                            field.onChange(+e.target.value);
+                          }}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage></FormMessage>
+                  </FormItem>
+                )}
+              ></FormField>
+              <Separator className=" w-full" />
+              <FormField
+                control={form.control}
+                name="negativePrompt"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col ">
+                    <div className=" flex gap-2 items-center">
+                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        Negative Words:
+                      </FormLabel>
+                      <HoverCard openDelay={300}>
+                        <HoverCardTrigger>
+                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                          <p className="text-white text-sm">
+                            命令: --no<br></br>
+                            不想图片中出现的元素(以逗号分开),比如:床,凳子,书桌
+                            详情查看
+                            <Link
+                              target="_blank"
+                              rel="stylesheet"
+                              className=" text-blue-500 underline underline-offset-4"
+                              href="https://docs.midjourney.com/docs/no"
+                            >
+                              官方文档
+                            </Link>
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+
+                    <div className="">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          className="bg-gray-100 border-none w-[90%] resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                          placeholder="不想出现的元素"
+                        ></Input>
+                      </FormControl>
+                    </div>
+                  </FormItem>
+                )}
+              ></FormField>
+              <Separator className=" w-full" />
+
+              <div className="flex flex-col gap-2">
+                <div className=" flex gap-2 items-center">
+                  <p className="text-neutral-800 font-medium text-nowrap text-sm">
+                    Image Urls:
+                  </p>
+                  <HoverCard openDelay={300}>
+                    <HoverCardTrigger>
+                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                    </HoverCardTrigger>
+                    <HoverCardContent>
+                      <p className="text-white text-sm">
+                        Image prompt中的image url,以 png, jpg, jpeg, webp 结尾,
+                        在prompt的最前面,
+                        您可以添加图像作为prompt的一部分来影响作业的构图、风格和颜色。
+                      </p>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
+
+                <div className="flex gap-2 flex-col">
+                  {imgPromptUrls.map((url, index) => (
+                    <div
+                      key={index}
+                      className=" flex gap-2 w-[212.92px] flex-col items-center"
                     >
-                      <div className=" w-full h-full flex flex-col items-center justify-center bordern">
-                        <div className="w-full h-full rounded-md flex ">
-                          <div className=" w-full h-full rounded-md gap-4 p-6 flex flex-col items-center justify-center">
-                            {generatePrompts &&
-                              generatePrompts.length === 4 &&
-                              generatePrompts.map((prompt, index) => (
-                                <div
-                                  className=" flex gap-2 border-2 border-gray-500 rounded w-full h-full"
-                                  key={index}
-                                >
-                                  <div className="leading-6 h-[120px] overflow-y-scroll hide-scrollbar w-full  px-4 text-sm  font-medium text-gray-600 bg-white/30  p-2 rounded-md">
-                                    <div className="flex">
-                                      <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
-                                        Prompt {index + 1} :
-                                      </span>
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        className="flex-center h-8 w-8 p-0"
-                                        onClick={() =>
-                                          handleCopy(generatePrompts[index])
-                                        }
-                                      >
-                                        <CopyIcon
-                                          height={12}
-                                          width={12}
-                                        ></CopyIcon>
-                                      </Button>
-                                    </div>
-                                    {prompt}
+                      <Input
+                        value={url}
+                        onBlur={() => handleInputBlur(index, "imageUrls")}
+                        onChange={(e) =>
+                          handleInputChange(index, e.target.value)
+                        }
+                        className="bg-gray-100 border-none text-xs placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                        placeholder="https://example.com/image.png"
+                      ></Input>
+
+                      <div className=" self-end flex gap-2">
+                        <Button
+                          onClick={() => handleAddInput()}
+                          disabled={imgPromptUrls.length === 5}
+                          type="button"
+                          variant="outline"
+                          className=" px-1.5 py-0 h-8"
+                        >
+                          <PlusIcon width={15} height={15}></PlusIcon>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={imgPromptUrls.length === 1}
+                          className=" px-1.5 py-0 h-8"
+                          onClick={() => handleRemoveInput(index)}
+                        >
+                          <MinusIcon width={15} height={15}></MinusIcon>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator className=" w-full" />
+
+              <div className="flex flex-col gap-2">
+                <div className=" flex gap-2 items-center">
+                  <p className="text-neutral-800 font-medium text-nowrap text-sm">
+                    Style References Image Urls:
+                  </p>
+                  <HoverCard openDelay={300}>
+                    <HoverCardTrigger>
+                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                    </HoverCardTrigger>
+                    <HoverCardContent>
+                      <p className="text-white text-sm">
+                        命令: --sref<br></br>
+                        仅适用于v 6, niji 6, 风格参考的image urls,以 png, jpg,
+                        jpeg, webp 结尾,
+                        在prompt的后面,可以得到与输入的图像非常相似的图像,可以与image
+                        prompt搭配使用。
+                      </p>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
+
+                <Input
+                  value={sreftUrl}
+                  disabled={useDefaultModel}
+                  onBlur={() => handleInputBlur(-1, "srefUrls")}
+                  onChange={(e) => setSrefUrl(e.target.value)}
+                  className="bg-gray-100 border-none text-xs  placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                  placeholder="https://example.com/image.png"
+                ></Input>
+              </div>
+              <Separator className=" w-full" />
+              <div className="flex flex-col gap-3">
+                <div className=" w-full flex gap-[89px] text-black items-center">
+                  <Switch
+                    id="use-form-data"
+                    className=" scale-[0.8]"
+                    checked={useStyleRow}
+                    onCheckedChange={(value) => setUseStyleRow(value)}
+                  ></Switch>
+                  <div className="flex gap-2 items-center">
+                    <Label
+                      htmlFor="use-form-data"
+                      className=" text-sm cursor-pointer"
+                    >
+                      Style Raw
+                    </Label>
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          命令: --style row<br></br>
+                          此项开启后,图像应用的自动美化较少,这可以在prompt特定样式时实现更准确的匹配。详情查看
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/style"
+                          >
+                            官方文档
+                          </Link>
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+                </div>
+                <div className=" w-full flex gap-[131px] text-black items-center">
+                  <Switch
+                    className=" scale-[0.8]"
+                    id="use-tile"
+                    checked={useTile}
+                    onCheckedChange={(value) => setUseTile(value)}
+                  ></Switch>
+                  <div className="flex gap-2 items-center">
+                    <Label
+                      htmlFor="use-tile"
+                      className="text-sm cursor-pointer"
+                    >
+                      Tile
+                    </Label>
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          命令:--tile<br></br>
+                          此项开启可以生成重复的无缝图案,类似地板砖。详情查看
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/tile"
+                          >
+                            官方文档
+                          </Link>
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+                </div>
+                <div className=" w-full flex gap-[87px] text-black items-center">
+                  <Switch
+                    checked={useTurbo}
+                    disabled={useDefaultModel === false}
+                    className=" scale-[0.8]"
+                    onCheckedChange={(value) => setUseTurbo(value)}
+                    id="use-turbo"
+                  ></Switch>
+                  <div className="flex gap-2 items-center">
+                    <Label
+                      htmlFor="use-turbo"
+                      className="text-sm cursor-pointer"
+                    >
+                      Turbo模式
+                    </Label>
+                    <HoverCard openDelay={300}>
+                      <HoverCardTrigger>
+                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <p className="text-white text-sm">
+                          仅v5.2可用;
+                          此项开启后,文生图,图生文,图生图的速度会更快,但是会消耗更多的GPU算力。turbo比fast快四倍,但消耗的订阅GPU分钟数是fast的两倍。
+                          默认fast模式。详情查看
+                          <Link
+                            target="_blank"
+                            rel="stylesheet"
+                            className=" text-blue-500 underline underline-offset-4"
+                            href="https://docs.midjourney.com/docs/fast-relax"
+                          >
+                            官方文档
+                          </Link>
+                        </p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className=" bg-gray-100  flex-1 w-full h-full flex-center">
+              <FormField
+                control={form.control}
+                name="prompt"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col  w-full h-full">
+                    <Tabs
+                      defaultValue="textToImage"
+                      className="flex flex-col h-full w-full items-center justify-between"
+                    >
+                      <TabsList className=" shadow-md bg-gray-200/20 my-2 p-4 py-6 gap-2 text-gray-600 rounded-md">
+                        <TabsTrigger
+                          value="textToImage"
+                          className=" py-[0.4rem] rounded-md"
+                        >
+                          文生图
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="ImageToText"
+                          className=" py-[0.4rem] rounded-md"
+                        >
+                          图生文
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="ImageToImage"
+                          className=" py-[0.4rem] rounded-md"
+                        >
+                          图生图
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent
+                        value="textToImage"
+                        className=" w-full h-full p-4 px-8 overflow-y-scroll hide-scrollbar"
+                      >
+                        <div
+                          className={`w-full h-full ${
+                            (imageArr.length === 0 || isInpainting) &&
+                            "!flex-center flex-col !justify-between"
+                          } grid gap-1 items-center justify-center`}
+                        >
+                          {(imageArr.length === 0 || isInpainting) && (
+                            <div className="flex-center mt-[6rem] max-w-[450px] max-h-[450px] aspect-square">
+                              {
+                                <img
+                                  src={"/pending2.png"}
+                                  alt="midjourney image"
+                                  className={`rounded-xl max-w-[100%] max-h-[100%] aspect-square ${
+                                    (isFetching || isInpainting) && "flicker"
+                                  }`}
+                                ></img>
+                              }
+                            </div>
+                          )}
+
+                          {imageArr.length === 4 &&
+                            isInpainting === false &&
+                            imageArr.map((imgUrl, index) => (
+                              <div
+                                key={index}
+                                className=" flex-center relative group"
+                              >
+                                <div className="  w-[400px] h-[400px] bg-gray-300/40 rounded-md p-2 relative flex-center">
+                                  <img
+                                    src={imgUrl}
+                                    alt="midjourney image"
+                                    className={`rounded-xl max-w-[100%] max-h-[100%]`}
+                                  ></img>
+                                  <button
+                                    type="button"
+                                    className="absolute min-w-[240px] h-full rounded-xl inset-0 bg-transparent hover:bg-transparent"
+                                    onClick={() => {
+                                      setSelectedIndex(index);
+                                      setOpen(true);
+                                    }}
+                                  ></button>
+                                  <div className=" rounded-md p-1 absolute bg-black/70 transition-all duration-200  opacity-0 right-1 top-1 flex group-hover:opacity-100 flex-col items-center justify-center gap-1">
+                                    <TooltipProvider delayDuration={200}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              handleDownload(imgUrl, index)
+                                            }
+                                            className=" active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                          >
+                                            <DownloadIcon
+                                              width={20}
+                                              height={20}
+                                              color="white"
+                                            ></DownloadIcon>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right">
+                                          <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                            下载
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+
+                                    <TooltipProvider delayDuration={200}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setSelectedIndex(index);
+                                              setOpen(true);
+                                            }}
+                                            className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                          >
+                                            <EnterFullScreenIcon
+                                              width={20}
+                                              height={20}
+                                              color="white"
+                                            ></EnterFullScreenIcon>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right">
+                                          <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                            放大
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+
+                                    <Separator className=" bg-gray-500/75"></Separator>
+
+                                    <TooltipProvider delayDuration={200}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              debounce(
+                                                handleVaryStrong(
+                                                  taskId,
+                                                  index + 1 + ""
+                                                ),
+                                                1000
+                                              )();
+                                            }}
+                                            className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                          >
+                                            <MagicWandIcon
+                                              width={20}
+                                              height={20}
+                                              color="white"
+                                            ></MagicWandIcon>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right">
+                                          <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                            Vary(strong)
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+
+                                    <TooltipProvider delayDuration={200}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              debounce(
+                                                handleVarySubtle(
+                                                  taskId,
+                                                  index + 1 + ""
+                                                ),
+                                                1000
+                                              )();
+                                            }}
+                                            className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                          >
+                                            <MagicWandIcon
+                                              width={15}
+                                              height={15}
+                                              color="white"
+                                            ></MagicWandIcon>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right">
+                                          <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                            Vary(subtle)
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+
+                                    <Separator className=" bg-gray-500/75"></Separator>
+
+                                    <TooltipProvider delayDuration={200}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setVaryRegionOpen(true);
+                                              setSelectedIndex(index);
+                                            }}
+                                            className="active:translate-y-[1px] rounded-md bg-transparent p-1.5 hover:bg-gray-500/35 transition-all duration-200"
+                                          >
+                                            <Pencil2Icon
+                                              width={20}
+                                              height={20}
+                                              color="white"
+                                            ></Pencil2Icon>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right">
+                                          <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
+                                            Vary(Region)
+                                          </p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   </div>
                                 </div>
-                              ))}
-                          </div>
-                          <div className=" w-full h-full flex-center">
-                            <div className=" flex flex-col gap-4 items-center">
-                              <div className="flex gap-1 items-center self-start -mb-3 text-zinc-900 text-[1rem] font-medium">
-                                本地上传 :
-                                <HoverCard openDelay={300}>
-                                  <HoverCardTrigger>
-                                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                                  </HoverCardTrigger>
-                                  <HoverCardContent>
-                                    <p className="text-white text-sm">
-                                      上传您本地的图片文件,上传后会自动触发生成按钮,并返回您上传图片的在线地址在输入框中。
-                                      下面的图片是您本地上传的图片或是您输入的在线图片地址的图片。
-                                    </p>
-                                  </HoverCardContent>
-                                </HoverCard>
-                              </div>
-                              <div className=" w-[450px] h-[450px] flex-center">
-                                <img
-                                  src={
-                                    uploadImg !== ""
-                                      ? uploadImg
-                                      : describeImageUrl
-                                      ? describeImageUrl
-                                      : "/pending2.png"
-                                  }
-                                  className=" rounded-md max-w-[100%] max-h-[100%]"
-                                  alt="describe image"
-                                ></img>
-                                a
-                              </div>
 
-                              <Input
-                                type="file"
-                                placeholder="Upload Image"
-                                accept="image/*"
-                                className="cursor-pointer border-gray-600 border-2 bg-white/55 "
-                                disabled={isDescribe}
-                                onChange={(e) => {
-                                  handleSelectImagUrl(e);
-                                }}
-                              ></Input>
+                                <ImageFullView
+                                  open={open}
+                                  setOpen={setOpen}
+                                  tempFormValue={tempFormValue}
+                                  parentimageArr={imageArr}
+                                  selectedIndex={selectedIndex || 0}
+                                  parentTaskId={taskId}
+                                  setOriginTaskId={setTaskId}
+                                  parentSeed={seed || ""}
+                                  finalPrompt={finalPrompt || ""}
+                                  setParentImgArr={setImageArr}
+                                  setParentSeed={setSeed}
+                                  useStyleRaw={useStyleRow}
+                                  useTile={useTile}
+                                ></ImageFullView>
+
+                                <VaryRegion
+                                  open={varyRegionOpen}
+                                  originTaskId={taskId}
+                                  setOriginTaskId={setTaskId}
+                                  setParentSeed={setSeed}
+                                  parentPrompt={finalPrompt || ""}
+                                  setOpen={setVaryRegionOpen}
+                                  parentimageArr={imageArr}
+                                  setParentImageArr={setImageArr}
+                                  selectedIndex={selectedIndex || 0}
+                                ></VaryRegion>
+                              </div>
+                            ))}
+
+                          <div className="flex rounded-md w-full p-1 col-span-2  flex-center bg-gray-100  !mt-4">
+                            <div className="flex w-full flex-center p-2 bg-gray-200 rounded-md">
+                              <HoverCard openDelay={300}>
+                                <HoverCardTrigger className=" ml-2">
+                                  <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                                </HoverCardTrigger>
+                                <HoverCardContent>
+                                  <p className="text-white text-sm">
+                                    1.暂时不支持中译英功能,请输入英文。<br></br>
+                                    2.为了避免模型版本和命令参数冲突引发错误,请不要输入命令和图片地址,会被屏蔽。
+                                    <br></br>
+                                    3.请勿输入敏感内容,会被屏蔽。<br></br>
+                                    4.左边的参数都是midjourney的默认值。
+                                  </p>
+                                </HoverCardContent>
+                              </HoverCard>
+                              <FormControl>
+                                <Input
+                                  className="bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+                                  placeholder="使用英文短语描述你的想象, 使用逗号分隔"
+                                  {...field}
+                                ></Input>
+                              </FormControl>
+
                               <Button
-                                type="button"
+                                type="submit"
                                 size="lg"
-                                className="w-full flex gap-2 button-85 text-lg"
+                                className="w-fit button-85 ml-2  text-lg"
                                 disabled={
-                                  isDescribe || selectImageFile === undefined
+                                  isFetching ||
+                                  isInpainting ||
+                                  field.value === ""
                                 }
-                                onClick={() => {
-                                  handleUploadImage();
-                                }}
                               >
-                                {selectImageFile?.name}
-                                <UploadCloudIcon></UploadCloudIcon>
-                                {isUploading ? (
-                                  <>
-                                    <span className="flicker">上传中...</span>
-                                  </>
+                                {isInpainting || isFetching ? (
+                                  <span className="flicker">生成中...</span>
                                 ) : (
-                                  "上传"
+                                  "生成"
                                 )}
                               </Button>
                             </div>
                           </div>
                         </div>
+                      </TabsContent>
+                      <TabsContent
+                        value="ImageToText"
+                        className=" w-full h-full p-4"
+                      >
+                        <div className=" w-full h-full flex flex-col items-center justify-center bordern">
+                          <div className="w-full h-full rounded-md flex ">
+                            <div className=" w-full h-full rounded-md gap-4 p-6 flex flex-col items-center justify-center">
+                              {generatePrompts &&
+                                generatePrompts.length === 4 &&
+                                generatePrompts.map((prompt, index) => (
+                                  <div
+                                    className=" flex gap-2 border-2 border-gray-500 rounded w-full h-full"
+                                    key={index}
+                                  >
+                                    <div className="leading-6 h-full overflow-y-scroll hide-scrollbar w-full  px-4 text-sm  font-medium text-gray-600 bg-white/80  p-2 rounded-md">
+                                      <div className="flex">
+                                        <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
+                                          Prompt {index + 1} :
+                                        </span>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          className="flex-center h-8 w-8 p-0"
+                                          onClick={() =>
+                                            handleCopy(generatePrompts[index])
+                                          }
+                                        >
+                                          <CopyIcon
+                                            height={12}
+                                            width={12}
+                                          ></CopyIcon>
+                                        </Button>
+                                      </div>
+                                      {prompt}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                            <div className=" w-full h-full flex-center">
+                              <div className=" flex flex-col gap-4 items-center">
+                                <div className="flex gap-1 items-center self-start -mb-3 text-zinc-900 text-[1rem] font-medium">
+                                  本地上传 :
+                                  <HoverCard openDelay={300}>
+                                    <HoverCardTrigger>
+                                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent>
+                                      <p className="text-white text-sm">
+                                        上传您本地的图片文件,上传后会自动触发生成按钮,并返回您上传图片的在线地址在输入框中。
+                                        下面的图片是您本地上传的图片或是您输入的在线图片地址的图片。
+                                      </p>
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </div>
+                                <div className=" w-[450px] h-[450px] flex-center">
+                                  <img
+                                    src={
+                                      uploadImg !== ""
+                                        ? uploadImg
+                                        : describeImageUrl
+                                        ? describeImageUrl
+                                        : "/pending2.png"
+                                    }
+                                    className=" rounded-md max-w-[100%] max-h-[100%]"
+                                    alt="describe image"
+                                  ></img>
+                                  a
+                                </div>
 
-                        <p className=" self-start -mb-3 text-[1rem] font-medium text-zinc-900">
-                          在线图片地址上传 :
-                        </p>
-                        <div className=" w-full flex rounded-md p-2 gap-2 flex-center bg-gray-200 mx-4 !mt-4">
-                          <div className="flex w-full flex-center">
-                            <Input
-                              value={describeImageUrl}
-                              onChange={(e) =>
-                                setDescribeImageUrl(e.target.value)
-                              }
-                              className=" bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
-                              placeholder="在线图片地址,png, jpg, jpeg后缀结尾,如:https://example.com/image.jpg,不支持webp,如果想描述midjourney官网的图片,请下载后再上传)"
-                            ></Input>
+                                <Input
+                                  type="file"
+                                  placeholder="Upload Image"
+                                  accept="image/*"
+                                  className="cursor-pointer border-gray-600 border-2 bg-white/55 "
+                                  disabled={isDescribe}
+                                  onChange={(e) => {
+                                    handleSelectImagUrl(e);
+                                  }}
+                                ></Input>
+                                <Button
+                                  type="button"
+                                  size="lg"
+                                  className="w-full flex gap-2 button-85 text-lg"
+                                  disabled={
+                                    isDescribe || selectImageFile === undefined
+                                  }
+                                  onClick={() => {
+                                    debounce(handleUploadImage(), 1000)();
+                                  }}
+                                >
+                                  {selectImageFile?.name}
+                                  <UploadCloudIcon></UploadCloudIcon>
+                                  {isUploading ? (
+                                    <>
+                                      <span className="flicker">上传中...</span>
+                                    </>
+                                  ) : (
+                                    "上传"
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
 
-                            <Button
-                              type="button"
-                              size="lg"
-                              className="w-fit button-85 ml-2  text-lg"
-                              disabled={isDescribe || describeImageUrl == ""}
-                              onClick={async () => {
-                                setUploadImg("");
-                                handleDescribe(describeImageUrl);
-                              }}
-                            >
-                              {isDescribe ? (
-                                <>
-                                  <span className="flicker">生成中...</span>
-                                </>
-                              ) : (
-                                "生成"
-                              )}
-                            </Button>
+                          <p className=" self-start -mb-3 text-[1rem] font-medium text-zinc-900">
+                            在线图片地址上传 :
+                          </p>
+                          <div className=" w-full flex rounded-md p-2 gap-2 flex-center bg-gray-200 mx-4 !mt-4">
+                            <div className="flex w-full flex-center">
+                              <Input
+                                value={describeImageUrl}
+                                onChange={(e) =>
+                                  setDescribeImageUrl(e.target.value)
+                                }
+                                className=" bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+                                placeholder="在线图片地址,png, jpg, jpeg后缀结尾,如:https://example.com/image.jpg,不支持webp,如果想描述midjourney官网的图片,请下载后再上传)"
+                              ></Input>
+
+                              <Button
+                                type="button"
+                                size="lg"
+                                className="w-fit button-85 ml-2  text-lg"
+                                disabled={isDescribe || describeImageUrl == ""}
+                                onClick={async () => {
+                                  setUploadImg("");
+                                  debounce(
+                                    handleDescribe(describeImageUrl),
+                                    1000
+                                  )();
+                                }}
+                              >
+                                {isDescribe ? (
+                                  <>
+                                    <span className="flicker">生成中...</span>
+                                  </>
+                                ) : (
+                                  "生成"
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TabsContent>
-                    <TabsContent
-                      value="ImageToImage"
-                      className="w-full h-full p-4"
-                    >
-                      <div className=" w-full h-full bg-white/35 p-2 rounded-md">
-                        <div className="flex flex-col items-center w-full h-full gap-4">
-                          <div className=" mt-10 relative w-[480px] h-[480px] border-dashed border-2 border-gray-800 flex flex-wrap gap-1 flex-center">
-                            {blendOrgins.map((image, index) =>
-                              index !== 4 ? (
-                                <div className="p-[0.6rem] relative rounded-md group w-[220px] h-[220px] mb-2 flex-center border-[1px] border-black ">
-                                  <img
-                                    src={image.src}
-                                    alt={image.name}
-                                    className=" max-w-[100%] max-h-[100%]  rounded-md"
-                                  />
-                                  <X
-                                    onClick={() => {
-                                      setBlendImages((pre) =>
-                                        pre.filter((file, i) => i !== index)
-                                      );
-                                      setBlendOrgins((pre) =>
-                                        pre.filter(
-                                          (old) => old.src !== image.src
-                                        )
-                                      );
-                                    }}
-                                    className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
-                                  ></X>
-                                </div>
-                              ) : (
-                                <div className="p-[0.6rem] absolute group rounded-md border-[1px] border-black translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[220px] h-[220px] mb-2 flex-center">
-                                  <img
-                                    src={image.src}
-                                    alt={image.name}
-                                    className=" max-w-[100%] max-h-[100%]  rounded-md"
-                                  />
-                                  <X
-                                    onClick={() => {
-                                      setBlendImages((pre) =>
-                                        pre.filter((file, i) => i !== index)
-                                      );
-                                      setBlendOrgins((pre) =>
-                                        pre.filter(
-                                          (old) => old.src !== image.src
-                                        )
-                                      );
-                                    }}
-                                    className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
-                                  ></X>
-                                </div>
-                              )
-                            )}
-                          </div>
-
-                          <div className="  max-w-[350px] rounded-md  h-fit mb-10 flex-center flex-col p-4 px-6">
-                            <div className="mb-4 self-start flex gap-2 items-center">
-                              <p className="text-md flex gap-2 justify-center items-center font-medium">
-                                dimension:
-                                <HoverCard openDelay={300}>
-                                  <HoverCardTrigger>
-                                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
-                                  </HoverCardTrigger>
-                                  <HoverCardContent>
-                                    <p className="text-white text-sm">
-                                      blend图片的aspect
-                                      ratio值,默认为square(1:1)
-                                      <Link
-                                        target="_blank"
-                                        rel="stylesheet"
-                                        className=" text-blue-500 underline underline-offset-4"
-                                        href="https://docs.midjourney.com/docs/blend-1"
-                                      >
-                                        官方文档
-                                      </Link>
-                                    </p>
-                                  </HoverCardContent>
-                                </HoverCard>
-                              </p>
-                              <Select
-                                onValueChange={(value) => {
-                                  setDimension(value);
-                                }}
-                                defaultValue={"square"}
-                              >
-                                <SelectTrigger className="bg-gray-100 border border-gray-800 py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
-                                  <SelectValue placeholder="dimension"></SelectValue>
-                                </SelectTrigger>
-
-                                <SelectContent className=" focus:ring-transparent">
-                                  <SelectItem value="square">
-                                    square(1:1)
-                                  </SelectItem>
-                                  <SelectItem value="portrait">
-                                    portrait(2:3)
-                                  </SelectItem>
-                                  <SelectItem value="landscape">
-                                    landscape(3:2)
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
+                      </TabsContent>
+                      <TabsContent
+                        value="ImageToImage"
+                        className="w-full h-full p-4"
+                      >
+                        <div className=" w-full h-full  p-2 rounded-md">
+                          <div className="flex flex-col items-center w-full h-full gap-4">
+                            <div className=" mt-10 relative w-[480px] h-[480px] border-dashed border-2 border-gray-800 flex flex-wrap gap-1 flex-center">
+                              {blendOrgins.map((image, index) =>
+                                index !== 4 ? (
+                                  <div className="p-[0.6rem] relative rounded-md group w-[220px] h-[220px] mb-2 flex-center border-[1px] border-black ">
+                                    <img
+                                      src={image.src}
+                                      alt={image.name}
+                                      className=" max-w-[100%] max-h-[100%]  rounded-md"
+                                    />
+                                    <X
+                                      onClick={() => {
+                                        setBlendImages((pre) =>
+                                          pre.filter((file, i) => i !== index)
+                                        );
+                                        setBlendOrgins((pre) =>
+                                          pre.filter(
+                                            (old) => old.src !== image.src
+                                          )
+                                        );
+                                      }}
+                                      className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
+                                    ></X>
+                                  </div>
+                                ) : (
+                                  <div className="p-[0.6rem] absolute group rounded-md border-[1px] border-black translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[220px] h-[220px] mb-2 flex-center">
+                                    <img
+                                      src={image.src}
+                                      alt={image.name}
+                                      className=" max-w-[100%] max-h-[100%]  rounded-md"
+                                    />
+                                    <X
+                                      onClick={() => {
+                                        setBlendImages((pre) =>
+                                          pre.filter((file, i) => i !== index)
+                                        );
+                                        setBlendOrgins((pre) =>
+                                          pre.filter(
+                                            (old) => old.src !== image.src
+                                          )
+                                        );
+                                      }}
+                                      className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
+                                    ></X>
+                                  </div>
+                                )
+                              )}
                             </div>
 
-                            <FileUploader
-                              types={fileTypes}
-                              maxSize={32}
-                              disabled={blendOrgins.length >= 5}
-                              handleChange={(file: File) => {
-                                setBlendImages([...blendImages, file]);
-                              }}
-                            >
-                              <div className=" flex-center cursor-pointer rounded-md border-dashed border-2 border-blue-500 w-[300px] h-[120px]">
-                                <UploadCloudIcon stroke="rgb(37, 99, 235)"></UploadCloudIcon>
-                                <div className=" ml-2">
-                                  <p
-                                    className={`${
-                                      blendOrgins.length >= 5 && `text-gray-700`
-                                    } text-lg font-medium text-blue-700 hover:underline-offset-4 hover:underline under`}
-                                  >
-                                    在此处上传或拖拽文件
-                                  </p>
-                                  <p className=" text-sm text-gray-700">
-                                    文件类型:png, jpg, jpeg, webp
-                                  </p>
-                                  <p className=" text-sm text-gray-700">
-                                    文件数量:2到5个
-                                  </p>
-                                </div>
-                              </div>
-                            </FileUploader>
+                            <div className="  max-w-[480px] rounded-md  h-fit mb-10 flex-center flex-col p-4 px-6">
+                              <div className="mb-4 self-start flex gap-2 items-center">
+                                <p className="text-md flex gap-2 justify-center items-center font-medium">
+                                  dimension:
+                                  <HoverCard openDelay={300}>
+                                    <HoverCardTrigger>
+                                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent>
+                                      <p className="text-white text-sm">
+                                        blend图片的aspect
+                                        ratio值,默认为square(1:1)
+                                        <Link
+                                          target="_blank"
+                                          rel="stylesheet"
+                                          className=" text-blue-500 underline underline-offset-4"
+                                          href="https://docs.midjourney.com/docs/blend-1"
+                                        >
+                                          官方文档
+                                        </Link>
+                                      </p>
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                </p>
+                                <Select
+                                  onValueChange={(value) => {
+                                    setDimension(value);
+                                  }}
+                                  defaultValue={"square"}
+                                >
+                                  <SelectTrigger className="bg-gray-100 border border-gray-800 py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                                    <SelectValue placeholder="dimension"></SelectValue>
+                                  </SelectTrigger>
 
-                            <Button
-                              type="button"
-                              size="lg"
-                              className="w-full mt-2 flex gap-2 button-85 text-lg"
-                              disabled={isBlending || canBlend === false}
-                              onClick={() => {
-                                handleBlend();
-                              }}
-                            >
-                              {isBlending ? (
-                                <span className="flicker">生成中</span>
-                              ) : (
-                                "确定"
-                              )}
-                            </Button>
+                                  <SelectContent className=" focus:ring-transparent">
+                                    <SelectItem value="square">
+                                      square(1:1)
+                                    </SelectItem>
+                                    <SelectItem value="portrait">
+                                      portrait(2:3)
+                                    </SelectItem>
+                                    <SelectItem value="landscape">
+                                      landscape(3:2)
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <FileUploader
+                                types={fileTypes}
+                                maxSize={32}
+                                disabled={blendOrgins.length >= 5}
+                                handleChange={(file: File) => {
+                                  setBlendImages([...blendImages, file]);
+                                }}
+                              >
+                                <div className=" flex-center cursor-pointer rounded-md border-dashed border-2 border-blue-500 w-[300px] h-[120px]">
+                                  <UploadCloudIcon stroke="rgb(37, 99, 235)"></UploadCloudIcon>
+                                  <div className=" ml-2">
+                                    <p
+                                      className={`${
+                                        blendOrgins.length >= 5 &&
+                                        `text-gray-700`
+                                      } text-lg font-medium text-blue-700 hover:underline-offset-4 hover:underline under`}
+                                    >
+                                      在此处上传或拖拽文件
+                                    </p>
+                                    <p className=" text-sm text-gray-700">
+                                      文件类型:png, jpg, jpeg, webp
+                                    </p>
+                                    <p className=" text-sm text-gray-700">
+                                      文件数量:2到5个
+                                    </p>
+                                  </div>
+                                </div>
+                              </FileUploader>
+
+                              <Button
+                                type="button"
+                                size="lg"
+                                className="w-full mt-2 flex gap-2 button-85 text-lg"
+                                disabled={isBlending || canBlend === false}
+                                onClick={() => {
+                                  debounce(handleBlend(), 1000)();
+                                }}
+                              >
+                                {isBlending ? (
+                                  <span className="flicker">生成中</span>
+                                ) : (
+                                  "确定"
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </FormItem>
-              )}
-            ></FormField>
+                      </TabsContent>
+                    </Tabs>
+                  </FormItem>
+                )}
+              ></FormField>
+            </div>
+            <div
+              className={`hide-scrollbar p-2 px-4 w-[20rem] h-full flex flex-col overflow-y-scroll`}
+            >
+              <HistoryImage></HistoryImage>
+            </div>
           </div>
-          <div
-            className={`hide-scrollbar p-2 px-4 w-[20rem] h-full flex flex-col overflow-y-scroll`}
-          >
-            <HistoryImage></HistoryImage>
-          </div>
-        </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
+    </>
   );
 };

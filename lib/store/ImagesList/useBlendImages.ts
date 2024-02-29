@@ -6,10 +6,13 @@ interface ImageState {
   deleteImage: (index: number) => void;
 }
 
-export const useVaryImage = create<ImageState>()((set) => ({
+export const useBlendImages = create<ImageState>()((set) => ({
   images: [],
+  prompts: [],
   setImages: (images) =>
     set((state) => ({ images: [...state.images, ...images] })),
   deleteImage: (index) =>
-    set((state) => ({ images: state.images.filter((img, i) => i !== index) })),
+    set((state) => ({
+      images: state.images.map((img, i) => (i === index ? "" : img)),
+    })),
 }));

@@ -88,7 +88,8 @@ export interface StyleStatus {
 
 export interface FullViewData {
   selectedIndex: number;
-  manualPrompt: string;
+  useStyleRaw: boolean;
+  useTile: boolean;
   parentTaskId: string;
   parentSeed: string;
   finalPrompt: string;

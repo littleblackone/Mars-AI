@@ -14,7 +14,6 @@ import {
   FetchImageData,
   FullViewData,
   Options,
-  TaskResult,
 } from "@/lib/interface/ImageData";
 import { Badge } from "../ui/badge";
 import {
@@ -25,19 +24,21 @@ import {
   handleCopy,
   handleDownloadBase64,
   handleGetSeed,
+  handleIw,
+  handleQuality,
 } from "@/lib/utils";
 
 import UpscaleSvg from "@/components/shared/UpscaleSvg";
 import { DownloadIcon, X, ZoomIn } from "lucide-react";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useUpscaleImage } from "@/lib/store/useUpscaleImage";
+import { useUpscaleImage } from "@/lib/store/ImagesList/useUpscaleImage";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { PopoverClose } from "@radix-ui/react-popover";
-import { useZoomImages } from "@/lib/store/useZoomImages";
-import { useExpandImages } from "@/lib/store/useExpandImages";
+import { useZoomImages } from "@/lib/store/ImagesList/useZoomImages";
+import { useExpandImages } from "@/lib/store/ImagesList/useExpandImages";
 import { useIsUpscaled } from "@/lib/store/useIsUpscaled";
 
 export function ImageFullView({
@@ -52,7 +53,8 @@ export function ImageFullView({
   setParentImgArr,
   setParentSeed,
   setOriginTaskId,
-  manualPrompt,
+  useStyleRaw,
+  useTile,
 }: FullViewData) {
   const [isFetching, setIsFetching] = useState(false);
 
@@ -74,16 +76,22 @@ export function ImageFullView({
   let imgIndexList = [0, 1, 2, 3];
 
   const setUpscaleImages = useUpscaleImage((state) => state.setImages);
+  const setUpscalePrompt = useUpscaleImage((state) => state.setPrompts);
   const setZoomImages = useZoomImages((state) => state.setImages);
+  const setZoomPrompt = useZoomImages((state) => state.setPrompts);
   const setExpandImages = useExpandImages((state) => state.setImages);
+  const setExpandPrompt = useExpandImages((state) => state.setPrompts);
 
   const isUpscaled = useIsUpscaled((state) => state.isUpscaled);
   const setIsUpscaled = useIsUpscaled((state) => state.setIsUpscaled);
 
   const model = tempFormValue?.model?.split(" --")[1];
-  const option: Options = extractOptions(manualPrompt);
+
   const formAS = extractArAndModel(tempFormValue?.aspectRatio || "");
   const formModel = extractArAndModel(tempFormValue?.model || "");
+
+  const handledIw = handleIw(tempFormValue?.imageWeight || 1);
+  const handledQ = handleQuality(tempFormValue?.quality || " --q 1");
 
   // parentimageArr = [
   //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
@@ -148,7 +156,8 @@ export function ImageFullView({
             const bast64ImgArr = await cropImageIntoFour(
               taskResult.data.task_result.image_url
             );
-
+            const prompt = taskResult.data.meta.task_param.prompt;
+            setZoomPrompt(prompt);
             setParentImgArr(bast64ImgArr);
             setZoomImages(bast64ImgArr);
 
@@ -221,7 +230,8 @@ export function ImageFullView({
             const bast64ImgArr = await cropImageIntoFour(
               taskResult.data.task_result.image_url
             );
-
+            const prompt = taskResult.data.meta.task_param.prompt;
+            setExpandPrompt(prompt);
             setParentImgArr(bast64ImgArr);
             setExpandImages(bast64ImgArr);
 
@@ -300,6 +310,8 @@ export function ImageFullView({
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
             setIsUpscaled(true);
+            const prompt = taskResult.data.meta.task_param.prompt;
+            setUpscalePrompt(prompt);
             setUpscaleImages(taskResult.data.task_result.image_url);
 
             setIsUpscaling(false);
@@ -476,36 +488,30 @@ export function ImageFullView({
                   type="button"
                   variant="outline"
                   className="flex-center h-8 w-8 p-0"
-                  onClick={() =>
-                    handleCopy(finalPrompt !== "" ? finalPrompt : manualPrompt)
-                  }
+                  onClick={() => handleCopy(finalPrompt)}
                 >
                   <CopyIcon height={12} width={12}></CopyIcon>
                 </Button>
               </div>
               <p className=" text-sm text-gray-600 leading-5 line-clamp-4">
-                {tempFormValue?.prompt || manualPrompt}
+                {tempFormValue?.prompt}
               </p>
 
               <div className="flex gap-2 flex-wrap mt-2 h-[52px] overflow-y-scroll hide-scrollbar">
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">ar</span>
-                  <span className="ml-1 text-gray-800">
-                    {formAS !== "" ? formAS : option.AspectRatio}
-                  </span>
+                  <span className="ml-1 text-gray-800">{formAS}</span>
                 </Badge>
 
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">model</span>
-                  <span className="ml-1 text-gray-800">
-                    {formModel !== "" ? formModel : option.Version}
-                  </span>
+                  <span className="ml-1 text-gray-800">{formModel}</span>
                 </Badge>
 
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">stylize</span>
                   <span className="ml-1 text-gray-800">
-                    {tempFormValue?.stylize || option.Stylize}
+                    {tempFormValue?.stylize}
                   </span>
                 </Badge>
 
@@ -517,56 +523,51 @@ export function ImageFullView({
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">chaos</span>
                   <span className="ml-1 text-gray-800">
-                    {tempFormValue?.chaos || tempFormValue?.chaos === 0
-                      ? tempFormValue?.chaos
-                      : option.Chaos}
+                    {(tempFormValue?.chaos || tempFormValue?.chaos === 0) &&
+                      tempFormValue?.chaos}
                   </span>
                 </Badge>
 
-                {option.ImageWeight !== "" && (
-                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                    <span className=" text-gray-500">iw</span>
-                    <span className="ml-1 text-gray-800">
-                      {option.ImageWeight}
-                    </span>
-                  </Badge>
-                )}
+                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500">iw</span>
+                  <span className="ml-1 text-gray-800">{handledIw}</span>
+                </Badge>
 
-                {option.Quality != "" && (
-                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                    <span className=" text-gray-500">quality</span>
-                    <span className="ml-1 text-gray-800">{option.Quality}</span>
-                  </Badge>
-                )}
+                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500">quality</span>
+                  <span className="ml-1 text-gray-800">{handledQ}</span>
+                </Badge>
 
-                {option.Stop !== "" && (
-                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                    <span className=" text-gray-500">stop</span>
-                    <span className="ml-1 text-gray-800">{option.Stop}</span>
-                  </Badge>
-                )}
+                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500">stop</span>
+                  <span className="ml-1 text-gray-800">
+                    {tempFormValue?.stop}
+                  </span>
+                </Badge>
 
-                {option.Style !== "" && (
-                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                    <span className=" text-gray-500">style </span>
-                    <span className="ml-1 text-gray-800">{option.Style}</span>
-                  </Badge>
-                )}
+                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500">style</span>
+                  <span className="ml-1 text-gray-800">
+                    {useStyleRaw ? "raw" : ""}
+                  </span>
+                </Badge>
 
-                {option.Tile && (
-                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                    <span className=" text-gray-500">
-                      {option.Tile ? "tile" : ""}
-                    </span>
-                  </Badge>
-                )}
+                <Badge
+                  className={`bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all hidden duration-200 ${
+                    useTile && "block"
+                  }`}
+                >
+                  <span className=" text-gray-500">
+                    {useTile ? "tile" : ""}
+                  </span>
+                </Badge>
 
-                {option.Weird !== "" && (
-                  <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                    <span className=" text-gray-500">weird </span>
-                    <span className="ml-1 text-gray-800">{option.Weird}</span>
-                  </Badge>
-                )}
+                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500">weird</span>
+                  <span className="ml-1 text-gray-800">
+                    {tempFormValue?.weird}
+                  </span>
+                </Badge>
               </div>
             </div>
             <div
@@ -635,7 +636,7 @@ export function ImageFullView({
                 className="px-2"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
-                  handleZoom("1.5");
+                  debounce(handleZoom("1.5"), 1000)();
                 }}
               >
                 {isZooming ? (
@@ -656,7 +657,7 @@ export function ImageFullView({
                 className="px-2"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
-                  handleZoom("2");
+                  debounce(handleZoom("2"), 1000)();
                 }}
               >
                 {isZooming ? (
@@ -678,7 +679,7 @@ export function ImageFullView({
                 className={`px-2 flex`}
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
-                  handleZoom("1");
+                  debounce(handleZoom("1"), 1000)();
                 }}
               >
                 {isZooming ? (
@@ -727,7 +728,7 @@ export function ImageFullView({
                   />
                   <PopoverClose
                     onClick={() => {
-                      handleZoom(zoomValue);
+                      debounce(handleZoom(zoomValue), 1000)();
                     }}
                     className=" p-2  rounded-md bg-black/80 text-white transition-all
                    duration-200 hover:bg-black/70"
