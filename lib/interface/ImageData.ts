@@ -89,6 +89,9 @@ export interface StyleStatus {
 export interface FullViewData {
   selectedIndex: number;
   useStyleRaw: boolean;
+  customAS: boolean;
+  customASW: number;
+  customASH: number;
   useTile: boolean;
   parentTaskId: string;
   parentSeed: string;

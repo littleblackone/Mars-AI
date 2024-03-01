@@ -59,9 +59,8 @@ export default function HistoryImage() {
             <AccordionItem value="originImages">
               <AccordionTrigger>
                 <span
-                  className={`self-start  mb-2 text-neutral-800 text-sm  hidden ${
-                    originImageList.length > 0 && "!block"
-                  }`}
+                  className={`self-start  mb-2 text-neutral-800 text-sm  hidden ${originImageList.length > 0 && "!block"
+                    }`}
                 >
                   Origin Images
                 </span>
@@ -97,9 +96,8 @@ export default function HistoryImage() {
             <AccordionItem value="varyImages">
               <AccordionTrigger>
                 <span
-                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${
-                    varyImageList.length > 0 && "!block"
-                  }`}
+                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${varyImageList.length > 0 && "!block"
+                    }`}
                 >
                   Vary Images
                 </span>
@@ -135,9 +133,8 @@ export default function HistoryImage() {
             <AccordionItem value="upscaleImages">
               <AccordionTrigger>
                 <span
-                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${
-                    upscaleImageList.length > 0 && "!block"
-                  }`}
+                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${upscaleImageList.length > 0 && "!block"
+                    }`}
                 >
                   Upscale Images
                 </span>
@@ -173,9 +170,8 @@ export default function HistoryImage() {
             <AccordionItem value="zoomImages">
               <AccordionTrigger>
                 <span
-                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${
-                    zoomImageList.length > 0 && "!block"
-                  }`}
+                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${zoomImageList.length > 0 && "!block"
+                    }`}
                 >
                   Zoom Images
                 </span>
@@ -211,9 +207,8 @@ export default function HistoryImage() {
             <AccordionItem value="expandImages">
               <AccordionTrigger>
                 <span
-                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${
-                    expandImageList.length > 0 && "!block"
-                  }`}
+                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${expandImageList.length > 0 && "!block"
+                    }`}
                 >
                   Expand Images
                 </span>
@@ -249,9 +244,8 @@ export default function HistoryImage() {
             <AccordionItem value="blendImages">
               <AccordionTrigger>
                 <span
-                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${
-                    blendImageList.length > 0 && "!block"
-                  }`}
+                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${blendImageList.length > 0 && "!block"
+                    }`}
                 >
                   Blend Images
                 </span>
@@ -287,9 +281,8 @@ export default function HistoryImage() {
             <AccordionItem value="inpaintImages">
               <AccordionTrigger>
                 <span
-                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${
-                    inpaintImageList.length > 0 && "!block"
-                  }`}
+                  className={`self-start mb-2 text-neutral-800 text-sm  hidden ${inpaintImageList.length > 0 && "!block"
+                    }`}
                 >
                   Inpaint Images
                 </span>

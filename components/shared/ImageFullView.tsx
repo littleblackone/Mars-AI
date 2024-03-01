@@ -20,12 +20,12 @@ import {
   cropImageIntoFour,
   debounce,
   extractArAndModel,
-  extractOptions,
   handleCopy,
   handleDownloadBase64,
   handleGetSeed,
   handleIw,
   handleQuality,
+  imageUrlToBase64,
 } from "@/lib/utils";
 
 import UpscaleSvg from "@/components/shared/UpscaleSvg";
@@ -40,6 +40,7 @@ import { PopoverClose } from "@radix-ui/react-popover";
 import { useZoomImages } from "@/lib/store/ImagesList/useZoomImages";
 import { useExpandImages } from "@/lib/store/ImagesList/useExpandImages";
 import { useIsUpscaled } from "@/lib/store/useIsUpscaled";
+import { toast } from "sonner";
 
 export function ImageFullView({
   selectedIndex,
@@ -55,7 +56,11 @@ export function ImageFullView({
   setOriginTaskId,
   useStyleRaw,
   useTile,
+  customAS,
+  customASW,
+  customASH
 }: FullViewData) {
+  const [fetchTime, setFetchTime] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(false);
 
   const [isUpscaling, setIsUpscaling] = useState(false);
@@ -83,12 +88,12 @@ export function ImageFullView({
   const setExpandPrompt = useExpandImages((state) => state.setPrompts);
 
   const isUpscaled = useIsUpscaled((state) => state.isUpscaled);
-  const setIsUpscaled = useIsUpscaled((state) => state.setIsUpscaled);
 
   const model = tempFormValue?.model?.split(" --")[1];
 
   const formAS = extractArAndModel(tempFormValue?.aspectRatio || "");
   const formModel = extractArAndModel(tempFormValue?.model || "");
+  const customAspectRatio = `${customASW}:${customASH}`
 
   const handledIw = handleIw(tempFormValue?.imageWeight || 1);
   const handledQ = handleQuality(tempFormValue?.quality || " --q 1");
@@ -100,10 +105,10 @@ export function ImageFullView({
   //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
   // ];
 
-  const handleZoom = debounce(async (zoomValue: string) => {
+  const handleZoom = async (zoomValue: string) => {
     try {
       setIsZooming(true);
-
+      setFetchTime(0)
       let zoomId: string = "";
       let isFirstIntervalCompleted: boolean = false;
 
@@ -150,6 +155,14 @@ export function ImageFullView({
             }
           );
 
+          setFetchTime((prev) => prev + 1);
+
+          if (fetchTime >= 120) {
+            clearInterval(intervalId);
+            setIsZooming(false);
+            toast.error("请求超时,请查看midjourney服务器状态后重试");
+          }
+
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
             setOriginTaskId(taskResult.data.task_id);
@@ -172,12 +185,12 @@ export function ImageFullView({
     } catch (error) {
       console.error("Error sending prompt:", error);
     }
-  }, 1000);
+  }
 
-  const handleExpand = debounce(async (expandValue: string) => {
+  const handleExpand = async (expandValue: string) => {
     try {
       setIsExpanding(true);
-
+      setFetchTime(0);
       let expandId: string = "";
       let isFirstIntervalCompleted: boolean = false;
 
@@ -224,6 +237,14 @@ export function ImageFullView({
             }
           );
 
+          setFetchTime((prev) => prev + 1);
+
+          if (fetchTime >= 120) {
+            clearInterval(intervalId);
+            setIsExpanding(false);
+            toast.error("请求超时,请查看midjourney服务器状态后重试");
+          }
+
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
             setOriginTaskId(taskResult.data.task_id);
@@ -246,12 +267,12 @@ export function ImageFullView({
     } catch (error) {
       console.error("Error sending prompt:", error);
     }
-  }, 1000);
+  }
 
-  const handleUpscaleImage = debounce(async () => {
+  const handleUpscaleImage = async () => {
     try {
       setIsUpscaling(true);
-
+      setFetchTime(0)
       let upscaleId: string;
       let isFirstIntervalCompleted: boolean = false;
 
@@ -279,8 +300,8 @@ export function ImageFullView({
                 ? "2x"
                 : "4x"
               : upscaleSub
-              ? "subtle"
-              : "creative";
+                ? "subtle"
+                : "creative";
 
           if (taskResult.data.status === "finished") {
             clearInterval(upscaleIntervalId);
@@ -306,14 +327,20 @@ export function ImageFullView({
               taskId: upscaleId,
             }
           );
+          setFetchTime((prev) => prev + 1);
 
+          if (fetchTime >= 180) {
+            clearInterval(intervalId);
+            setIsFetching(false);
+            toast.error("请求超时,请查看midjourney服务器状态后重试");
+          }
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
-            setIsUpscaled(true);
             const prompt = taskResult.data.meta.task_param.prompt;
             setUpscalePrompt(prompt);
-            setUpscaleImages(taskResult.data.task_result.image_url);
-
+            const upscaledBase64 = await imageUrlToBase64(taskResult.data.task_result.image_url)
+            toast.success('Upscale成功, 请在历史图片区域查看', { duration: 3500 })
+            setUpscaleImages(upscaledBase64);
             setIsUpscaling(false);
           }
         } catch (error) {
@@ -323,7 +350,7 @@ export function ImageFullView({
     } catch (error) {
       console.error("Error sending prompt:", error);
     }
-  }, 1000);
+  }
 
   useEffect(() => {
     setIsFetching(isUpscaling || isZooming || isExpanding);
@@ -390,9 +417,9 @@ export function ImageFullView({
               onClick={() => {
                 handleDownloadBase64(
                   parentimageArr[
-                    mainImageIndex !== undefined
-                      ? mainImageIndex
-                      : selectedIndex
+                  mainImageIndex !== undefined
+                    ? mainImageIndex
+                    : selectedIndex
                   ],
                   mainImageIndex !== undefined ? mainImageIndex : selectedIndex
                 );
@@ -402,70 +429,63 @@ export function ImageFullView({
             </Button>
 
             <div
-              className={` w-[712px] h-[712px] flex-center ${
-                isFetching && "hidden"
-              }`}
+              className={` w-[712px] h-[712px] flex-center ${isFetching && "hidden"
+                }`}
             >
               <img
                 src={
                   parentimageArr[
-                    mainImageIndex !== undefined
-                      ? mainImageIndex
-                      : selectedIndex
+                  mainImageIndex !== undefined
+                    ? mainImageIndex
+                    : selectedIndex
                   ]
                 }
-                className={` max-w-[100%] max-h-[100%] ${
-                  isFetching && "hidden"
-                }`}
+                className={` max-w-[100%] max-h-[100%] ${isFetching && "hidden"
+                  }`}
                 alt="full view img"
               ></img>
               <div
-                className={` absolute right-2 bottom-2 w-fit h-fit ${
-                  isFetching && "hidden"
-                }`}
+                className={` absolute right-2 bottom-2 w-fit h-fit ${isFetching && "hidden"
+                  }`}
               >
                 <div className=" flex gap-1">
                   <img
                     src={parentimageArr[0]}
-                    className={`w-[5rem] border-2 border-transparent h-full hover:scale-105 transition-all duration-300 cursor-pointer ${
-                      imgIndexList[0] ===
-                        (mainImageIndex !== undefined
-                          ? mainImageIndex
-                          : selectedIndex) && "border-2 !border-green-500"
-                    }`}
+                    className={`w-[5rem] border-2 border-transparent h-full hover:scale-105 transition-all duration-300 cursor-pointer ${imgIndexList[0] ===
+                      (mainImageIndex !== undefined
+                        ? mainImageIndex
+                        : selectedIndex) && "border-2 !border-green-500"
+                      }`}
                     alt="full view img"
                     onClick={() => setMainImageIndex(imgIndexList[0])}
                   ></img>
                   <img
                     src={parentimageArr[1]}
-                    className={`w-[5rem] border-2 border-transparent   h-full hover:scale-105 transition-all duration-300 cursor-pointer ${
-                      imgIndexList[1] ===
-                        (mainImageIndex !== undefined
-                          ? mainImageIndex
-                          : selectedIndex) && "border-2 !border-green-500"
-                    }`}
+                    className={`w-[5rem] border-2 border-transparent   h-full hover:scale-105 transition-all duration-300 cursor-pointer ${imgIndexList[1] ===
+                      (mainImageIndex !== undefined
+                        ? mainImageIndex
+                        : selectedIndex) && "border-2 !border-green-500"
+                      }`}
                     alt="full view img"
                     onClick={() => setMainImageIndex(imgIndexList[1])}
                   ></img>
                   <img
                     src={parentimageArr[2]}
-                    className={`w-[5rem] border-2 border-transparent  h-full hover:scale-105 transition-all duration-300 cursor-pointer ${
-                      imgIndexList[2] ===
-                        (mainImageIndex !== undefined
-                          ? mainImageIndex
-                          : selectedIndex) && "border-2 !border-green-500"
-                    }`}
+                    className={`w-[5rem] border-2 border-transparent  h-full hover:scale-105 transition-all duration-300 cursor-pointer ${imgIndexList[2] ===
+                      (mainImageIndex !== undefined
+                        ? mainImageIndex
+                        : selectedIndex) && "border-2 !border-green-500"
+                      }`}
                     alt="full view img"
                     onClick={() => setMainImageIndex(imgIndexList[2])}
                   ></img>
                   <img
                     src={parentimageArr[3]}
-                    className={`w-[5rem] border-2 border-transparent  h-full hover:scale-105 transition-all duration-300 cursor-pointer ${
-                      imgIndexList[3] ===
-                        (mainImageIndex !== undefined
-                          ? mainImageIndex
-                          : selectedIndex) && "border-2 !border-green-500"
-                    }`}
+                    className={`w-[5rem] border-2 border-transparent  h-full hover:scale-105 transition-all duration-300 cursor-pointer ${imgIndexList[3] ===
+                      (mainImageIndex !== undefined
+                        ? mainImageIndex
+                        : selectedIndex) && "border-2 !border-green-500"
+                      }`}
                     alt="full view img"
                     onClick={() => setMainImageIndex(imgIndexList[3])}
                   ></img>
@@ -474,9 +494,8 @@ export function ImageFullView({
               <img
                 src={"/pending2.png"}
                 alt="midjourney image"
-                className={`hidden w-full h-full aspect-square ${
-                  isFetching && "flicker !block"
-                }`}
+                className={`hidden w-full h-full aspect-square ${isFetching && "flicker !block"
+                  }`}
               ></img>
             </div>
           </div>
@@ -500,7 +519,7 @@ export function ImageFullView({
               <div className="flex gap-2 flex-wrap mt-2 h-[52px] overflow-y-scroll hide-scrollbar">
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
                   <span className=" text-gray-500">ar</span>
-                  <span className="ml-1 text-gray-800">{formAS}</span>
+                  <span className="ml-1 text-gray-800">{customAS ? customAspectRatio : formAS}</span>
                 </Badge>
 
                 <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
@@ -545,7 +564,7 @@ export function ImageFullView({
                   </span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                <Badge className={`${useStyleRaw ? '!block' : ''} hidden bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200`}>
                   <span className=" text-gray-500">style</span>
                   <span className="ml-1 text-gray-800">
                     {useStyleRaw ? "raw" : ""}
@@ -553,9 +572,8 @@ export function ImageFullView({
                 </Badge>
 
                 <Badge
-                  className={`bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all hidden duration-200 ${
-                    useTile && "block"
-                  }`}
+                  className={`bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all hidden duration-200 ${useTile && "block"
+                    }`}
                 >
                   <span className=" text-gray-500">
                     {useTile ? "tile" : ""}
@@ -636,7 +654,7 @@ export function ImageFullView({
                 className="px-2"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
-                  debounce(handleZoom("1.5"), 1000)();
+                  debounce(() => handleZoom("1.5"), 1000)();
                 }}
               >
                 {isZooming ? (
@@ -657,7 +675,7 @@ export function ImageFullView({
                 className="px-2"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
-                  debounce(handleZoom("2"), 1000)();
+                  debounce(() => handleZoom("2"), 1000)();
                 }}
               >
                 {isZooming ? (
@@ -679,7 +697,7 @@ export function ImageFullView({
                 className={`px-2 flex`}
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
-                  debounce(handleZoom("1"), 1000)();
+                  debounce(() => handleZoom("1"), 1000)();
                 }}
               >
                 {isZooming ? (
@@ -728,7 +746,7 @@ export function ImageFullView({
                   />
                   <PopoverClose
                     onClick={() => {
-                      debounce(handleZoom(zoomValue), 1000)();
+                      debounce(() => handleZoom(zoomValue), 1000)();
                     }}
                     className=" p-2  rounded-md bg-black/80 text-white transition-all
                    duration-200 hover:bg-black/70"

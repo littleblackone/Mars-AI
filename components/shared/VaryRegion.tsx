@@ -2,13 +2,13 @@ import React, { useEffect, useState, useRef } from "react";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { InfoCircledIcon, ThickArrowRightIcon } from "@radix-ui/react-icons";
+import { ThickArrowRightIcon } from "@radix-ui/react-icons";
 import Cropper, { ReactCropperElement } from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import {
   FetchImageData,
   InpaintData,
-  TaskResult,
+
 } from "@/lib/interface/ImageData";
 import axios from "axios";
 import { useInpaintImages } from "@/lib/store/ImagesList/useInpaintImages";
@@ -21,11 +21,8 @@ import {
 } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useIsInpainting } from "@/lib/store/useisInpainting";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../ui/hover-card";
+
+
 
 export default function VaryRegion({
   open,
@@ -39,7 +36,7 @@ export default function VaryRegion({
   parentimageArr,
 }: InpaintData) {
   const cropperRef = useRef<ReactCropperElement>(null);
-
+  const [fetchTime, setFetchTime] = useState<number>(0);
   const [prompt, setPrompt] = useState(parentPrompt);
 
   const [canvasHeight, setCanvasHeight] = useState(0);
@@ -57,12 +54,6 @@ export default function VaryRegion({
   const setInpaintImages = useInpaintImages((state) => state.setImages);
   const setInpaintPrompts = useInpaintImages((state) => state.setPrompts);
 
-  // parentimageArr = [
-  //   "https://cdn.midjourney.com/b4637836-433c-4e39-bbbd-2d42df177832/0_3.webp",
-  //   "https://cdn.midjourney.com/b4637836-433c-4e39-bbbd-2d42df177832/0_3.webp",
-  //   "https://cdn.midjourney.com/b4637836-433c-4e39-bbbd-2d42df177832/0_3.webp",
-  //   "https://cdn.midjourney.com/b4637836-433c-4e39-bbbd-2d42df177832/0_3.webp",
-  // ];
 
   const onCrop = () => {
     const cropper = cropperRef.current?.cropper;
@@ -132,10 +123,15 @@ export default function VaryRegion({
     canvasWidth,
   ]);
 
+  useEffect(() => {
+    console.log(prompt);
+
+  }, [prompt])
+
   const handleInpaint = async () => {
     try {
       setIsInpainting(true);
-
+      setFetchTime(0)
       let inpaintId: string = "";
       let isFirstIntervalCompleted: boolean = false;
 
@@ -161,11 +157,10 @@ export default function VaryRegion({
             const response = await axios.post("/api/inpaint", {
               mask: blackWhiteImg,
               originTaskId: taskId,
-              cleanedPrompt,
+              prompt: cleanedPrompt,
             });
 
             inpaintId = response.data.task_id;
-
             isFirstIntervalCompleted = true;
           }
         } catch (error) {
@@ -179,15 +174,21 @@ export default function VaryRegion({
         const taskResult: FetchImageData = await axios.post("/api/fetchImage", {
           taskId: inpaintId,
         });
+        setFetchTime((prev) => prev + 1);
 
-        if (taskResult.data.status === "finished") {
+        if (fetchTime >= 180) {
           clearInterval(intervalId);
           setIsInpainting(false);
+          toast.error("请求超时,请查看midjourney服务器状态后重试");
+        }
+        if (taskResult.data.status === "finished") {
+          clearInterval(intervalId);
           const prompt = taskResult.data.meta.task_param.prompt;
           setInpaintPrompts(prompt);
           const bast64ImgArr = await cropImageIntoFour(
             taskResult.data.task_result.image_url
           );
+          setIsInpainting(false);
           setParentImageArr(bast64ImgArr);
           setInpaintImages(bast64ImgArr);
           setOriginTaskId(taskResult.data.task_id);
@@ -211,9 +212,8 @@ export default function VaryRegion({
             movable={false}
             src={parentimageArr[selectedIndex]}
             disabled={isInpainting}
-            className={`rounded-sm max-w-[100%] max-h-[100%] ${
-              isInpainting && `flicker`
-            }`}
+            className={`rounded-sm max-w-[100%] max-h-[100%] ${isInpainting && `flicker`
+              }`}
             alt="midjourney image"
             initialAspectRatio={1}
             crop={onCrop}
@@ -237,7 +237,7 @@ export default function VaryRegion({
             type="button"
             className=" rounded-xl mr-2"
             onClick={() => {
-              debounce(handleInpaint, 1000)();
+              debounce(() => handleInpaint(), 1000)();
               setOpen(false);
             }}
           >

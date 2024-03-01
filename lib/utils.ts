@@ -72,7 +72,8 @@ export async function generateFinalPrompt(
   imageUrls: string[],
   srefUrl: string,
   customASW: number,
-  customASH: number
+  customASH: number,
+  stylesList: string[]
 ) {
   const {
     prompt,
@@ -117,6 +118,10 @@ export async function generateFinalPrompt(
   }
 
   finalPromptArray.push(handledPrompt);
+
+  if (stylesList.length > 0) {
+    stylesList.map((style) => finalPromptArray.push(`, ${style}`));
+  }
 
   if (useStyleRow) {
     finalPromptArray.push(" --style raw");
@@ -203,6 +208,24 @@ export function extractArAndModel(input: string): string {
     return input.split(" --")[1];
   } else {
     return "";
+  }
+}
+
+export async function imageUrlToBase64(imageUrl: string) {
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: "arraybuffer",
+    });
+
+    if (!response.data) {
+      throw new Error("No image data received");
+    }
+
+    const base64Data = Buffer.from(response.data, "binary").toString("base64");
+    return `data:image/jpeg;base64,${base64Data}`;
+  } catch (error) {
+    console.error("Error converting image to base64:", error);
+    throw error;
   }
 }
 
@@ -449,4 +472,11 @@ function base64toBlob(base64Data: string): Blob {
     ia[i] = byteString.charCodeAt(i);
   }
   return new Blob([ab], { type: mimeString });
+}
+
+export function getRandomPrompt(prompts: string[]): string {
+  // 生成一个介于 0 到 prompts.length - 1 之间的随机整数
+  const randomIndex: number = Math.floor(Math.random() * prompts.length);
+  // 返回随机选择的 prompt
+  return prompts[randomIndex];
 }

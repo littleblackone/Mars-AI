@@ -115,9 +115,8 @@ export default function FullViewImg({
 
   return (
     <div
-      className={`w-screen p-10  h-screen  transition-all z-50 duration-300 bg-white absolute hidden opacity-0 ${
-        open && "!flex !items-center !justify-between opacity-100"
-      }`}
+      className={`w-screen p-10  h-screen  transition-all z-50 duration-300 bg-white absolute hidden opacity-0 ${open && "!flex !items-center !justify-between opacity-100"
+        }`}
     >
       <div className="h-full relative w-[80vw] flex-center">
         <img
@@ -167,111 +166,114 @@ export default function FullViewImg({
             ></TrashIcon>
           </Button>
         </div>
-        <div className="flex flex-col gap-2  rounded-sm">
-          <div className="flex gap-2 items-center ">
-            <span className=" font-medium text-[18px]">Prompt :</span>
-            <Button
-              variant="outline"
-              className=" cursor-pointer !px-[12px]"
-              type="button"
-              onClick={() => {
-                handleCopy(prompt);
-              }}
-            >
-              <CopyIcon width={15} height={15}></CopyIcon>
-            </Button>
-          </div>
-          <p className=" text-[15px] line-clamp-[15] text-neutral-700">
-            {prompt}
-          </p>
-        </div>
-        <div className=" w-full h-full ">
-          <span className="font-medium text-[18px]">Command List:</span>
-          <div className=" flex gap-4 flex-wrap mt-4 h-fit w-full overflow-y-scroll hide-scrollbar">
-            {option?.AspectRatio && (
-              <Badge className=" bg-white/50 text-base h-[50px]    shadow cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">ar</span>
-                <span className="ml-1 text-neutral-950">
-                  {option?.AspectRatio}
-                </span>
-              </Badge>
-            )}
+        {imgListName !== 'blendImageList' &&
+          <>
+            <div className="flex flex-col gap-2  rounded-sm">
+              <div className="flex gap-2 items-center ">
+                <span className=" font-medium text-[18px]">Prompt :</span>
+                <Button
+                  variant="outline"
+                  className=" cursor-pointer !px-[12px]"
+                  type="button"
+                  onClick={() => {
+                    handleCopy(prompt);
+                  }}
+                >
+                  <CopyIcon width={15} height={15}></CopyIcon>
+                </Button>
+              </div>
+              <p className=" text-[15px] line-clamp-[15] text-neutral-700">
+                {prompt}
+              </p>
+            </div>
+            <div className=" w-full h-full ">
+              <span className="font-medium text-[18px]">Command List:</span>
+              <div className=" flex gap-4 flex-wrap mt-4 h-fit w-full overflow-y-scroll hide-scrollbar">
+                {option?.AspectRatio && (
+                  <Badge className=" bg-white/50 text-base h-[50px]    shadow cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">ar</span>
+                    <span className="ml-1 text-neutral-950">
+                      {option?.AspectRatio}
+                    </span>
+                  </Badge>
+                )}
 
-            {option?.Version && (
-              <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">model</span>
-                <span className="ml-1 text-neutral-950">{option?.Version}</span>
-              </Badge>
-            )}
+                {option?.Version && (
+                  <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">model</span>
+                    <span className="ml-1 text-neutral-950">{option?.Version}</span>
+                  </Badge>
+                )}
 
-            {option?.Stylize && (
-              <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">stylize</span>
-                <span className="ml-1 text-neutral-950">{option?.Stylize}</span>
-              </Badge>
-            )}
+                {option?.Stylize && (
+                  <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">stylize</span>
+                    <span className="ml-1 text-neutral-950">{option?.Stylize}</span>
+                  </Badge>
+                )}
 
-            {option?.Seed && (
-              <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">seed</span>
-                <span className="ml-1 text-neutral-950">{option?.Seed}</span>
-              </Badge>
-            )}
+                {option?.Seed && (
+                  <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">seed</span>
+                    <span className="ml-1 text-neutral-950">{option?.Seed}</span>
+                  </Badge>
+                )}
 
-            {option?.Chaos && (
-              <Badge className=" bg-white/50 shadow text-base h-[50px]     cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">chaos</span>
-                <span className="ml-1 text-neutral-950">{option?.Chaos}</span>
-              </Badge>
-            )}
+                {option?.Chaos && (
+                  <Badge className=" bg-white/50 shadow text-base h-[50px]     cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">chaos</span>
+                    <span className="ml-1 text-neutral-950">{option?.Chaos}</span>
+                  </Badge>
+                )}
 
-            {option?.ImageWeight && (
-              <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">iw</span>
-                <span className="ml-1 text-neutral-950">
-                  {option?.ImageWeight}
-                </span>
-              </Badge>
-            )}
+                {option?.ImageWeight && (
+                  <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">iw</span>
+                    <span className="ml-1 text-neutral-950">
+                      {option?.ImageWeight}
+                    </span>
+                  </Badge>
+                )}
 
-            {option?.Quality && (
-              <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">quality</span>
-                <span className="ml-1 text-neutral-950">{option?.Quality}</span>
-              </Badge>
-            )}
+                {option?.Quality && (
+                  <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">quality</span>
+                    <span className="ml-1 text-neutral-950">{option?.Quality}</span>
+                  </Badge>
+                )}
 
-            {option?.Stop && (
-              <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">stop</span>
-                <span className="ml-1 text-neutral-950">{option?.Stop}</span>
-              </Badge>
-            )}
+                {option?.Stop && (
+                  <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">stop</span>
+                    <span className="ml-1 text-neutral-950">{option?.Stop}</span>
+                  </Badge>
+                )}
 
-            {option?.Style && (
-              <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">style</span>
-                <span className="ml-1 text-neutral-950">{option?.Style}</span>
-              </Badge>
-            )}
+                {option?.Style && (
+                  <Badge className=" bg-white/50 shadow text-base h-[50px]    cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">style</span>
+                    <span className="ml-1 text-neutral-950">{option?.Style}</span>
+                  </Badge>
+                )}
 
-            <Badge
-              className={`bg-white/50 ${
-                option?.Tile ? "flex-center" : "hidden"
-              } shadow text-base h-[50px] cursor-pointer hover:bg-gray-300/45 transition-all  duration-200 `}
-            >
-              <span className=" text-gray-500">
-                {option?.Tile ? "tile" : ""}
-              </span>
-            </Badge>
-            {option?.Weird && (
-              <Badge className=" bg-white/50 shadow text-base  h-[50px]   cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                <span className=" text-gray-500">weird</span>
-                <span className="ml-1 text-neutral-950">{option?.Weird}</span>
-              </Badge>
-            )}
-          </div>
-        </div>
+                <Badge
+                  className={`bg-white/50 ${option?.Tile ? "flex-center" : "hidden"
+                    } shadow text-base h-[50px] cursor-pointer hover:bg-gray-300/45 transition-all  duration-200 `}
+                >
+                  <span className=" text-gray-500">
+                    {option?.Tile ? "tile" : ""}
+                  </span>
+                </Badge>
+                {option?.Weird && (
+                  <Badge className=" bg-white/50 shadow text-base  h-[50px]   cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                    <span className=" text-gray-500">weird</span>
+                    <span className="ml-1 text-neutral-950">{option?.Weird}</span>
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </>
+        }
       </div>
     </div>
   );
