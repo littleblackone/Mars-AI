@@ -6,17 +6,22 @@ import React from "react";
 import CustomLink from "./CustomLink";
 export default function Header() {
   return (
-    <div className=" px-32 py-12 pb-0 flex items-center w-full justify-between text-[#F4DFB6]">
-      <div className="flex gap-[4rem]">
+    <>
+      <div className="flex gap-2 items-center absolute top-4 left-4">
         <Link href="/" className="flex items-center ">
           <Image src="/logo.png" alt="logo" height={52} width={52}></Image>
-          <p className=" text-lg text-white font-medium">MARS AI</p>
+          <p className=" text-lg text-white font-medium">Infinity AI</p>
         </Link>
-        <ul className="flex gap-12 items-center text-xl">
-          <CustomLink href="/create" text="创 造"></CustomLink>
-          <CustomLink href="/order" text="订 阅"></CustomLink>
-        </ul>
       </div>
-    </div>
+      <div className=" px-32 py-12 pb-0 flex items-center w-full justify-end text-[#F4DFB6]">
+        <div className="flex gap-[4rem]">
+          <ul className="flex gap-12 items-center text-xl">
+            <CustomLink href="/login" text="登 录"></CustomLink>
+            <CustomLink href="/order" text="订 阅"></CustomLink>
+          </ul>
+        </div>
+      </div>
+    </>
+
   );
 }

@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <link rel="icon" href="/logo.png" sizes="any" />
-      <body className={`${inter.className}  bg-main-bg w-full min-h-screen`}>
+      <body className={`${inter.className} w-full min-h-screen`}>
         {children}
         <Toaster position="top-center" duration={2000} richColors></Toaster>
       </body>

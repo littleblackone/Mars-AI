@@ -37,12 +37,11 @@ import {
   generateFinalPrompt,
   getRandomPrompt,
   handleCopy,
-  handleDownload,
   handleDownloadBase64,
   handleGetSeed,
 } from "@/lib/utils";
 import axios from "axios";
-import { ImageFormData, FetchImageData, StyleStatus } from "@/lib/interface/ImageData";
+import { ImageFormData, FetchImageData } from "@/lib/interface/ImageData";
 import { randomPrompts, styleTags } from "@/lib/constant";
 
 import { Button } from "../ui/button";

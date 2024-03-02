@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <>
+    <div className="bg-main-bg">
       <Header></Header>
       <div className="p-32">
         <main className="flex items-center flex-col p-32">
@@ -22,6 +22,6 @@ export default function Home() {
         </main>
       </div>
       <Footer></Footer>
-    </>
+    </div>
   );
 }
