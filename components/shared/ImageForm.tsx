@@ -86,6 +86,7 @@ import FullViewImg from "./FullViewImg";
 import { useFullViewImage } from "@/lib/store/useFullViewImage";
 import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { UserButton } from "@clerk/nextjs";
 
 export const ImageForm = () => {
   const [fetchTime, setFetchTime] = useState<number>(0);
@@ -732,6 +733,9 @@ export const ImageForm = () => {
               <ArrowLeftIcon width={20} height={20}></ArrowLeftIcon>
               <span>返回</span>
             </Link>
+            <div className="ml-auto">
+              <UserButton></UserButton>
+            </div>
           </div>
           <div className=" flex items-center flex-1  w-full h-[95vh]">
             <div className="overflow-y-scroll styled-scrollbar  flex-shrink-0 w-fit px-6 py-4 h-full flex flex-col gap-4 items-start">
