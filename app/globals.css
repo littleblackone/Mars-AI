@@ -348,3 +348,6 @@
 .cl-profileSection__danger {
   display: none;
 }
+.cl-userButtonPopoverActionButton__manageAccount {
+  display: none;
+}

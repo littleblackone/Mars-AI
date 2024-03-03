@@ -480,3 +480,15 @@ export function getRandomPrompt(prompts: string[]): string {
   // 返回随机选择的 prompt
   return prompts[randomIndex];
 }
+
+export function convertTimestampToDateTime(timestamp: number) {
+  // 如果时间戳是以毫秒为单位的，请将其转换为秒
+  if (timestamp.toString().length > 10) {
+    timestamp = Math.floor(timestamp / 1000);
+  }
+
+  // 创建一个新的 Date 对象，将时间戳作为参数传递给构造函数
+  let date = new Date(timestamp * 1000);
+
+  return date;
+}

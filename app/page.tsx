@@ -1,35 +1,11 @@
 'use client'
 import Footer from "@/components/shared/Footer";
 import Header from "@/components/shared/Header";
-import { getUsers } from "@/lib/actions/user.actions";
 import { useAuth, useSession } from "@clerk/nextjs";
 
 import Link from "next/link";
-import { useEffect } from "react";
 
 export default function Home() {
-
-  const { getToken, userId } = useAuth()
-  console.log(userId);
-
-
-  useEffect(() => {
-    const fn = async () => {
-
-      const supabaseAccessToken = await getToken({
-        template: "supabase",
-      });
-
-      console.log(supabaseAccessToken);
-      const res = await getUsers(supabaseAccessToken!);
-      console.log(res);
-
-      return res
-    }
-
-    fn()
-
-  }, [])
 
   return (
     <div className="bg-main-bg">

@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import CustomLink from "./CustomLink";
+import { useUser } from "@clerk/nextjs";
 export default function Header() {
+  const user = useUser()
+
+
   return (
     <>
       <div className="flex gap-2 items-center absolute top-4 left-4">
