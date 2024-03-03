@@ -16,7 +16,7 @@ export default function Header() {
       <div className=" px-32 py-12 pb-0 flex items-center w-full justify-end text-[#F4DFB6]">
         <div className="flex gap-[4rem]">
           <ul className="flex gap-12 items-center text-xl">
-            <CustomLink href="/login" text="登 录"></CustomLink>
+            <CustomLink href="/sign-in" text="登 录"></CustomLink>
             <CustomLink href="/order" text="订 阅"></CustomLink>
           </ul>
         </div>

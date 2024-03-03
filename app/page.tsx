@@ -1,8 +1,24 @@
+'use client'
 import Footer from "@/components/shared/Footer";
 import Header from "@/components/shared/Header";
+import { getUsers } from "@/lib/actions/user.actions";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function Home() {
+
+  useEffect(() => {
+    const fn = async () => {
+      const res = await getUsers();
+      console.log(res);
+
+      return res
+    }
+
+    fn()
+
+  }, [])
+
   return (
     <div className="bg-main-bg">
       <Header></Header>

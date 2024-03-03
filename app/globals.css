@@ -344,3 +344,7 @@
     transform: rotate(360deg); /* 旋转到 360 度 */
   }
 }
+
+.cl-profileSection__danger {
+  display: none;
+}

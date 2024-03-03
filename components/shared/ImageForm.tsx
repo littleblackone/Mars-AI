@@ -161,6 +161,7 @@ export const ImageForm = () => {
     return stylesList.includes(value);
   };
 
+
   // 添加输入框
   const handleAddInput = () => {
     if (imgPromptUrls.length < 5) {
@@ -734,7 +735,7 @@ export const ImageForm = () => {
               <span>返回</span>
             </Link>
             <div className="ml-auto">
-              <UserButton></UserButton>
+              <UserButton afterSignOutUrl="/" ></UserButton>
             </div>
           </div>
           <div className=" flex items-center flex-1  w-full h-[95vh]">
