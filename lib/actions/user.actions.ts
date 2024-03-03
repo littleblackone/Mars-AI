@@ -1,15 +1,11 @@
 "use server";
-import { createClient } from "@supabase/supabase-js";
 
-export const getUsers = async () => {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-  );
+import { supabaseClient } from "../supabase/supabaseClient";
+
+export const getUsers = async (supabaseAccessToken: string) => {
+  const supabase = await supabaseClient(supabaseAccessToken!);
 
   let data = await supabase.from("users").select("*");
-
-  console.log(data);
 
   return data;
 };
