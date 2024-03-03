@@ -1,8 +1,6 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { WebhookEvent } from "@clerk/nextjs/server";
-// import { createUser, deleteUser, updateUser } from "@/lib/actions/user.action";
-import { clerkClient, useAuth } from "@clerk/nextjs";
 import { NextResponse } from "next/server";
 import { createUser } from "@/lib/actions/user.actions";
 
@@ -68,14 +66,8 @@ export async function POST(req: Request) {
       subscription_type: "free",
       credits: 0,
     };
-    const { getToken } = useAuth();
-
-    const supabaseAccessToken = await getToken({
-      template: "supabase",
-    });
-    console.log(supabaseAccessToken);
-
-    const res = await createUser(supabaseAccessToken!, user);
+    console.log(user);
+    const res = await createUser(user);
     console.log(res);
 
     return NextResponse.json({ message: "OK" });

@@ -1,12 +1,9 @@
 'use client'
 import Footer from "@/components/shared/Footer";
 import Header from "@/components/shared/Header";
-import { useAuth, useSession } from "@clerk/nextjs";
-
 import Link from "next/link";
 
 export default function Home() {
-
   return (
     <div className="bg-main-bg">
       <Header></Header>

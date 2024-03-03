@@ -11,11 +11,9 @@ interface userData {
   credits: number;
   user_id: string;
 }
-export const createUser = async (
-  supabaseAccessToken: string,
-  user: userData
-) => {
-  const supabase = await supabaseClient(supabaseAccessToken!);
+
+export const createUser = async (user: userData) => {
+  const supabase = supabaseClient();
 
   const createTime = convertTimestampToDateTime(user.created_at);
 
