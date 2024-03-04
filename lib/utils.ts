@@ -8,6 +8,9 @@ import { twMerge } from "tailwind-merge";
 
 import axios from "axios";
 import { toast } from "sonner";
+import { supabaseClient, supabaseRealTime } from "./supabase/supabaseClient";
+import { UserData } from "@/lib/interface/ImageData";
+import { useCredits } from "./store/useCredits";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -492,3 +495,30 @@ export function convertTimestampToDateTime(timestamp: number) {
 
   return date;
 }
+
+export const getUserCredits = async (email: string, token: string) => {
+  const supabase = await supabaseClient(token!);
+  const res = await supabase.from("users").select().eq("email", email);
+  const realData: UserData = res.data && res.data[0];
+  return realData.credits;
+};
+export const updateUserCredits = async (
+  credits: number,
+  email: string,
+  token: string
+) => {
+  const supabase = await supabaseClient(token!);
+  try {
+    const res = await supabase
+      .from("users")
+      .update({
+        credits: credits,
+      })
+      .eq("email", email)
+      .select();
+    console.log(res);
+    return res;
+  } catch (error) {
+    console.log(error);
+  }
+};

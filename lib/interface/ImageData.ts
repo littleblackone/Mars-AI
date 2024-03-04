@@ -88,6 +88,7 @@ export interface StyleStatus {
 
 export interface FullViewData {
   selectedIndex: number;
+  email: string;
   useDefaultModel: boolean;
   useStyleRaw: boolean;
   customAS: boolean;
@@ -109,6 +110,7 @@ export interface FullViewData {
 export interface InpaintData {
   open: boolean;
   originTaskId: string;
+  email: string;
   parentPrompt: string;
   setParentSeed: React.Dispatch<React.SetStateAction<string>>;
   setOriginTaskId: React.Dispatch<React.SetStateAction<string>>;
@@ -130,4 +132,14 @@ export interface Options {
   Weird: string;
   Seed: string;
   Version: string;
+}
+
+export interface UserData {
+  created_at: number;
+  email: string;
+  subscription_type: string;
+  subscription_expiry?: number;
+  subscription_startAt?: number;
+  credits: number;
+  user_id: string;
 }

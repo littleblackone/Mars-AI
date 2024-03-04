@@ -13,21 +13,21 @@ import { Button } from "../ui/button";
 import {
   FetchImageData,
   FullViewData,
-  Options,
 } from "@/lib/interface/ImageData";
 import { Badge } from "../ui/badge";
 import {
   cropImageIntoFour,
   debounce,
   extractArAndModel,
+  getUserCredits,
   handleCopy,
   handleDownloadBase64,
   handleGetSeed,
   handleIw,
   handleQuality,
   imageUrlToBase64,
+  updateUserCredits,
 } from "@/lib/utils";
-
 import UpscaleSvg from "@/components/shared/UpscaleSvg";
 import { DownloadIcon, X, ZoomIn } from "lucide-react";
 import axios from "axios";
@@ -41,6 +41,8 @@ import { useZoomImages } from "@/lib/store/ImagesList/useZoomImages";
 import { useExpandImages } from "@/lib/store/ImagesList/useExpandImages";
 import { useIsUpscaled } from "@/lib/store/useIsUpscaled";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
+import { useCredits } from "@/lib/store/useCredits";
 
 export function ImageFullView({
   selectedIndex,
@@ -59,7 +61,8 @@ export function ImageFullView({
   customAS,
   customASW,
   customASH,
-  useDefaultModel
+  useDefaultModel,
+  email
 }: FullViewData) {
   const [fetchTime, setFetchTime] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(false);
@@ -98,29 +101,31 @@ export function ImageFullView({
 
   const handledIw = handleIw(tempFormValue?.imageWeight || 1);
   const handledQ = handleQuality(tempFormValue?.quality || " --q 1");
-
-  // parentimageArr = [
-  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_0.webp",
-  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_1.webp",
-  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_2.webp",
-  //   "https://cdn.midjourney.com/ffd8ffcd-3abf-4349-831b-71a79b682d6f/0_3.webp",
-  // ];
-
+  const { getToken } = useAuth()
+  const setCredits = useCredits(state => state.setCredits)
   const handleZoom = async (zoomValue: string) => {
     try {
-      // if (useDefaultModel) {
-      //   if (useTurbo) {
-      //     const credits = await getUserCredits()
-      //     await updateUserCredits(credits - 15)
-      //   } else {
-      //     const credits = await getUserCredits()
-      //     await updateUserCredits(credits - 10)
-      //   }
+      const token = await getToken({ template: 'supabase' })
 
-      // } else {
-      //   const credits = await getUserCredits()
-      //   await updateUserCredits(credits - 15)
-      // }
+      if (useDefaultModel) {
+        const credits = await getUserCredits(email, token!)
+        setCredits(credits)
+        if (credits - 11 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 11, email, token!)
+        setCredits(credits - 11)
+      } else {
+        const credits = await getUserCredits(email, token!)
+        setCredits(credits)
+        if (credits - 16 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 16, email, token!)
+        setCredits(credits - 16)
+      }
       setIsZooming(true);
       setFetchTime(0)
       let zoomId: string = "";
@@ -203,6 +208,25 @@ export function ImageFullView({
 
   const handleExpand = async (expandValue: string) => {
     try {
+      const token = await getToken({ template: 'supabase' })
+      if (useDefaultModel) {
+        const credits = await getUserCredits(email, token!)
+        setCredits(credits)
+        if (credits - 11 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 11, email, token!)
+        setCredits(credits - 11)
+      } else {
+        const credits = await getUserCredits(email, token!)
+        if (credits - 16 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 16, email, token!)
+        setCredits(credits - 16)
+      }
       setIsExpanding(true);
       setFetchTime(0);
       let expandId: string = "";
@@ -282,12 +306,20 @@ export function ImageFullView({
       console.error("Error sending prompt:", error);
     }
   }
-
   const handleUpscaleImage = async () => {
     try {
+      const token = await getToken({ template: 'supabase' })
+      const credits = await getUserCredits(email, token!)
+      setCredits(credits)
+      if (credits - 1 < 0) {
+        toast.warning("积分余额不足")
+        return;
+      }
+      await updateUserCredits(credits - 1, email, token!)
+      setCredits(credits - 1)
       setIsUpscaling(true);
       setFetchTime(0)
-      let upscaleId: string;
+      let upscaleId: string = '';
       let isFirstIntervalCompleted: boolean = false;
 
       const response = await axios.post("/api/upscale", {
@@ -333,7 +365,7 @@ export function ImageFullView({
 
       const intervalId = setInterval(async () => {
         try {
-          if (isFirstIntervalCompleted === false) return;
+          if (isFirstIntervalCompleted === false || upscaleId === '') return;
 
           const taskResult: FetchImageData = await axios.post(
             "/api/fetchImage",
@@ -363,6 +395,53 @@ export function ImageFullView({
       }, 1000);
     } catch (error) {
       console.error("Error sending prompt:", error);
+    }
+  }
+
+  const handleUpscale2xOrSub = async () => {
+    const token = await getToken({ template: 'supabase' })
+    if (model == "v 5.2") {
+      const credits = await getUserCredits(email, token!)
+      if (credits - 15 < 0) {
+        toast.warning("积分余额不足")
+        return;
+      }
+      await updateUserCredits(credits - 15, email, token!)
+
+      setUpscale2x(true);
+    } else {
+      const credits = await getUserCredits(email, token!)
+      if (credits - 12 < 0) {
+        toast.warning("积分余额不足")
+        return;
+      }
+      await updateUserCredits(credits - 12, email, token!)
+
+      setUpscaleSub(true);
+    }
+  }
+
+  const handleUpscale4xOrCreative = async () => {
+    const token = await getToken({ template: 'supabase' })
+    if (model == "v 5.2") {
+      const credits = await getUserCredits(email, token!)
+      if (credits - 30 < 0) {
+        toast.warning("积分余额不足")
+        return;
+      }
+      await updateUserCredits(credits - 30, email, token!)
+   
+
+      setUpscale4x(true);
+    } else {
+      const credits = await getUserCredits(email, token!)
+      if (credits - 12 < 0) {
+        toast.warning("积分余额不足")
+        return;
+      }
+      await updateUserCredits(credits - 12, email, token!)
+     
+      setUpscaleCreative(true);
     }
   }
 
@@ -610,13 +689,10 @@ export function ImageFullView({
                 variant="outline"
                 className="px-2"
                 disabled={isFetching}
-                onClick={() => {
-                  if (model == "v 5.2") {
-                    setUpscale2x(true);
-                  } else {
-                    setUpscaleSub(true);
-                  }
-                }}
+                onClick={async () => {
+                  debounce(() => handleUpscale2xOrSub(), 1000)()
+                }
+                }
               >
                 {isUpscaling ? (
                   <>
@@ -637,12 +713,8 @@ export function ImageFullView({
                 variant="outline"
                 className="px-2"
                 disabled={isFetching}
-                onClick={() => {
-                  if (model == "v 5.2") {
-                    setUpscale4x(true);
-                  } else {
-                    setUpscaleCreative(true);
-                  }
+                onClick={async () => {
+                  debounce(() => handleUpscale4xOrCreative(), 1000)()
                 }}
               >
                 {isUpscaling ? (

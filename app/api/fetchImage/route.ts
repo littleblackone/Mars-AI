@@ -21,8 +21,6 @@ const handleFetch = async (req: NextRequest) => {
       status: taskResult.status,
     });
   } catch (error) {
-    console.log(error);
-
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

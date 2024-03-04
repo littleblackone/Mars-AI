@@ -2,10 +2,11 @@
 import { ImageForm } from "@/components/shared/ImageForm";
 import UserCreditsServer from "@/components/shared/realtime/UserCreditsServer";
 import { currentUser } from "@clerk/nextjs";
-export default async function Create() {
 
+export default async function Create() {
   const user = await currentUser()
   // console.log(user);
+
   if (!user) return
 
   return (

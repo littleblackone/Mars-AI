@@ -17,10 +17,14 @@ import {
   cleanInput,
   cropImageIntoFour,
   debounce,
+  getUserCredits,
   handleGetSeed,
+  updateUserCredits,
 } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useIsInpainting } from "@/lib/store/useisInpainting";
+import { useAuth } from "@clerk/nextjs";
+import { useCredits } from "@/lib/store/useCredits";
 
 
 
@@ -34,6 +38,7 @@ export default function VaryRegion({
   setParentImageArr,
   selectedIndex,
   parentimageArr,
+  email
 }: InpaintData) {
   const cropperRef = useRef<ReactCropperElement>(null);
   const [fetchTime, setFetchTime] = useState<number>(0);
@@ -128,8 +133,19 @@ export default function VaryRegion({
 
   }, [prompt])
 
+  const { getToken } = useAuth()
+  const setCredits = useCredits(state => state.setCredits)
   const handleInpaint = async () => {
     try {
+      const token = await getToken({ template: 'supabase' })
+      const credits = await getUserCredits(email, token!)
+      setCredits(credits)
+      if (credits - 11 < 0) {
+        toast.warning("积分余额不足")
+        return;
+      }
+      await updateUserCredits(credits - 11, email, token!)
+      setCredits(credits - 11)
       setIsInpainting(true);
       setFetchTime(0)
       let inpaintId: string = "";

@@ -36,9 +36,11 @@ import {
   debounce,
   generateFinalPrompt,
   getRandomPrompt,
+  getUserCredits,
   handleCopy,
   handleDownloadBase64,
   handleGetSeed,
+  updateUserCredits,
 } from "@/lib/utils";
 import axios from "axios";
 import { ImageFormData, FetchImageData } from "@/lib/interface/ImageData";
@@ -86,11 +88,8 @@ import FullViewImg from "./FullViewImg";
 import { useFullViewImage } from "@/lib/store/useFullViewImage";
 import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-// import { SignOutButton, UserButton } from "@clerk/nextjs";
-import UserCreditsServer from "./realtime/UserCreditsServer";
-import { UserButton } from "@clerk/nextjs";
-import { supabaseClient } from "@/lib/supabase/supabaseClient";
-import { UserData } from "@/lib/actions/user.actions";
+import { UserButton, useAuth } from "@clerk/nextjs";
+import { useCredits } from "@/lib/store/useCredits";
 
 export const ImageForm = ({ email }: { email: string }) => {
   const [fetchTime, setFetchTime] = useState<number>(0);
@@ -157,6 +156,9 @@ export const ImageForm = ({ email }: { email: string }) => {
   const fullImgImgUrl = useFullViewImage((state) => state.imgUrl);
   const fullImgListName = useFullViewImage((state) => state.imgListName);
   const setFullImgOpen = useFullViewImage((state) => state.setOpen);
+
+  const { getToken } = useAuth()
+  const setCredits = useCredits(state => state.setCredits)
 
   const styleInList = (value: string): boolean => {
     return stylesList.includes(value);
@@ -334,18 +336,31 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleBlend = async () => {
     try {
+      const token = await getToken({ template: 'supabase' })
       if (useDefaultModel) {
         if (useTurbo) {
-          const credits = await getUserCredits()
-          await updateUserCredits(credits - 15)
+          const credits = await getUserCredits(email, token!)
+          setCredits(credits)
+          if (credits - 15 < 0) {
+            toast.warning("积分余额不足")
+            return;
+          }
+          await updateUserCredits(credits - 15, email, token!)
+          setCredits(credits - 15)
         } else {
-          const credits = await getUserCredits()
-          await updateUserCredits(credits - 10)
+          const credits = await getUserCredits(email, token!)
+          setCredits(credits)
+          if (credits - 10 < 0) {
+            toast.warning("积分余额不足")
+            return;
+          }
+          await updateUserCredits(credits - 10, email, token!)
+          setCredits(credits - 10)
         }
 
       } else {
-        const credits = await getUserCredits()
-        await updateUserCredits(credits - 15)
+        const credits = await getUserCredits(email, token!)
+        await updateUserCredits(credits - 15, email, token!)
       }
 
       setIsBlending(true);
@@ -396,10 +411,15 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleDescribe = async (imageUrl: string) => {
     try {
-
-      const credits = await getUserCredits()
-      await updateUserCredits(credits - 1)
-
+      const token = await getToken({ template: 'supabase' })
+      const credits = await getUserCredits(email, token!)
+      setCredits(credits)
+      if (credits - 1 < 0) {
+        toast.warning("积分余额不足")
+        return;
+      }
+      await updateUserCredits(credits - 1, email, token!)
+      setCredits(credits - 1)
       setIsDescribe(true);
       let time = 0;
 
@@ -450,12 +470,25 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleVaryStrong = async (originTaskId: string, index: string) => {
     try {
+      const token = await getToken({ template: 'supabase' })
       if (useDefaultModel) {
-        const credits = await getUserCredits()
-        await updateUserCredits(credits - 10)
+        const credits = await getUserCredits(email, token!)
+        setCredits(credits)
+        if (credits - 10 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 10, email, token!)
+        setCredits(credits - 10)
       } else {
-        const credits = await getUserCredits()
-        await updateUserCredits(credits - 15)
+        const credits = await getUserCredits(email, token!)
+        setCredits(credits)
+        if (credits - 15 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 15, email, token!)
+        setCredits(credits - 15)
       }
 
       setImageArr([]);
@@ -506,12 +539,25 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleVarySubtle = async (originTaskId: string, index: string) => {
     try {
+      const token = await getToken({ template: 'supabase' })
       if (useDefaultModel) {
-        const credits = await getUserCredits()
-        await updateUserCredits(credits - 10)
+        const credits = await getUserCredits(email, token!)
+        setCredits(credits)
+        if (credits - 10 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 10, email, token!)
+        setCredits(credits - 10)
       } else {
-        const credits = await getUserCredits()
-        await updateUserCredits(credits - 15)
+        const credits = await getUserCredits(email, token!)
+        setCredits(credits)
+        if (credits - 15 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 15, email, token!)
+        setCredits(credits - 15)
       }
       setImageArr([]);
       setIsFetching(true);
@@ -593,19 +639,41 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleGenerateImage = async (prompt: string) => {
     try {
-
+      const token = await getToken({ template: 'supabase' })
       if (useDefaultModel) {
         if (useTurbo) {
-          const credits = await getUserCredits()
-          await updateUserCredits(credits - 15)
+          const credits = await getUserCredits(email, token!)
+          setCredits(credits)
+          if (credits - 15 < 0) {
+            toast.warning("积分余额不足")
+            return;
+          }
+          await updateUserCredits(credits - 15, email, token!)
+          setCredits(credits - 15)
         } else {
-          const credits = await getUserCredits()
-          await updateUserCredits(credits - 10)
+
+          const credits = await getUserCredits(email, token!)
+          setCredits(credits)
+          console.log(credits);
+          if (credits - 10 < 0) {
+            toast.warning("积分余额不足")
+            return;
+          }
+          const res = await updateUserCredits(credits - 10, email, token!)
+          setCredits(credits - 10)
+          console.log(res);
+
         }
 
       } else {
-        const credits = await getUserCredits()
-        await updateUserCredits(credits - 15)
+        const credits = await getUserCredits(email, token!)
+        setCredits(credits)
+        if (credits - 15 < 0) {
+          toast.warning("积分余额不足")
+          return;
+        }
+        await updateUserCredits(credits - 15, email, token!)
+        setCredits(credits - 15)
       }
 
       setIsFetching(true);
@@ -657,8 +725,8 @@ export const ImageForm = ({ email }: { email: string }) => {
 
             setOriginImages(bast64ImgArr);
 
-            await handleGetSeed(taskId, setSeed);
             setIsFetching(false);
+            await handleGetSeed(taskId, setSeed);
           }
         } catch (error) {
           console.error("Error fetching image:", error);
@@ -666,6 +734,8 @@ export const ImageForm = ({ email }: { email: string }) => {
         }
       }, 1000);
     } catch (error) {
+      console.log(error);
+
       toast.error(
         "请求失败,请检查prompt格式或查看midjourney服务器状态并过一段时间重试",
         { duration: 5000 }
@@ -673,24 +743,6 @@ export const ImageForm = ({ email }: { email: string }) => {
       setIsFetching(false);
       console.error("Error sending prompt:", error);
     }
-  }
-
-  const getUserCredits = async () => {
-    const supabase = supabaseClient()
-    const res = await supabase.from("users").select().eq("email", email);
-    const realData: UserData = res.data && res.data[0]
-    return realData.credits
-  }
-
-  const updateUserCredits = async (credits: number) => {
-    const supabase = supabaseClient()
-    const res = await supabase
-      .from("users")
-      .update({
-        credits: credits,
-      })
-      .eq("email", email)
-      .select();
   }
 
 
@@ -779,7 +831,7 @@ export const ImageForm = ({ email }: { email: string }) => {
     );
     console.log(finalPrompt);
     setFinalPrompt(finalPrompt);
-    // debounce(() => handleGenerateImage(finalPrompt), 1000)();
+    debounce(() => handleGenerateImage(finalPrompt), 1000)();
   };
 
   return (
@@ -1901,6 +1953,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                     customAS={customAs}
                                     customASW={customASW}
                                     useDefaultModel={useDefaultModel}
+                                    email={email}
                                   ></ImageFullView>
 
                                   <VaryRegion
@@ -1913,6 +1966,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                     parentimageArr={imageArr}
                                     setParentImageArr={setImageArr}
                                     selectedIndex={selectedIndex || 0}
+                                    email={email}
                                   ></VaryRegion>
                                 </div>
                               ))}
@@ -2054,7 +2108,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                     className=" flex gap-2 border-2 border-gray-500 rounded w-full h-full"
                                     key={index}
                                   >
-                                    <div className="leading-6 h-full overflow-y-scroll hide-scrollbar w-full  px-4 text-sm  font-medium text-gray-600 bg-white/80  p-2 rounded-md">
+                                    <div className="leading-6 h-[145px] overflow-y-scroll hide-scrollbar w-[40rem] px-4 text-sm  font-medium text-gray-600 bg-white/80  p-2 rounded-md">
                                       <div className="flex">
                                         <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
                                           Prompt {index + 1} :
