@@ -88,6 +88,7 @@ export interface StyleStatus {
 
 export interface FullViewData {
   selectedIndex: number;
+  useDefaultModel: boolean;
   useStyleRaw: boolean;
   customAS: boolean;
   customASW: number;

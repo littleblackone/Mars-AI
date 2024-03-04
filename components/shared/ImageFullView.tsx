@@ -58,7 +58,8 @@ export function ImageFullView({
   useTile,
   customAS,
   customASW,
-  customASH
+  customASH,
+  useDefaultModel
 }: FullViewData) {
   const [fetchTime, setFetchTime] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(false);
@@ -107,6 +108,19 @@ export function ImageFullView({
 
   const handleZoom = async (zoomValue: string) => {
     try {
+      // if (useDefaultModel) {
+      //   if (useTurbo) {
+      //     const credits = await getUserCredits()
+      //     await updateUserCredits(credits - 15)
+      //   } else {
+      //     const credits = await getUserCredits()
+      //     await updateUserCredits(credits - 10)
+      //   }
+
+      // } else {
+      //   const credits = await getUserCredits()
+      //   await updateUserCredits(credits - 15)
+      // }
       setIsZooming(true);
       setFetchTime(0)
       let zoomId: string = "";

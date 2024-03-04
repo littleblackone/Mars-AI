@@ -86,9 +86,13 @@ import FullViewImg from "./FullViewImg";
 import { useFullViewImage } from "@/lib/store/useFullViewImage";
 import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+// import { SignOutButton, UserButton } from "@clerk/nextjs";
+import UserCreditsServer from "./realtime/UserCreditsServer";
 import { UserButton } from "@clerk/nextjs";
+import { supabaseClient } from "@/lib/supabase/supabaseClient";
+import { UserData } from "@/lib/actions/user.actions";
 
-export const ImageForm = () => {
+export const ImageForm = ({ email }: { email: string }) => {
   const [fetchTime, setFetchTime] = useState<number>(0);
   const [isFetching, setIsFetching] = useState(false);
   const [imageArr, setImageArr] = useState<string[]>([]);
@@ -137,10 +141,7 @@ export const ImageForm = () => {
   const [stylesList, setStylesList] = useState<string[]>([])
 
   const fileTypes = ["png", "jpg", "jpeg", "webp"];
-
   let uploadImages: string[] = [];
-
-
   const IMGBB_KEY = "bf349c2c6056943bee6bc4a507958c22";
 
   const setOriginImages = useOriginImage((state) => state.setImages);
@@ -333,6 +334,20 @@ export const ImageForm = () => {
 
   const handleBlend = async () => {
     try {
+      if (useDefaultModel) {
+        if (useTurbo) {
+          const credits = await getUserCredits()
+          await updateUserCredits(credits - 15)
+        } else {
+          const credits = await getUserCredits()
+          await updateUserCredits(credits - 10)
+        }
+
+      } else {
+        const credits = await getUserCredits()
+        await updateUserCredits(credits - 15)
+      }
+
       setIsBlending(true);
       await handleUploadImages(blendImages);
       let time = 0;
@@ -381,6 +396,10 @@ export const ImageForm = () => {
 
   const handleDescribe = async (imageUrl: string) => {
     try {
+
+      const credits = await getUserCredits()
+      await updateUserCredits(credits - 1)
+
       setIsDescribe(true);
       let time = 0;
 
@@ -431,6 +450,14 @@ export const ImageForm = () => {
 
   const handleVaryStrong = async (originTaskId: string, index: string) => {
     try {
+      if (useDefaultModel) {
+        const credits = await getUserCredits()
+        await updateUserCredits(credits - 10)
+      } else {
+        const credits = await getUserCredits()
+        await updateUserCredits(credits - 15)
+      }
+
       setImageArr([]);
       setIsFetching(true);
       const response = await axios.post("/api/vary", { originTaskId, index });
@@ -479,6 +506,13 @@ export const ImageForm = () => {
 
   const handleVarySubtle = async (originTaskId: string, index: string) => {
     try {
+      if (useDefaultModel) {
+        const credits = await getUserCredits()
+        await updateUserCredits(credits - 10)
+      } else {
+        const credits = await getUserCredits()
+        await updateUserCredits(credits - 15)
+      }
       setImageArr([]);
       setIsFetching(true);
       let varySubId: string = "";
@@ -559,6 +593,21 @@ export const ImageForm = () => {
 
   const handleGenerateImage = async (prompt: string) => {
     try {
+
+      if (useDefaultModel) {
+        if (useTurbo) {
+          const credits = await getUserCredits()
+          await updateUserCredits(credits - 15)
+        } else {
+          const credits = await getUserCredits()
+          await updateUserCredits(credits - 10)
+        }
+
+      } else {
+        const credits = await getUserCredits()
+        await updateUserCredits(credits - 15)
+      }
+
       setIsFetching(true);
       const response = await axios.post("/api/imagine", {
         prompt,
@@ -624,6 +673,24 @@ export const ImageForm = () => {
       setIsFetching(false);
       console.error("Error sending prompt:", error);
     }
+  }
+
+  const getUserCredits = async () => {
+    const supabase = supabaseClient()
+    const res = await supabase.from("users").select().eq("email", email);
+    const realData: UserData = res.data && res.data[0]
+    return realData.credits
+  }
+
+  const updateUserCredits = async (credits: number) => {
+    const supabase = supabaseClient()
+    const res = await supabase
+      .from("users")
+      .update({
+        credits: credits,
+      })
+      .eq("email", email)
+      .select();
   }
 
 
@@ -712,7 +779,7 @@ export const ImageForm = () => {
     );
     console.log(finalPrompt);
     setFinalPrompt(finalPrompt);
-    debounce(() => handleGenerateImage(finalPrompt), 1000)();
+    // debounce(() => handleGenerateImage(finalPrompt), 1000)();
   };
 
   return (
@@ -734,8 +801,12 @@ export const ImageForm = () => {
               <ArrowLeftIcon width={20} height={20}></ArrowLeftIcon>
               <span>返回</span>
             </Link>
-            <div className="ml-auto">
-              <UserButton afterSignOutUrl="/" ></UserButton>
+
+            <div className="ml-auto gap-2 items-center flex">
+              {/* <UserCreditsServer email={email}></UserCreditsServer> */}
+              <UserButton afterSignOutUrl="/"></UserButton>
+              {/* <SignOutButton ></SignOutButton>
+              {/* <Sparkle width={15} height={15}></Sparkle> */}
             </div>
           </div>
           <div className=" flex items-center flex-1  w-full h-[95vh]">
@@ -1829,6 +1900,7 @@ export const ImageForm = () => {
                                     customASH={customASH}
                                     customAS={customAs}
                                     customASW={customASW}
+                                    useDefaultModel={useDefaultModel}
                                   ></ImageFullView>
 
                                   <VaryRegion

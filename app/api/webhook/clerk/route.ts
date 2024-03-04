@@ -74,21 +74,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "OK" });
   }
 
-  if (eventType === "user.updated") {
-    const { id, image_url, first_name, last_name, username } = evt.data;
-
-    const user = {
-      photo: image_url,
-      firstName: first_name,
-      lastName: last_name,
-      username: username!,
-    };
-
-    // const updatedUser = await updateUser(id, user);
-
-    // return NextResponse.json({ message: "OK", user: updatedUser });
-  }
-
   console.log(`Webhook with and ID of ${id} and type of ${eventType}`);
   console.log("Webhook body:", body);
 

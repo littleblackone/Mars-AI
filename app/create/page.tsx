@@ -1,15 +1,20 @@
-"use client";
 
 import { ImageForm } from "@/components/shared/ImageForm";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import UserCreditsServer from "@/components/shared/realtime/UserCreditsServer";
+import { currentUser } from "@clerk/nextjs";
+export default async function Create() {
 
-export default function Create() {
-  const router = useRouter();
+  const user = await currentUser()
+  // console.log(user);
+  if (!user) return
+
   return (
-    <div className=" relative flex form-shadow  items-start  w-full max-h-screen overflow-hidden bg-white ">
-      <ImageForm></ImageForm>
-    </div>
+    user && (<div className=" relative flex form-shadow  items-start  w-full max-h-screen overflow-hidden bg-white ">
+      <ImageForm email={user.emailAddresses[0].emailAddress ?? ''}></ImageForm>
+      <div className=" fixed right-[4.3rem] top-[2px]">
+        <UserCreditsServer email={user.emailAddresses[0].emailAddress ?? ''}></UserCreditsServer>
+      </div>
+    </div>)
   )
 
 }
