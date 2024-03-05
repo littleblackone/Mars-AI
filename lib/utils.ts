@@ -522,3 +522,23 @@ export const updateUserCredits = async (
     console.log(error);
   }
 };
+
+export const createUser = async (user: UserData, token: string) => {
+  const supabase = await supabaseClient(token);
+
+  const createTime = convertTimestampToDateTime(user.created_at);
+
+  const res = await supabase.from("users").insert([
+    {
+      created_at: createTime,
+      email: user.email,
+      subscription_type: "free",
+      credits: 0,
+      user_id: user.user_id,
+    },
+  ]);
+
+  console.log(res);
+
+  return res;
+};
