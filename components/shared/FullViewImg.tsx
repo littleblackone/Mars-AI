@@ -89,11 +89,19 @@ export default function FullViewImg({
   };
 
   const handlePrompt = () => {
-    if (PromptList[imgListName]) {
-      const promptList = PromptList[imgListName];
-      const divNum = Math.ceil((index + 1) / 4);
-      return promptList[divNum - 1];
+    if (imgListName !== 'upscaleImageList') {
+      if (PromptList[imgListName]) {
+        const promptList = PromptList[imgListName];
+        const divNum = Math.ceil((index + 1) / 4);
+        return promptList[divNum - 1];
+      }
+    } else {
+      if (PromptList[imgListName]) {
+        const promptList = PromptList[imgListName];
+        return promptList[index];
+      }
     }
+
   };
 
   const handleDelete = () => {

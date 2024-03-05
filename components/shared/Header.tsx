@@ -17,11 +17,11 @@ export default function Header() {
           <p className=" text-lg text-white font-medium">Infinity AI</p>
         </Link>
       </div>
-      <div className=" px-32 py-12 pb-0 flex items-center w-full justify-end text-[#F4DFB6]">
-        <div className="flex gap-[4rem]">
-          <ul className="flex gap-12 items-center text-xl">
+      <div className=" pr-8 pt-4 flex items-center w-full justify-end text-white">
+        <div className="flex">
+          <ul className="flex gap-4 items-center text-lg">
             <CustomLink href="/sign-in" text="登 录"></CustomLink>
-            <CustomLink href="/order" text="订 阅"></CustomLink>
+            <CustomLink href="#price" text="订 阅"></CustomLink>
           </ul>
         </div>
       </div>

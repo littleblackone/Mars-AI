@@ -176,7 +176,7 @@ export function ImageFullView({
 
           setFetchTime((prev) => prev + 1);
 
-          if (fetchTime >= 120) {
+          if (fetchTime >= 180) {
             clearInterval(intervalId);
             setIsZooming(false);
             toast.error("请求超时,请查看midjourney服务器状态后重试");
@@ -277,7 +277,7 @@ export function ImageFullView({
 
           setFetchTime((prev) => prev + 1);
 
-          if (fetchTime >= 120) {
+          if (fetchTime >= 180) {
             clearInterval(intervalId);
             setIsExpanding(false);
             toast.error("请求超时,请查看midjourney服务器状态后重试");
@@ -317,6 +317,7 @@ export function ImageFullView({
       }
       await updateUserCredits(credits - 1, email, token!)
       setCredits(credits - 1)
+      
       setIsUpscaling(true);
       setFetchTime(0)
       let upscaleId: string = '';
@@ -375,9 +376,9 @@ export function ImageFullView({
           );
           setFetchTime((prev) => prev + 1);
 
-          if (fetchTime >= 180) {
+          if (fetchTime >= 240) {
             clearInterval(intervalId);
-            setIsFetching(false);
+            setIsUpscaling(false);
             toast.error("请求超时,请查看midjourney服务器状态后重试");
           }
           if (taskResult.data.status === "finished") {

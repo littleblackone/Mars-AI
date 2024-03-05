@@ -192,7 +192,7 @@ export default function VaryRegion({
         });
         setFetchTime((prev) => prev + 1);
 
-        if (fetchTime >= 180) {
+        if (fetchTime >= 240) {
           clearInterval(intervalId);
           setIsInpainting(false);
           toast.error("请求超时,请查看midjourney服务器状态后重试");

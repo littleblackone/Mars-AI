@@ -18,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" className="scroll-smooth">
         <link rel="icon" href="/logo.png" sizes="any" />
         <body className={`${inter.className} w-full min-h-screen`}>
           {children}

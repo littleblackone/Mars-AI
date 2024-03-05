@@ -506,7 +506,7 @@ export const ImageForm = ({ email }: { email: string }) => {
           );
 
           setFetchTime((prev) => prev + 1);
-          if (fetchTime >= 120) {
+          if (fetchTime >= 180) {
             clearInterval(intervalId);
             setIsFetching(false);
             toast.error("请求超时,请查看midjourney服务器状态后重试");
@@ -543,21 +543,21 @@ export const ImageForm = ({ email }: { email: string }) => {
       if (useDefaultModel) {
         const credits = await getUserCredits(email, token!)
         setCredits(credits)
-        if (credits - 10 < 0) {
+        if (credits - 11 < 0) {
           toast.warning("积分余额不足")
           return;
         }
         await updateUserCredits(credits - 10, email, token!)
-        setCredits(credits - 10)
+        setCredits(credits - 11)
       } else {
         const credits = await getUserCredits(email, token!)
         setCredits(credits)
-        if (credits - 15 < 0) {
+        if (credits - 16 < 0) {
           toast.warning("积分余额不足")
           return;
         }
         await updateUserCredits(credits - 15, email, token!)
-        setCredits(credits - 15)
+        setCredits(credits - 16)
       }
       setImageArr([]);
       setIsFetching(true);
@@ -607,7 +607,7 @@ export const ImageForm = ({ email }: { email: string }) => {
 
           setFetchTime((prev) => prev + 1);
 
-          if (fetchTime >= 120) {
+          if (fetchTime >= 180) {
             clearInterval(intervalId);
             setIsFetching(false);
             toast.error("请求超时,请查看midjourney服务器状态后重试");
@@ -693,7 +693,7 @@ export const ImageForm = ({ email }: { email: string }) => {
 
           setFetchTime((prev) => prev + 1);
 
-          if (fetchTime >= 120) {
+          if (fetchTime >= 180) {
             clearInterval(intervalId);
             setIsFetching(false);
             toast.error("请求超时,请查看midjourney服务器状态后重试");
@@ -808,6 +808,12 @@ export const ImageForm = ({ email }: { email: string }) => {
       toast.success("turbo模式开启");
     }
   }, [useTurbo]);
+
+  useEffect(() => {
+    console.log(fetchTime);
+
+  }, [fetchTime])
+
 
   const onSubmit = async (values: z.infer<typeof ImageValidation>) => {
     if (customASW / customASH < 0.5 || customASW / customASH > 2) {
