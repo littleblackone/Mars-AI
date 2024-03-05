@@ -1,14 +1,12 @@
 import { Webhook } from "svix";
 import { headers } from "next/headers";
-import { WebhookEvent } from "@clerk/nextjs/server";
+import { WebhookEvent, getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { createUser } from "@/lib/utils";
-import { auth } from "@clerk/nextjs";
+
 export async function POST(req: Request) {
   // You can find this in the Clerk Dashboard -> Webhooks -> choose the webhook
   const WEBHOOK_SECRET = process.env.NEXT_CLERK_WEBHOOK_SECRET;
-  console.log(WEBHOOK_SECRET);
-
   if (!WEBHOOK_SECRET) {
     throw new Error(
       "Please add WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local"
@@ -57,20 +55,20 @@ export async function POST(req: Request) {
   const { id } = evt.data;
   const eventType = evt.type;
 
-  const { getToken } = auth();
-
   if (eventType === "user.created") {
     const { id, email_addresses, created_at } = evt.data;
-    const token = await getToken({ template: "supabase" });
+
     const user = {
       user_id: id,
       email: email_addresses[0].email_address,
       created_at,
+      subscription_expiry: 123456,
+      subscription_startAt: 123456,
       subscription_type: "free",
-      credits: 50,
+      infinityai_user_credits: 50,
     };
     console.log(user);
-    const res = await createUser(user, token!);
+    const res = await createUser(user);
     console.log(res);
 
     return NextResponse.json({ message: "OK" });

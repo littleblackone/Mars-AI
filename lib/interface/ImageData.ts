@@ -138,8 +138,8 @@ export interface UserData {
   created_at: number;
   email: string;
   subscription_type: string;
-  subscription_expiry?: number;
-  subscription_startAt?: number;
-  credits: number;
+  subscription_expiry: number;
+  subscription_startAt: number;
+  infinityai_user_credits: number;
   user_id: string;
 }

@@ -138,14 +138,14 @@ export default function VaryRegion({
   const handleInpaint = async () => {
     try {
       const token = await getToken({ template: 'supabase' })
-      const credits = await getUserCredits(email, token!)
-      setCredits(credits)
-      if (credits - 11 < 0) {
+      const infinityai_user_credits = await getUserCredits(email, token!)
+      setCredits(infinityai_user_credits)
+      if (infinityai_user_credits - 11 < 0) {
         toast.warning("积分余额不足")
         return;
       }
-      await updateUserCredits(credits - 11, email, token!)
-      setCredits(credits - 11)
+      await updateUserCredits(infinityai_user_credits - 11, email, token!)
+      setCredits(infinityai_user_credits - 11)
       setIsInpainting(true);
       setFetchTime(0)
       let inpaintId: string = "";

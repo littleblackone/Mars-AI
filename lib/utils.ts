@@ -498,21 +498,24 @@ export function convertTimestampToDateTime(timestamp: number) {
 
 export const getUserCredits = async (email: string, token: string) => {
   const supabase = await supabaseClient(token!);
-  const res = await supabase.from("users").select().eq("email", email);
+  const res = await supabase
+    .from("infinityai_352020833zsx_users")
+    .select()
+    .eq("email", email);
   const realData: UserData = res.data && res.data[0];
-  return realData.credits;
+  return realData.infinityai_user_credits;
 };
 export const updateUserCredits = async (
-  credits: number,
+  infinityai_user_credits: number,
   email: string,
   token: string
 ) => {
   const supabase = await supabaseClient(token!);
   try {
     const res = await supabase
-      .from("users")
+      .from("infinityai_352020833zsx_users")
       .update({
-        credits: credits,
+        infinityai_user_credits: infinityai_user_credits,
       })
       .eq("email", email)
       .select();
@@ -523,17 +526,17 @@ export const updateUserCredits = async (
   }
 };
 
-export const createUser = async (user: UserData, token: string) => {
-  const supabase = await supabaseClient(token);
+export const createUser = async (user: UserData) => {
+  const supabase = supabaseRealTime();
 
   const createTime = convertTimestampToDateTime(user.created_at);
 
-  const res = await supabase.from("users").insert([
+  const res = await supabase.from("infinityai_352020833zsx_users").insert([
     {
       created_at: createTime,
       email: user.email,
       subscription_type: "free",
-      credits: 0,
+      infinityai_user_credits: user.infinityai_user_credits,
       user_id: user.user_id,
     },
   ]);

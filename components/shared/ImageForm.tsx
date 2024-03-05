@@ -339,28 +339,28 @@ export const ImageForm = ({ email }: { email: string }) => {
       const token = await getToken({ template: 'supabase' })
       if (useDefaultModel) {
         if (useTurbo) {
-          const credits = await getUserCredits(email, token!)
-          setCredits(credits)
-          if (credits - 15 < 0) {
+          const infinityai_user_credits = await getUserCredits(email, token!)
+          setCredits(infinityai_user_credits)
+          if (infinityai_user_credits - 15 < 0) {
             toast.warning("积分余额不足")
             return;
           }
-          await updateUserCredits(credits - 15, email, token!)
-          setCredits(credits - 15)
+          await updateUserCredits(infinityai_user_credits - 15, email, token!)
+          setCredits(infinityai_user_credits - 15)
         } else {
-          const credits = await getUserCredits(email, token!)
-          setCredits(credits)
-          if (credits - 10 < 0) {
+          const infinityai_user_credits = await getUserCredits(email, token!)
+          setCredits(infinityai_user_credits)
+          if (infinityai_user_credits - 10 < 0) {
             toast.warning("积分余额不足")
             return;
           }
-          await updateUserCredits(credits - 10, email, token!)
-          setCredits(credits - 10)
+          await updateUserCredits(infinityai_user_credits - 10, email, token!)
+          setCredits(infinityai_user_credits - 10)
         }
 
       } else {
-        const credits = await getUserCredits(email, token!)
-        await updateUserCredits(credits - 15, email, token!)
+        const infinityai_user_credits = await getUserCredits(email, token!)
+        await updateUserCredits(infinityai_user_credits - 15, email, token!)
       }
 
       setIsBlending(true);
@@ -412,14 +412,14 @@ export const ImageForm = ({ email }: { email: string }) => {
   const handleDescribe = async (imageUrl: string) => {
     try {
       const token = await getToken({ template: 'supabase' })
-      const credits = await getUserCredits(email, token!)
-      setCredits(credits)
-      if (credits - 1 < 0) {
+      const infinityai_user_credits = await getUserCredits(email, token!)
+      setCredits(infinityai_user_credits)
+      if (infinityai_user_credits - 1 < 0) {
         toast.warning("积分余额不足")
         return;
       }
-      await updateUserCredits(credits - 1, email, token!)
-      setCredits(credits - 1)
+      await updateUserCredits(infinityai_user_credits - 1, email, token!)
+      setCredits(infinityai_user_credits - 1)
       setIsDescribe(true);
       let time = 0;
 
@@ -472,23 +472,23 @@ export const ImageForm = ({ email }: { email: string }) => {
     try {
       const token = await getToken({ template: 'supabase' })
       if (useDefaultModel) {
-        const credits = await getUserCredits(email, token!)
-        setCredits(credits)
-        if (credits - 10 < 0) {
+        const infinityai_user_credits = await getUserCredits(email, token!)
+        setCredits(infinityai_user_credits)
+        if (infinityai_user_credits - 10 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(credits - 10, email, token!)
-        setCredits(credits - 10)
+        await updateUserCredits(infinityai_user_credits - 10, email, token!)
+        setCredits(infinityai_user_credits - 10)
       } else {
-        const credits = await getUserCredits(email, token!)
-        setCredits(credits)
-        if (credits - 15 < 0) {
+        const infinityai_user_credits = await getUserCredits(email, token!)
+        setCredits(infinityai_user_credits)
+        if (infinityai_user_credits - 15 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(credits - 15, email, token!)
-        setCredits(credits - 15)
+        await updateUserCredits(infinityai_user_credits - 15, email, token!)
+        setCredits(infinityai_user_credits - 15)
       }
 
       setImageArr([]);
@@ -541,23 +541,23 @@ export const ImageForm = ({ email }: { email: string }) => {
     try {
       const token = await getToken({ template: 'supabase' })
       if (useDefaultModel) {
-        const credits = await getUserCredits(email, token!)
-        setCredits(credits)
-        if (credits - 11 < 0) {
+        const infinityai_user_credits = await getUserCredits(email, token!)
+        setCredits(infinityai_user_credits)
+        if (infinityai_user_credits - 11 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(credits - 10, email, token!)
-        setCredits(credits - 11)
+        await updateUserCredits(infinityai_user_credits - 11, email, token!)
+        setCredits(infinityai_user_credits - 11)
       } else {
-        const credits = await getUserCredits(email, token!)
-        setCredits(credits)
-        if (credits - 16 < 0) {
+        const infinityai_user_credits = await getUserCredits(email, token!)
+        setCredits(infinityai_user_credits)
+        if (infinityai_user_credits - 16 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(credits - 15, email, token!)
-        setCredits(credits - 16)
+        await updateUserCredits(infinityai_user_credits - 16, email, token!)
+        setCredits(infinityai_user_credits - 16)
       }
       setImageArr([]);
       setIsFetching(true);
@@ -642,38 +642,38 @@ export const ImageForm = ({ email }: { email: string }) => {
       const token = await getToken({ template: 'supabase' })
       if (useDefaultModel) {
         if (useTurbo) {
-          const credits = await getUserCredits(email, token!)
-          setCredits(credits)
-          if (credits - 15 < 0) {
+          const infinityai_user_credits = await getUserCredits(email, token!)
+          setCredits(infinityai_user_credits)
+          if (infinityai_user_credits - 15 < 0) {
             toast.warning("积分余额不足")
             return;
           }
-          await updateUserCredits(credits - 15, email, token!)
-          setCredits(credits - 15)
+          await updateUserCredits(infinityai_user_credits - 15, email, token!)
+          setCredits(infinityai_user_credits - 15)
         } else {
 
-          const credits = await getUserCredits(email, token!)
-          setCredits(credits)
-          console.log(credits);
-          if (credits - 10 < 0) {
+          const infinityai_user_credits = await getUserCredits(email, token!)
+          setCredits(infinityai_user_credits)
+          console.log(infinityai_user_credits);
+          if (infinityai_user_credits - 10 < 0) {
             toast.warning("积分余额不足")
             return;
           }
-          const res = await updateUserCredits(credits - 10, email, token!)
-          setCredits(credits - 10)
+          const res = await updateUserCredits(infinityai_user_credits - 10, email, token!)
+          setCredits(infinityai_user_credits - 10)
           console.log(res);
 
         }
 
       } else {
-        const credits = await getUserCredits(email, token!)
-        setCredits(credits)
-        if (credits - 15 < 0) {
+        const infinityai_user_credits = await getUserCredits(email, token!)
+        setCredits(infinityai_user_credits)
+        if (infinityai_user_credits - 15 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(credits - 15, email, token!)
-        setCredits(credits - 15)
+        await updateUserCredits(infinityai_user_credits - 15, email, token!)
+        setCredits(infinityai_user_credits - 15)
       }
 
       setIsFetching(true);
