@@ -53,8 +53,8 @@ const handlePay = async (req: NextRequest) => {
     const orderId = generateOrderNumber();
     console.log("orderId", orderId);
 
-    // const callbackUrl = "https://infinityai.asia/api/payCallback";
-    const callbackUrl = "https://funny-friends-accept.loca.lt/api/payCallback";
+    const callbackUrl = "https://infinityai.asia/api/payCallback";
+    // const callbackUrl = "https://funny-friends-accept.loca.lt/api/payCallback";
     const timestamp = Math.floor(Date.now() / 1000); // 获取当前时间的秒级时间戳
     const tenDigitTimestamp = timestamp.toString().substring(0, 10); // 提取前 10 位数
     const signParams = {
@@ -62,8 +62,8 @@ const handlePay = async (req: NextRequest) => {
       out_trade_no: orderId, //商户订单号
       total_fee: fee + "", //支付金额
       body: product_description, //商品描述
-      timestamp: tenDigitTimestamp + "",//10位时间戳
-      notify_url: callbackUrl,//支付通知url
+      timestamp: tenDigitTimestamp + "", //10位时间戳
+      notify_url: callbackUrl, //支付通知url
     };
     const sign = wxPaySign(signParams, merchant_key);
     console.log("sign", sign);
