@@ -1,4 +1,4 @@
-
+'use client'
 import Footer from "@/components/shared/Footer";
 import Header from "@/components/shared/Header";
 import TypeEffect from "@/components/shared/TypeEffect";
@@ -12,6 +12,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+import axios from "axios";
+
+const handlepay = async (payType: string) => {
+  const payRes = await axios.post('/api/pay', { payType });
+  console.log(payRes.data);
+}
 
 export default function Home() {
 
@@ -60,7 +66,7 @@ export default function Home() {
                         <p className="text-white text-4xl font-bold">99元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
-                      <Button type="button" className=" hover:bg-gray-500 bg-gray-700">
+                      <Button type="button" onClick={() => handlepay('oneMonthPay')} className=" hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>
                       <ul className="flex flex-col gap-4 text-sm">

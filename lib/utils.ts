@@ -5,7 +5,7 @@ import {
 } from "@/lib/interface/ImageData";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-
+import md5 from "md5";
 import axios from "axios";
 import { toast } from "sonner";
 import { supabaseClient, supabaseRealTime } from "./supabase/supabaseClient";
@@ -572,3 +572,30 @@ export const createUser = async (user: UserData) => {
 
   return res;
 };
+
+export function generateOrderNumber() {
+  const prefix = "infinity";
+  const timestamp = Date.now(); // 获取当前时间戳
+  const randomDigits = Math.floor(Math.random() * 1000000); // 生成一个 0 到 999999 之间的随机数
+  const orderNumber = `${prefix}${timestamp}${randomDigits
+    .toString()
+    .padStart(3, "0")}`; // 将时间戳和随机数填充到 6 位数并与前缀拼接
+  return orderNumber;
+}
+
+interface PayParams {
+  [key: string]: string;
+}
+
+export function wxPaySign(params: PayParams, key: string) {
+  const paramsArr = Object.keys(params);
+  paramsArr.sort();
+  const stringArr = [];
+  paramsArr.map((key) => {
+    stringArr.push(key + "=" + params[key]);
+  });
+  // 最后加上商户Key
+  stringArr.push("key=" + key);
+  const string = stringArr.join("&");
+  return md5(string).toString().toUpperCase();
+}

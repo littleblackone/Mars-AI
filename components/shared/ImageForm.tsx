@@ -2161,8 +2161,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                     </HoverCardTrigger>
                                     <HoverCardContent>
                                       <p className="text-white text-sm">
-                                        上传您本地的图片文件,上传后会自动触发生成按钮,并返回您上传图片的在线地址在输入框中。
-                                        下面的图片是您本地上传的图片或是您输入的在线图片地址的图片。
+                                        免费上传您本地的图片文件到云端,上传后会自动触发生成按钮,发送给midjourney。
                                       </p>
                                     </HoverCardContent>
                                   </HoverCard>
