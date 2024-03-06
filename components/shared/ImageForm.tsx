@@ -90,6 +90,8 @@ import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { UserButton, useAuth } from "@clerk/nextjs";
 import { useCredits } from "@/lib/store/useCredits";
+import useThemeSwitcher from "../hooks/useThemeSwitcher";
+import { MoonIcon, SunIcon } from "../ui/icons";
 
 export const ImageForm = ({ email }: { email: string }) => {
   const [fetchTime, setFetchTime] = useState<number>(0);
@@ -138,6 +140,7 @@ export const ImageForm = ({ email }: { email: string }) => {
   const [useDefaultModel, setUseDefaultModel] = useState(true);
   const [model, setModel] = useState(" --v 5.2");
   const [stylesList, setStylesList] = useState<string[]>([])
+  const [themeMode, setThemeMode] = useThemeSwitcher();
 
   const fileTypes = ["png", "jpg", "jpeg", "webp"];
   let uploadImages: string[] = [];
@@ -725,6 +728,7 @@ export const ImageForm = ({ email }: { email: string }) => {
 
             setOriginImages(bast64ImgArr);
 
+            form.setValue('prompt', '')
             setIsFetching(false);
             await handleGetSeed(taskId, setSeed);
           }
@@ -837,7 +841,7 @@ export const ImageForm = ({ email }: { email: string }) => {
     );
     console.log(finalPrompt);
     setFinalPrompt(finalPrompt);
-    debounce(() => handleGenerateImage(finalPrompt), 1000)();
+    debounce(() => handleGenerateImage(finalPrompt ?? "a cute cat"), 1000)();
   };
 
   return (
@@ -850,21 +854,30 @@ export const ImageForm = ({ email }: { email: string }) => {
         setOpen={setFullImgOpen}
       ></FullViewImg>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className=" w-full relative h-full">
-          <div className=" h-[5vh] w-full bg-white border-b flex p-2 px-[1.4rem] items-center">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="dark:bg-[#111827] w-full transition-colors duration-300 relative h-full">
+          <div className=" h-[5vh] w-full bg-white dark:bg-[#111827]  border-b dark:border-gray-700 flex p-2 px-[1.4rem] items-center">
             <Link
               href="/"
-              className=" w-fit active:translate-y-[1px] h-[30px] bg-gray-100 rounded-md hover:bg-gray-200 transition-all duration-200 p-2 flex-center"
+              className=" w-fit active:translate-y-[1px] h-[30px] bg-gray-100 dark:bg-[#1f345e] dark:hover:bg-[#27427e] dark:text-white rounded-md hover:bg-gray-200 transition-all duration-200 p-2 flex-center"
             >
               <ArrowLeftIcon width={20} height={20}></ArrowLeftIcon>
               <span>返回</span>
             </Link>
 
             <div className="ml-auto gap-2 items-center flex">
-              {/* <UserCreditsServer email={email}></UserCreditsServer> */}
+              <button
+                className="  bg-gray-200 rounded-full p-1 translate-x-[-6rem]"
+                onClick={() => {
+                  setThemeMode(themeMode === "light" ? "dark" : "light");
+                }}
+              >
+                {themeMode === "dark" ? (
+                  <MoonIcon className={" fill-dark"}></MoonIcon>
+                ) : (
+                  <SunIcon className={" fill-light dark:fill-light"}></SunIcon>
+                )}
+              </button>
               <UserButton afterSignOutUrl="/"></UserButton>
-              {/* <SignOutButton ></SignOutButton>
-              {/* <Sparkle width={15} height={15}></Sparkle> */}
             </div>
           </div>
           <div className=" flex items-center flex-1  w-full h-[95vh]">
@@ -875,12 +888,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between w-[200px]">
                     <div className=" flex gap-2 items-center">
-                      <FormLabel className=" text-neutral-800 text-nowrap text-sm">
+                      <FormLabel className=" text-neutral-800 dark:text-white text-nowrap text-sm">
                         Models:
                       </FormLabel>
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
@@ -911,11 +924,11 @@ export const ImageForm = ({ email }: { email: string }) => {
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className=" bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                          <SelectTrigger className=" bg-gray-100 dark:focus:ring-transparent dark:ring-offset-transparent dark:text-white dark:bg-[#202e4d] border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                             <SelectValue placeholder="模型"></SelectValue>
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className=" focus:ring-transparent">
+                        <SelectContent className=" focus:ring-transparent dark:bg-[#202e4d]">
                           <SelectItem value=" --v 5.2">v5.2</SelectItem>
                           <SelectItem value=" --v 6">v6</SelectItem>
                           <SelectItem value=" --niji 6">niji 6</SelectItem>
@@ -932,16 +945,16 @@ export const ImageForm = ({ email }: { email: string }) => {
                 control={form.control}
                 name="aspectRatio"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col items-center justify-between  w-[200px]">
+                  <FormItem className="flex flex-col items-center justify-between w-[200px]">
                     <div className=" flex justify-between items-center w-full">
                       <div className=" flex gap-2 items-center">
-                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                           AspectRatio:
                         </FormLabel>
 
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
-                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                            <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
@@ -970,38 +983,38 @@ export const ImageForm = ({ email }: { email: string }) => {
                           defaultValue={field.value}
                         >
                           <FormControl>
-                            <SelectTrigger className="bg-gray-100 border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                            <SelectTrigger className="bg-gray-100 dark:focus:ring-transparent dark:ring-offset-transparent dark:text-white dark:bg-[#202e4d] border-none py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                               <SelectValue placeholder="图片比例"></SelectValue>
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="dark:bg-[#202e4d] focus:ring-transparent">
                             <SelectItem value=" --ar 1:1">
                               <div className="flex gap-1 items-center">
-                                <div className=" w-4 h-4 border-[1px] rounded-sm border-black"></div>
+                                <div className=" w-4 h-4 border-[1px] rounded-sm border-black dark:border-white"></div>
                                 <span>1:1</span>
                               </div>
                             </SelectItem>
                             <SelectItem value=" --ar 4:3">
                               <div className="flex gap-1 items-center">
-                                <div className=" w-4 h-[12px] border-[1px] rounded-sm border-black"></div>
+                                <div className=" w-4 h-[12px] border-[1px] rounded-sm border-black dark:border-white"></div>
                                 <span>4:3</span>
                               </div>
                             </SelectItem>
                             <SelectItem value=" --ar 3:2">
                               <div className="flex gap-1 items-center">
-                                <div className=" w-4 h-[10.6px] border-[1px] rounded-sm border-black"></div>
+                                <div className=" w-4 h-[10.6px] border-[1px] rounded-sm border-black dark:border-white"></div>
                                 <span>3:2</span>
                               </div>
                             </SelectItem>
                             <SelectItem value=" --ar 16:9">
                               <div className="flex gap-1 items-center">
-                                <div className=" w-4 h-[9px] border-[1px] rounded-sm border-black"></div>
+                                <div className=" w-4 h-[9px] border-[1px] rounded-sm border-black dark:border-white"></div>
                                 <span>16:9</span>
                               </div>
                             </SelectItem>
                             <SelectItem value=" --ar 9:16">
                               <div className="flex gap-1 items-center">
-                                <div className=" ml-1 mr-1.5 w-[9px] h-[16px] border-[1px] rounded-sm border-black"></div>
+                                <div className=" ml-1 mr-1.5 w-[9px] h-[16px] border-[1px] rounded-sm border-black dark:border-white"></div>
                                 <span>9:16</span>
                               </div>
                             </SelectItem>
@@ -1017,7 +1030,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                     </div>
 
                     {customAs && (
-                      <div className="flex items-center text-xs text-neutral-800 font-medium justify-between">
+                      <div className="flex items-center text-xs text-neutral-800 dark:text-white font-medium justify-between">
                         <div className="flex items-center  gap-1 mr-[1.1rem]">
                           <span className=" text-base font-medium">宽</span>
                           <Input
@@ -1026,7 +1039,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                             value={customASW}
                             onChange={(e) => setCustomASW(+e.target.value)}
                             step={1}
-                            className=" w-[60px]"
+                            className="dark:bg-[#202e4d] dark:text-white w-[60px]"
                           ></Input>
                         </div>
 
@@ -1040,7 +1053,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                             value={customASH}
                             onChange={(e) => setCustomASH(+e.target.value)}
                             step={1}
-                            className=" w-[60px]"
+                            className="dark:bg-[#202e4d] dark:text-white w-[60px]"
                           ></Input>
                         </div>
                       </div>
@@ -1056,13 +1069,13 @@ export const ImageForm = ({ email }: { email: string }) => {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between  w-[200px]">
                     <div className=" flex gap-2 items-center">
-                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                      <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                         Quality:
                       </FormLabel>
 
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
@@ -1087,11 +1100,11 @@ export const ImageForm = ({ email }: { email: string }) => {
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="bg-gray-100 border-none py-1 text-xs px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                          <SelectTrigger className="bg-gray-100 dark:focus:ring-transparent dark:ring-offset-transparent dark:text-white dark:bg-[#202e4d] border-none py-1 text-xs px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                             <SelectValue placeholder="图片质量"></SelectValue>
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="focus:ring-transparent dark:bg-[#202e4d]">
                           <SelectItem value=" --q .25" className=" text-xs">
                             低质量
                           </SelectItem>
@@ -1117,12 +1130,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex flex-col gap-4 ">
                     <div className="flex justify-between items-center">
                       <div className="flex gap-2 items-center">
-                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                           Stylize:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
-                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                            <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
@@ -1145,7 +1158,7 @@ export const ImageForm = ({ email }: { email: string }) => {
 
                       <FormControl>
                         <Input
-                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                          className="bg-gray-100 dark:bg-[#202e4d] dark:text-white border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
                           max={1000}
                           min={0}
                           type="number"
@@ -1181,12 +1194,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex flex-col gap-4 ">
                     <div className="flex justify-between items-center">
                       <div className="flex gap-2 items-center">
-                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                           Chaos:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
-                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                            <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
@@ -1209,7 +1222,7 @@ export const ImageForm = ({ email }: { email: string }) => {
 
                       <FormControl>
                         <Input
-                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent p-1 rounded-lg w-[60px] text-center"
+                          className="bg-gray-100 dark:bg-[#202e4d] dark:text-white border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent p-1 rounded-lg w-[60px] text-center"
                           max={100}
                           min={0}
                           type="number"
@@ -1246,12 +1259,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex flex-col gap-4">
                     <div className="flex justify-between items-center">
                       <div className=" flex gap-2 items-center">
-                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                           Image Weight:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
-                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                            <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
@@ -1272,7 +1285,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                       </div>
                       <FormControl>
                         <Input
-                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                          className="bg-gray-100 dark:bg-[#202e4d] dark:text-white border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
                           max={useDefaultModel ? 2 : 3}
                           min={0}
                           step={0.1}
@@ -1307,12 +1320,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex flex-col gap-4">
                     <div className="flex justify-between items-center">
                       <div className=" flex gap-2 items-center">
-                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                           Stop:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
-                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                            <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
@@ -1333,7 +1346,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                       </div>
                       <FormControl>
                         <Input
-                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                          className="bg-gray-100 dark:bg-[#202e4d] dark:text-white border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
                           max={100}
                           min={10}
                           step={1}
@@ -1367,12 +1380,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex flex-col gap-4">
                     <div className="flex justify-between items-center">
                       <div className=" flex gap-2 items-center">
-                        <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                        <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                           Weird:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
-                            <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                            <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
@@ -1393,7 +1406,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                       </div>
                       <FormControl>
                         <Input
-                          className="bg-gray-100 border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
+                          className="bg-gray-100 dark:bg-[#202e4d] dark:text-white border-none py-1 px-2 h-8 focus-visible:ring-offset-transparent focus-visible:ring-transparent  p-1 rounded-lg w-[60px] text-center"
                           max={3000}
                           min={0}
                           step={10}
@@ -1427,12 +1440,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                 render={({ field }) => (
                   <FormItem className="flex flex-col ">
                     <div className=" flex gap-2 items-center">
-                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                      <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                         Seeds:
                       </FormLabel>
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
@@ -1456,7 +1469,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                     <div className="-translate-y-[3px]">
                       <FormControl>
                         <Input
-                          className="bg-gray-100 border-none w-[200px] focus-visible:ring-offset-transparent focus-visible:ring-transparent"
+                          className="bg-gray-100 dark:bg-[#202e4d] dark:text-white border-none w-[200px] focus-visible:ring-offset-transparent focus-visible:ring-transparent"
                           type="number"
                           min={0}
                           max={4294967295}
@@ -1478,12 +1491,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                 render={({ field }) => (
                   <FormItem className="flex flex-col ">
                     <div className=" flex gap-2 items-center">
-                      <FormLabel className="text-neutral-800 text-nowrap text-sm">
+                      <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
                         Negative Words:
                       </FormLabel>
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
-                          <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                          <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
@@ -1507,7 +1520,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                       <FormControl>
                         <Input
                           {...field}
-                          className="bg-gray-100 border-none w-[90%] resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                          className="bg-gray-100 border-none dark:bg-[#202e4d] dark:text-white w-[90%] resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
                           placeholder="不想出现的元素"
                         ></Input>
                       </FormControl>
@@ -1519,12 +1532,12 @@ export const ImageForm = ({ email }: { email: string }) => {
 
               <div className="flex flex-col gap-2">
                 <div className=" flex gap-2 items-center">
-                  <p className="text-neutral-800 font-medium text-nowrap text-sm">
+                  <p className="text-neutral-800 dark:text-white font-medium text-nowrap text-sm">
                     Image Urls:
                   </p>
                   <HoverCard openDelay={300}>
                     <HoverCardTrigger>
-                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                      <InfoCircledIcon className="dark:text-white dark:hover:text-gray-100 cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                     </HoverCardTrigger>
                     <HoverCardContent>
                       <p className="text-white text-sm">
@@ -1548,7 +1561,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                         onChange={(e) =>
                           handleInputChange(index, e.target.value)
                         }
-                        className="bg-gray-100 border-none text-xs placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                        className="bg-gray-100 border-none dark:bg-[#202e4d] dark:text-white text-xs placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
                         placeholder="https://example.com/image.png"
                       ></Input>
 
@@ -1558,7 +1571,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                           disabled={imgPromptUrls.length === 5}
                           type="button"
                           variant="outline"
-                          className=" px-1.5 py-0 h-8"
+                          className=" px-1.5 dark:bg-[#202e4d] dark:text-white py-0 h-8"
                         >
                           <PlusIcon width={15} height={15}></PlusIcon>
                         </Button>
@@ -1566,7 +1579,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                           type="button"
                           variant="outline"
                           disabled={imgPromptUrls.length === 1}
-                          className=" px-1.5 py-0 h-8"
+                          className=" px-1.5 dark:bg-[#202e4d] dark:text-white py-0 h-8"
                           onClick={() => handleRemoveInput(index)}
                         >
                           <MinusIcon width={15} height={15}></MinusIcon>
@@ -1581,12 +1594,12 @@ export const ImageForm = ({ email }: { email: string }) => {
 
               <div className="flex flex-col gap-2">
                 <div className=" flex gap-2 items-center">
-                  <p className="text-neutral-800 font-medium text-nowrap text-sm">
+                  <p className="text-neutral-800 dark:text-white font-medium text-nowrap text-sm">
                     Style References Image Urls:
                   </p>
                   <HoverCard openDelay={300}>
                     <HoverCardTrigger>
-                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                      <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                     </HoverCardTrigger>
                     <HoverCardContent>
                       <p className="text-white text-sm">
@@ -1605,7 +1618,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                   disabled={useDefaultModel}
                   onBlur={() => handleInputBlur(-1, "srefUrls")}
                   onChange={(e) => setSrefUrl(e.target.value)}
-                  className="bg-gray-100 border-none text-xs  placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                  className="bg-gray-100 border-none text-xs dark:bg-[#202e4d] dark:text-white  placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
                   placeholder="https://example.com/image.png"
                 ></Input>
               </div>
@@ -1621,13 +1634,13 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <div className="flex gap-2 items-center">
                     <Label
                       htmlFor="use-form-data"
-                      className=" text-sm cursor-pointer"
+                      className=" dark:text-white text-sm cursor-pointer"
                     >
                       Style Raw
                     </Label>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        <InfoCircledIcon className="dark:text-white dark:hover:text-gray-100 cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
@@ -1656,13 +1669,13 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <div className="flex gap-2 items-center">
                     <Label
                       htmlFor="use-tile"
-                      className="text-sm cursor-pointer"
+                      className="text-sm dark:text-white cursor-pointer"
                     >
                       Tile
                     </Label>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        <InfoCircledIcon className="dark:text-white dark:hover:text-gray-100  cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
@@ -1692,13 +1705,13 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <div className="flex gap-2 items-center">
                     <Label
                       htmlFor="use-turbo"
-                      className="text-sm cursor-pointer"
+                      className="text-sm dark:text-white cursor-pointer"
                     >
                       Turbo模式
                     </Label>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
-                        <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                        <InfoCircledIcon className="dark:text-white dark:hover:text-gray-100  cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
@@ -1729,9 +1742,9 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex flex-col  w-full h-full">
                     <Tabs
                       defaultValue="textToImage"
-                      className="flex flex-col h-full w-full items-center justify-between"
+                      className="flex flex-col dark:bg-[#202e4d] h-full w-full items-center justify-between"
                     >
-                      <TabsList className=" shadow-md bg-gray-200/20 my-2 p-4 py-6 gap-2 text-gray-600 rounded-md">
+                      <TabsList className=" shadow-md bg-gray-200/20 dark:bg-[#27375c] dark:text-white my-2 p-4 py-6 gap-2 text-gray-600 rounded-md">
                         <TabsTrigger
                           value="textToImage"
                           className=" py-[0.4rem] rounded-md"
@@ -1781,7 +1794,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                   key={index}
                                   className=" flex-center relative group"
                                 >
-                                  <div className="  w-[400px] h-[400px] bg-gray-300/40 rounded-md p-2 relative flex-center">
+                                  <div className="  w-[400px] h-[400px] bg-gray-300/40 dark:bg-[#293c66] rounded-md p-2 relative flex-center">
                                     <img
                                       src={imgUrl}
                                       alt="midjourney image"
@@ -1977,11 +1990,11 @@ export const ImageForm = ({ email }: { email: string }) => {
                                 </div>
                               ))}
 
-                            <div className="flex flex-col items-center absolute bottom-4 left-[27.5%] w-[820px] shadow-md rounded-xl p-1 col-span-2  flex-center bg-white">
-                              <div className="flex w-full flex-center p-2 bg-white rounded-md">
+                            <div className="flex flex-col items-center absolute bottom-4 left-[27.5%] w-[820px] shadow-md rounded-xl p-1 col-span-2  flex-center bg-white dark:bg-[#334877]">
+                              <div className="flex w-full flex-center p-2 bg-white dark:bg-[#334877] rounded-md">
                                 <HoverCard openDelay={300}>
                                   <HoverCardTrigger className=" ml-2 mb-5">
-                                    <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                                    <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                                   </HoverCardTrigger>
                                   <HoverCardContent>
                                     <p className="text-white text-sm">
@@ -1996,21 +2009,21 @@ export const ImageForm = ({ email }: { email: string }) => {
                                 </HoverCard>
                                 <FormControl>
                                   <Textarea
-                                    className=" hide-scrollbar resize-none  bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+                                    className="hide-scrollbar resize-none dark:text-white dark:bg-[#334877] dark:focus-visible:ring-0 dark:focus-visible:ring-offset-0 bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
                                     placeholder="使用英文短语描述你的想象, 使用逗号分隔"
                                     {...field}
                                   ></Textarea>
                                 </FormControl>
                                 <div className="flex gap-2 items-center self-end">
                                   <Popover>
-                                    <PopoverTrigger className=" bg-white hover:bg-gray-100 transition-all duration-200 active:translate-y-[1px] rounded-md border-slate-200 border py-2 px-[8px]">
+                                    <PopoverTrigger className=" bg-white dark:bg-[#334877] dark:text-white dark:hover:bg-[#51699e] hover:bg-gray-100 transition-all duration-200 active:translate-y-[1px] rounded-md border-slate-200 border py-2 px-[8px]">
                                       <HoverCard openDelay={300}>
                                         <HoverCardTrigger className=" flex items-center">
                                           <TagsIcon
                                             width={20}
                                             height={20}
                                           ></TagsIcon>
-                                          <span className={`rounded-full w-[24px] h-[24px] p-1 aspect-square bg-gray-100 text-xs hidden ${stylesList.length > 0 && '!block ml-1'}`}>{stylesList.length > 0 ? stylesList.length : ''}</span>
+                                          <span className={`rounded-full w-[24px] h-[24px] p-1 aspect-square bg-gray-100 dark:bg-[#51699e] dark:text-white text-xs hidden ${stylesList.length > 0 && '!block ml-1'}`}>{stylesList.length > 0 ? stylesList.length : ''}</span>
                                         </HoverCardTrigger>
                                         <HoverCardContent className=" w-fit">
                                           <p className="text-white text-sm">
@@ -2042,7 +2055,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                                 setStylesList([...stylesList.filter(item => item !== tag.value)])
                                               }
                                               }
-                                              className=" rounded-full cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all duration-200"
+                                              className="dark:text-neutral-900 rounded-full cursor-pointer bg-gray-100 hover:bg-gray-200 transition-all duration-200"
                                             ></X>
                                           )}
                                         </div>
@@ -2064,7 +2077,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                           getRandomPrompt(randomPrompts);
                                         form.setValue("prompt", randomPrompt);
                                       }}
-                                      className="bg-white cursor-pointer active:translate-y-[1px] hover:bg-gray-100 transition-all duration-200 rounded-md border-slate-200 border py-2 px-[8px]">
+                                      className="bg-white dark:bg-[#334877] dark:text-white dark:hover:bg-[#51699e] cursor-pointer active:translate-y-[1px] hover:bg-gray-100 transition-all duration-200 rounded-md border-slate-200 border py-2 px-[8px]">
 
                                       <Lightbulb
                                         width={20}
@@ -2081,11 +2094,11 @@ export const ImageForm = ({ email }: { email: string }) => {
                                   <Button
                                     type="submit"
                                     size="lg"
-                                    className="w-fit button-85 active:translate-y-[1px] transition-all duration-200 ml-2 self-end text-lg"
+                                    className="w-fit dark:text-white button-85 active:translate-y-[1px] transition-all duration-200 ml-2 self-end text-lg"
                                     disabled={
                                       isFetching ||
                                       isInpainting ||
-                                      field.value === ""
+                                      field.value.trim() === ""
                                     }
                                   >
                                     {isInpainting || isFetching ? (
@@ -2111,12 +2124,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                                 generatePrompts.length === 4 &&
                                 generatePrompts.map((prompt, index) => (
                                   <div
-                                    className=" flex gap-2 border-2 border-gray-500 rounded w-full h-full"
+                                    className=" flex gap-2 border-2 border-gray-500 dark:border-gray-300 rounded w-full h-full"
                                     key={index}
                                   >
-                                    <div className="leading-6 h-[145px] overflow-y-scroll hide-scrollbar w-[40rem] px-4 text-sm  font-medium text-gray-600 bg-white/80  p-2 rounded-md">
+                                    <div className="leading-6 h-[145px] overflow-y-scroll hide-scrollbar w-[40rem] px-4 text-sm  font-medium text-gray-600 dark:text-white bg-white/80 dark:bg-[#31456e] p-2 rounded-md">
                                       <div className="flex">
-                                        <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black font-semibold">
+                                        <span className=" mr-2 break-words whitespace-nowrap mt-1 text-md text-black dark:text-gray-200 font-semibold">
                                           Prompt {index + 1} :
                                         </span>
                                         <Button
@@ -2140,11 +2153,11 @@ export const ImageForm = ({ email }: { email: string }) => {
                             </div>
                             <div className=" w-full h-full flex-center">
                               <div className=" flex flex-col gap-4 items-center">
-                                <div className="flex gap-1 items-center self-start -mb-3 text-zinc-900 text-[1rem] font-medium">
+                                <div className="flex gap-1 items-center self-start -mb-3 text-zinc-900 dark:text-white text-[1rem] font-medium">
                                   本地上传 :
                                   <HoverCard openDelay={300}>
                                     <HoverCardTrigger>
-                                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                                      <InfoCircledIcon className=" dark:text-white dark:hover:text-gray-100 cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                                     </HoverCardTrigger>
                                     <HoverCardContent>
                                       <p className="text-white text-sm">
@@ -2154,12 +2167,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                                     </HoverCardContent>
                                   </HoverCard>
                                 </div>
-                                <div className=" w-[450px] h-[450px] bg-white rounded-md flex-center">
+                                <div className=" w-[450px] h-[450px] bg-white rounded-md flex-center dark:bg-[#31456e]">
                                   <img
                                     src={
                                       uploadImg !== ""
                                         ? uploadImg
-                                        : describeImageUrl
+                                        : describeImageUrl.trim().length > 0
                                           ? describeImageUrl
                                           : "/pending2.png"
                                     }
@@ -2173,7 +2186,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                   type="file"
                                   placeholder="Upload Image"
                                   accept="image/*"
-                                  className="cursor-pointer border-gray-600 border-2 bg-white/55 "
+                                  className="cursor-pointer dark:text-white border-gray-600 border-2 dark:border-transparent bg-white/55 dark:bg-gray-400"
                                   disabled={isDescribe}
                                   onChange={(e) => {
                                     handleSelectImagUrl(e);
@@ -2182,7 +2195,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                 <Button
                                   type="button"
                                   size="lg"
-                                  className="w-full flex gap-2 button-85 text-lg"
+                                  className="w-full dark:text-white flex gap-2 button-85 text-lg"
                                   disabled={
                                     isDescribe || isUploading || selectImageFile === undefined
                                   }
@@ -2205,10 +2218,10 @@ export const ImageForm = ({ email }: { email: string }) => {
                             </div>
                           </div>
 
-                          <p className=" self-start -mb-3 text-[1rem] font-medium text-zinc-900">
+                          <p className=" self-start -translate-y-1 text-[1rem] font-medium text-zinc-900 dark:text-white">
                             在线图片地址上传 :
                           </p>
-                          <div className=" w-full flex rounded-md p-2 gap-2 flex-center bg-gray-200 mx-4 !mt-4">
+                          <div className=" w-full flex rounded-md p-2 gap-2 flex-center bg-gray-200 dark:bg-[#334877] mx-4">
                             <div className="flex w-full flex-center">
                               <Input
                                 value={describeImageUrl}
@@ -2216,15 +2229,15 @@ export const ImageForm = ({ email }: { email: string }) => {
                                   setDescribeImageUrl(e.target.value)
                                 }
                                 onFocus={() => setSelectImageFile(undefined)}
-                                className=" bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+                                className="dark:bg-[#334877] dark:text-white dark:focus-visible:ring-0 dark:focus-visible:ring-offset-0 bg-transparent border-none p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
                                 placeholder="在线图片地址,png, jpg, jpeg后缀结尾,如:https://example.com/image.jpg,不支持webp,如果想描述midjourney官网的图片,请下载后再上传)"
                               ></Input>
 
                               <Button
                                 type="button"
                                 size="lg"
-                                className="w-fit button-85 ml-2  text-lg"
-                                disabled={isDescribe || isUploading || describeImageUrl == ""}
+                                className="w-fit button-85 dark:text-white ml-2  text-lg"
+                                disabled={isDescribe || isUploading || describeImageUrl.trim() == ""}
                                 onClick={async () => {
                                   setUploadImg("");
                                   debounce(() =>
@@ -2251,10 +2264,10 @@ export const ImageForm = ({ email }: { email: string }) => {
                       >
                         <div className=" w-full h-full  p-2 rounded-md">
                           <div className="flex flex-col items-center w-full h-full gap-4">
-                            <div className="relative w-[480px] h-[480px] border-dashed border-2 border-gray-800 flex flex-wrap gap-1 flex-center">
+                            <div className="relative w-[480px] h-[480px] border-dashed border-2 dark:bg-[#31456e] border-gray-800 dark:border-gray-300 flex flex-wrap gap-1 flex-center">
                               {blendOrgins.map((image, index) =>
                                 index !== 4 ? (
-                                  <div className="p-[0.6rem] relative rounded-md group w-[220px] h-[220px] mb-2 flex-center border-[1px] border-black ">
+                                  <div className="p-[0.6rem] relative rounded-md group w-[220px] h-[220px] mb-2 flex-center border-[1px] border-black dark:border-white ">
                                     <img
                                       src={image.src}
                                       alt={image.name}
@@ -2271,11 +2284,11 @@ export const ImageForm = ({ email }: { email: string }) => {
                                           )
                                         );
                                       }}
-                                      className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
+                                      className="dark:text-white cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
                                     ></X>
                                   </div>
                                 ) : (
-                                  <div className="p-[0.6rem] absolute group rounded-md border-[1px] border-black translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[220px] h-[220px] mb-2 flex-center">
+                                  <div className="p-[0.6rem] absolute group rounded-md border-[1px] border-black dark:border-white translate-x-[50%] translate-y-[50%] top-0 right-[50%]  w-[220px] h-[220px] mb-2 flex-center">
                                     <img
                                       src={image.src}
                                       alt={image.name}
@@ -2292,7 +2305,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                           )
                                         );
                                       }}
-                                      className=" cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
+                                      className=" dark:text-white cursor-pointer h-4 w-4 opacity-0 absolute right-1 top-1 group-hover:opacity-100 transition-all duration-200"
                                     ></X>
                                   </div>
                                 )
@@ -2301,11 +2314,11 @@ export const ImageForm = ({ email }: { email: string }) => {
 
                             <div className="  max-w-[480px] rounded-md  h-fit mb-10 flex-center flex-col p-4 px-6">
                               <div className="mb-4 self-start flex gap-2 items-center">
-                                <p className="text-md flex gap-2 justify-center items-center font-medium">
+                                <p className="text-md dark:text-white flex gap-2 justify-center items-center font-medium">
                                   dimension:
                                   <HoverCard openDelay={300}>
                                     <HoverCardTrigger>
-                                      <InfoCircledIcon className=" cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
+                                      <InfoCircledIcon className="dark:text-white dark:hover:text-gray-100 cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                                     </HoverCardTrigger>
                                     <HoverCardContent>
                                       <p className="text-white text-sm">
@@ -2328,11 +2341,11 @@ export const ImageForm = ({ email }: { email: string }) => {
                                   }}
                                   defaultValue={"square"}
                                 >
-                                  <SelectTrigger className="bg-gray-100 border border-gray-800 py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                                  <SelectTrigger className="bg-gray-100 dark:focus:ring-transparent dark:ring-offset-transparent dark:focus:ring-transparent dark:ring-offset-transparent dark:text-white dark:bg-[#31456e] border border-gray-800 py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                                     <SelectValue placeholder="dimension"></SelectValue>
                                   </SelectTrigger>
 
-                                  <SelectContent className=" focus:ring-transparent">
+                                  <SelectContent className="dark:bg-[#31456e] focus:ring-transparent">
                                     <SelectItem value="square">
                                       square(1:1)
                                     </SelectItem>
@@ -2360,14 +2373,14 @@ export const ImageForm = ({ email }: { email: string }) => {
                                     <p
                                       className={`${blendOrgins.length >= 5 &&
                                         `text-gray-700`
-                                        } text-lg font-medium text-blue-700 hover:underline-offset-4 hover:underline under`}
+                                        } text-lg font-medium text-blue-700 dark:text-blue-500 hover:underline-offset-4 hover:underline under`}
                                     >
                                       在此处上传或拖拽文件
                                     </p>
-                                    <p className=" text-sm text-gray-700">
+                                    <p className=" text-sm text-gray-700 dark:text-gray-300">
                                       文件类型:png, jpg, jpeg, webp
                                     </p>
-                                    <p className=" text-sm text-gray-700">
+                                    <p className=" text-sm text-gray-700 dark:text-gray-300">
                                       文件数量:2到5个
                                     </p>
                                   </div>
@@ -2377,7 +2390,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                               <Button
                                 type="button"
                                 size="lg"
-                                className="w-full mt-2 flex gap-2 button-85 text-lg"
+                                className="w-full mt-2 dark:text-white flex gap-2 button-85 text-lg"
                                 disabled={isBlending || canBlend === false}
                                 onClick={() => {
                                   debounce(() => handleBlend(), 1000)();

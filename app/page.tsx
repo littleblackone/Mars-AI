@@ -359,9 +359,9 @@ export default function Home() {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger className=" text-xl text-gray-200">有多少discrod中的功能?</AccordionTrigger>
+                <AccordionTrigger className=" text-xl text-gray-200">有多少discord中的功能?</AccordionTrigger>
                 <AccordionContent className="text-gray-300 text-base">
-                  本网站复现了所有discrod中对图片的操作,包括imagine,vary(strong,subtle,region),expand(right,left,up,down),zoom(1.5,2,make square,custom),upscale(2x,4x,subtle,creative),describe,blend
+                  本网站复现了所有discrod中对图片的操作,包括imagine,vary(strong,subtle,region),expand(right,left,up,down),zoom(1.5,2,make square,custom),upscale(1,2,3,4,2x,4x,subtle,creative),describe,blend
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">

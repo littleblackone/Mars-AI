@@ -239,7 +239,7 @@ export default function VaryRegion({
           ></Cropper>
         </div>
 
-        <div className=" w-full h-fit relative rounded-xl flex items-center bg-gray-100 border-4 border-black/60 focus:border-black/80">
+        <div className=" w-full h-fit relative rounded-xl flex items-center bg-gray-100 dark:bg-[#334877] dark:border-gray-300 border-4 border-black/60 focus:border-black/80">
           <Input
             type="text"
             autoFocus={true}
@@ -247,10 +247,11 @@ export default function VaryRegion({
             maxLength={3000}
             placeholder="描述你选择的区域"
             onChange={(e) => setPrompt(e.target.value)}
-            className=" self-center  rounded-xl bg-transparent p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
+            className="dark:text-white dark:bg-[#334877] dark:focus-visible:ring-0 dark:focus-visible:ring-offset-0  border-none self-center  rounded-xl bg-transparent p-[1.5rem] focus-visible:ring-transparent focus-visible:ring-offset-transparent"
           ></Input>
           <Button
             type="button"
+            variant='default'
             className=" rounded-xl mr-2"
             onClick={() => {
               debounce(() => handleInpaint(), 1000)();

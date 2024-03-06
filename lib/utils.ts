@@ -10,7 +10,6 @@ import axios from "axios";
 import { toast } from "sonner";
 import { supabaseClient, supabaseRealTime } from "./supabase/supabaseClient";
 import { UserData } from "@/lib/interface/ImageData";
-import { useCredits } from "./store/useCredits";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -108,7 +107,7 @@ export async function generateFinalPrompt(
     }
   });
 
-  const handledPrompt = cleanInput(prompt);
+  let handledPrompt = cleanInput(prompt);
 
   const response = await axios.post(
     "https://api.midjourneyapi.xyz/mj/v2/validation",
@@ -117,7 +116,7 @@ export async function generateFinalPrompt(
 
   if (response.data.ErrorMessage !== "") {
     toast.error(response.data.ErrorMessage, { duration: 3500 });
-    return "a cute cat";
+    return;
   }
 
   finalPromptArray.push(handledPrompt);
@@ -459,6 +458,34 @@ export const handleDownloadBase64 = (base64Data: string, index: number) => {
     // 清理
     document.body.removeChild(link);
     URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    toast.error("服务器繁忙，请稍后重试");
+    console.error("Error downloading image:", error);
+  }
+};
+
+export const handleDownloadBase64s = (base64Datas: string[]) => {
+  try {
+    base64Datas.forEach((base64Data, index) => {
+      // 将 base64 数据转换为 Blob 对象
+      const blob = base64toBlob(base64Data);
+
+      // 创建 blob 对象的 URL
+      const blobUrl = URL.createObjectURL(blob);
+
+      // 创建一个 <a> 元素并设置下载属性
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `midjourney${index}.png`;
+
+      // 将 <a> 元素添加到文档中，模拟点击下载
+      document.body.appendChild(link);
+      link.click();
+
+      // 清理
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    });
   } catch (error) {
     toast.error("服务器繁忙，请稍后重试");
     console.error("Error downloading image:", error);

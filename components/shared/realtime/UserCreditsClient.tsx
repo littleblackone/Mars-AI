@@ -27,7 +27,7 @@ export default function UserCreditsClient({ userData, email, token }: { token: s
   // }, [supabase, userDatas, setUserDatas])
 
   return (
-    <div className='flex items-center gap-2 bg-gray-100 p-2 rounded-lg'>
+    <div className='flex items-center gap-2 text-white bg-[#818CF8] p-2 py-[4px] rounded-lg'>
       <span>{infinityai_user_credits === 0 ? userData.infinityai_user_credits : infinityai_user_credits}</span>
       <Sparkles width={15} height={15}></Sparkles>
     </div>

@@ -29,7 +29,7 @@ import {
   updateUserCredits,
 } from "@/lib/utils";
 import UpscaleSvg from "@/components/shared/UpscaleSvg";
-import { DownloadIcon, X, ZoomIn } from "lucide-react";
+import { DownloadIcon, LoaderIcon, X, ZoomIn } from "lucide-react";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useUpscaleImage } from "@/lib/store/ImagesList/useUpscaleImage";
@@ -502,12 +502,12 @@ export function ImageFullView({
         className=" !h-[800px]  min-w-[1260px]"
       >
         <div className="flex w-full h-full">
-          <div className=" relative flex-1 w-full h-full flex-center bg-gray-300/25 rounded-l-md">
+          <div className=" relative flex-1 w-full h-full flex-center dark:bg-[#131d33] bg-gray-300/25 rounded-l-md">
             <Button
               type="button"
               disabled={isFetching}
               variant="outline"
-              className="absolute px-2.5 right-2 top-2 active:translate-y-[1px] rounded-md"
+              className="absolute px-2.5 dark:bg-[#364e83] right-2 top-2 active:translate-y-[1px] rounded-md"
               onClick={() => {
                 handleDownloadBase64(
                   parentimageArr[
@@ -519,7 +519,7 @@ export function ImageFullView({
                 );
               }}
             >
-              <DownloadIcon width={20} height={20} color="black"></DownloadIcon>
+              <DownloadIcon width={20} height={20} className=" dark:text-white"></DownloadIcon>
             </Button>
 
             <div
@@ -593,102 +593,102 @@ export function ImageFullView({
               ></img>
             </div>
           </div>
-          <div className=" max-w-[20rem] flex p-2 flex-col  h-full bg-gray-400/25 rounded-r-md">
-            <div className=" bg-white p-4 mt-4 rounded-md flex flex-col">
+          <div className=" max-w-[20rem] flex p-2 flex-col dark:bg-[#192746] h-full bg-gray-400/25 rounded-r-md">
+            <div className=" bg-white p-4 mt-4 dark:bg-[#263861] rounded-md flex flex-col">
               <div className="flex gap-2  items-center">
-                <p className=" text-lg">Prompt</p>
+                <p className=" text-lg dark:text-white">Prompt</p>
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-center h-8 w-8 p-0"
+                  className="flex-center h-8  w-8 dark:bg-[#364e83] p-0"
                   onClick={() => handleCopy(finalPrompt)}
                 >
-                  <CopyIcon height={12} width={12}></CopyIcon>
+                  <CopyIcon height={12} width={12} className="dark:text-white"></CopyIcon>
                 </Button>
               </div>
-              <p className=" text-sm text-gray-600 leading-5 line-clamp-4">
+              <p className=" text-sm text-gray-600 dark:text-gray-200 leading-5 line-clamp-4">
                 {tempFormValue?.prompt}
               </p>
 
               <div className="flex gap-2 flex-wrap mt-2 h-[52px] overflow-y-scroll hide-scrollbar">
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">ar</span>
-                  <span className="ml-1 text-gray-800">{customAS ? customAspectRatio : formAS}</span>
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">ar</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">{customAS ? customAspectRatio : formAS}</span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">model</span>
-                  <span className="ml-1 text-gray-800">{formModel}</span>
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">model</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">{formModel}</span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">stylize</span>
-                  <span className="ml-1 text-gray-800">
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">stylize</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">
                     {tempFormValue?.stylize}
                   </span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">seed</span>
-                  <span className="ml-1 text-gray-800">{parentSeed}</span>
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">seed</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">{parentSeed}</span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">chaos</span>
-                  <span className="ml-1 text-gray-800">
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">chaos</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">
                     {(tempFormValue?.chaos || tempFormValue?.chaos === 0) &&
                       tempFormValue?.chaos}
                   </span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">iw</span>
-                  <span className="ml-1 text-gray-800">{handledIw}</span>
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">iw</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">{handledIw}</span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">quality</span>
-                  <span className="ml-1 text-gray-800">{handledQ}</span>
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">quality</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">{handledQ}</span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">stop</span>
-                  <span className="ml-1 text-gray-800">
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">stop</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">
                     {tempFormValue?.stop}
                   </span>
                 </Badge>
 
-                <Badge className={`${useStyleRaw ? '!block' : ''} hidden bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200`}>
-                  <span className=" text-gray-500">style</span>
-                  <span className="ml-1 text-gray-800">
+                <Badge className={`${useStyleRaw ? '!block' : ''} hidden bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200`}>
+                  <span className=" text-gray-500 dark:text-gray-300">style</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">
                     {useStyleRaw ? "raw" : ""}
                   </span>
                 </Badge>
 
                 <Badge
-                  className={`bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all hidden duration-200 ${useTile && "block"
+                  className={`bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all hidden duration-200 ${useTile && "block"
                     }`}
                 >
-                  <span className=" text-gray-500">
+                  <span className=" text-gray-500 dark:text-gray-300">
                     {useTile ? "tile" : ""}
                   </span>
                 </Badge>
 
-                <Badge className=" bg-gray-300/25 cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
-                  <span className=" text-gray-500">weird</span>
-                  <span className="ml-1 text-gray-800">
+                <Badge className=" bg-gray-300/25 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] cursor-pointer hover:bg-gray-300/45 transition-all duration-200">
+                  <span className=" text-gray-500 dark:text-gray-300">weird</span>
+                  <span className="ml-1 text-gray-800 dark:text-gray-100">
                     {tempFormValue?.weird}
                   </span>
                 </Badge>
               </div>
             </div>
             <div
-              className={`flex flex-col gap-2 w-full justify-between h-fit bg-white p-4 mt-4 rounded-md `}
+              className={`flex flex-col dark:bg-[#263861] gap-2 w-full justify-between h-fit bg-white p-4 mt-4 rounded-md `}
             >
               <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="px-2 dark:bg-[#3558a3] dark:text-white hover:dark:bg-[#2e4d91]"
                 disabled={isFetching}
                 onClick={async () => {
                   debounce(() => handleUpscale2xOrSub(), 1000)()
@@ -697,7 +697,7 @@ export function ImageFullView({
               >
                 {isUpscaling ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Upscaling...&nbsp;</span>
                   </>
                 ) : (
@@ -712,7 +712,7 @@ export function ImageFullView({
               <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
                 disabled={isFetching}
                 onClick={async () => {
                   debounce(() => handleUpscale4xOrCreative(), 1000)()
@@ -720,7 +720,7 @@ export function ImageFullView({
               >
                 {isUpscaling ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Upscaling...&nbsp;</span>
                   </>
                 ) : (
@@ -734,11 +734,11 @@ export function ImageFullView({
               </Button>
             </div>
 
-            <div className="flex flex-col gap-2 w-full justify-between h-fit bg-white p-4 mt-4 rounded-md">
+            <div className="flex dark:bg-[#263861] flex-col gap-2 w-full justify-between h-fit bg-white p-4 mt-4 rounded-md">
               <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
                   debounce(() => handleZoom("1.5"), 1000)();
@@ -746,7 +746,7 @@ export function ImageFullView({
               >
                 {isZooming ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Zooming...&nbsp;</span>
                   </>
                 ) : (
@@ -759,7 +759,7 @@ export function ImageFullView({
               <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
                   debounce(() => handleZoom("2"), 1000)();
@@ -767,7 +767,7 @@ export function ImageFullView({
               >
                 {isZooming ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Zooming...&nbsp;</span>
                   </>
                 ) : (
@@ -781,7 +781,7 @@ export function ImageFullView({
               <Button
                 type="button"
                 variant="outline"
-                className={`px-2 flex`}
+                className={`px-2 flex dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white`}
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
                   debounce(() => handleZoom("1"), 1000)();
@@ -789,7 +789,7 @@ export function ImageFullView({
               >
                 {isZooming ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Zooming...&nbsp;</span>
                   </>
                 ) : (
@@ -805,12 +805,12 @@ export function ImageFullView({
                   <Button
                     type="button"
                     variant="outline"
-                    className="px-2 w-full"
+                    className="px-2 w-full dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
                     disabled={isFetching || isUpscaled}
                   >
                     {isZooming ? (
                       <>
-                        <GearIcon className="gear-icon"></GearIcon>
+                        <GearIcon className="gear-icon mr-1"></GearIcon>
                         <span className="flicker ">Zooming...&nbsp;</span>
                       </>
                     ) : (
@@ -845,12 +845,12 @@ export function ImageFullView({
             </div>
 
             <div
-              className={`grid grid-cols-2 gap-2 w-full  h-fit bg-white p-4 mt-4 rounded-md `}
+              className={`grid dark:bg-[#263861] grid-cols-2 gap-2 w-full  h-fit bg-white p-4 mt-4 rounded-md `}
             >
               <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
                   setExpandDirction("up");
@@ -858,7 +858,7 @@ export function ImageFullView({
               >
                 {isExpanding ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Expanding...&nbsp;</span>
                   </>
                 ) : (
@@ -871,7 +871,7 @@ export function ImageFullView({
               <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
                   setExpandDirction("down");
@@ -879,7 +879,7 @@ export function ImageFullView({
               >
                 {isExpanding ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Expanding...&nbsp;</span>
                   </>
                 ) : (
@@ -892,7 +892,7 @@ export function ImageFullView({
               <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
                   setExpandDirction("right");
@@ -900,7 +900,7 @@ export function ImageFullView({
               >
                 {isExpanding ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Expanding...&nbsp;</span>
                   </>
                 ) : (
@@ -913,7 +913,7 @@ export function ImageFullView({
               <Button
                 type="button"
                 variant="outline"
-                className="px-2"
+                className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
                 disabled={isFetching || isUpscaled}
                 onClick={() => {
                   setExpandDirction("left");
@@ -921,7 +921,7 @@ export function ImageFullView({
               >
                 {isExpanding ? (
                   <>
-                    <img src="/Spin.svg" alt="spin" width={20} height={20} />
+                    <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
                     <span className="flicker ">Expanding...&nbsp;</span>
                   </>
                 ) : (
@@ -938,7 +938,7 @@ export function ImageFullView({
           disabled={isFetching}
           className="absolute right-2 top-2 rounded-sm opacity-70  transition-opacity hover:opacity-100  disabled:pointer-events-none "
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5 dark:text-white" />
         </DialogClose>
       </DialogContent>
     </Dialog>
