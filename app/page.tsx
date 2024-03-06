@@ -13,14 +13,17 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import axios from "axios";
+import { useUser } from "@clerk/nextjs";
 
-const handlepay = async (payType: string) => {
-  const payRes = await axios.post('/api/pay', { payType });
+const handlepay = async (payType: string, email: string) => {
+  const payRes = await axios.post('/api/pay', { payType, email });
   console.log(payRes.data);
 }
 
 export default function Home() {
+  const { user } = useUser()
 
+  const email = user?.emailAddresses[0].emailAddress
   return (
     <div className="bg-[#111827]">
       <Header></Header>
@@ -66,7 +69,9 @@ export default function Home() {
                         <p className="text-white text-4xl font-bold">99元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
-                      <Button type="button" onClick={() => handlepay('oneMonthPay')} className=" hover:bg-gray-500 bg-gray-700">
+                      <Button type="button" onClick={() => {
+                        handlepay('oneMonthPay', email!)
+                      }} className=" hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>
                       <ul className="flex flex-col gap-4 text-sm">
@@ -117,7 +122,9 @@ export default function Home() {
                         <p className="text-white text-4xl font-bold">297元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
-                      <Button type="button" className=" hover:bg-[#8f98ee] bg-[#818CF8]">
+                      <Button onClick={() => {
+                        handlepay('threeMonthPay', email!)
+                      }} type="button" className=" hover:bg-[#8f98ee] bg-[#818CF8]">
                         购买计划
                       </Button>
                       <ul className="flex flex-col gap-4 text-sm">
@@ -168,7 +175,9 @@ export default function Home() {
                         <p className="text-white text-4xl font-bold">999元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
-                      <Button type="button" className="hover:bg-gray-500 bg-gray-700">
+                      <Button onClick={() => {
+                        handlepay('twelveMonthPay', email!)
+                      }} type="button" className="hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>
                       <ul className="flex flex-col gap-4 text-sm">
@@ -222,7 +231,9 @@ export default function Home() {
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">24元</p>
                       </div>
-                      <Button type="button" className=" hover:bg-gray-500 bg-gray-700">
+                      <Button onClick={() => {
+                        handlepay('twentyPay', email!)
+                      }} type="button" className=" hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>
                       <ul className="flex flex-col gap-4 text-sm">
@@ -268,7 +279,9 @@ export default function Home() {
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">60元</p>
                       </div>
-                      <Button type="button" className=" hover:bg-[#8f98ee] bg-[#818CF8]">
+                      <Button onClick={() => {
+                        handlepay('fiftyPay', email!)
+                      }} type="button" className=" hover:bg-[#8f98ee] bg-[#818CF8]">
                         购买计划
                       </Button>
                       <ul className="flex flex-col gap-4 text-sm">
@@ -314,7 +327,9 @@ export default function Home() {
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">120元</p>
                       </div>
-                      <Button type="button" className="hover:bg-gray-500 bg-gray-700">
+                      <Button onClick={() => {
+                        handlepay('hundredPay', email!)
+                      }} type="button" className="hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>
                       <ul className="flex flex-col gap-4 text-sm">

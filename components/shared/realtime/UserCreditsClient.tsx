@@ -1,11 +1,10 @@
 'use client'
 import { UserData } from '@/lib/interface/ImageData'
 import { useCredits } from '@/lib/store/useCredits'
-import { supabaseRealTime } from '@/lib/supabase/supabaseClient'
 import { Sparkles } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 
-export default function UserCreditsClient({ userData, email, token }: { token: string, userData: UserData, email: string }) {
+export default function UserCreditsClient({ userData, email, }: { userData: UserData, email: string }) {
 
   // const supabase = supabaseRealTime()
   // supabase.realtime.setAuth(token)//不设置这个就不能实时数据更新

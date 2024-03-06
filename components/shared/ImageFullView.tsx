@@ -101,29 +101,26 @@ export function ImageFullView({
 
   const handledIw = handleIw(tempFormValue?.imageWeight || 1);
   const handledQ = handleQuality(tempFormValue?.quality || " --q 1");
-  const { getToken } = useAuth()
   const setCredits = useCredits(state => state.setCredits)
   const handleZoom = async (zoomValue: string) => {
     try {
-      const token = await getToken({ template: 'supabase' })
-
       if (useDefaultModel) {
-        const infinityai_user_credits = await getUserCredits(email, token!)
+        const infinityai_user_credits = await getUserCredits(email)
         setCredits(infinityai_user_credits)
         if (infinityai_user_credits - 11 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(infinityai_user_credits - 11, email, token!)
+        await updateUserCredits(infinityai_user_credits - 11, email)
         setCredits(infinityai_user_credits - 11)
       } else {
-        const infinityai_user_credits = await getUserCredits(email, token!)
+        const infinityai_user_credits = await getUserCredits(email)
         setCredits(infinityai_user_credits)
         if (infinityai_user_credits - 16 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(infinityai_user_credits - 16, email, token!)
+        await updateUserCredits(infinityai_user_credits - 16, email)
         setCredits(infinityai_user_credits - 16)
       }
       setIsZooming(true);
@@ -208,23 +205,23 @@ export function ImageFullView({
 
   const handleExpand = async (expandValue: string) => {
     try {
-      const token = await getToken({ template: 'supabase' })
+
       if (useDefaultModel) {
-        const infinityai_user_credits = await getUserCredits(email, token!)
+        const infinityai_user_credits = await getUserCredits(email)
         setCredits(infinityai_user_credits)
         if (infinityai_user_credits - 11 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(infinityai_user_credits - 11, email, token!)
+        await updateUserCredits(infinityai_user_credits - 11, email)
         setCredits(infinityai_user_credits - 11)
       } else {
-        const infinityai_user_credits = await getUserCredits(email, token!)
+        const infinityai_user_credits = await getUserCredits(email)
         if (infinityai_user_credits - 16 < 0) {
           toast.warning("积分余额不足")
           return;
         }
-        await updateUserCredits(infinityai_user_credits - 16, email, token!)
+        await updateUserCredits(infinityai_user_credits - 16, email)
         setCredits(infinityai_user_credits - 16)
       }
       setIsExpanding(true);
@@ -308,14 +305,14 @@ export function ImageFullView({
   }
   const handleUpscaleImage = async () => {
     try {
-      const token = await getToken({ template: 'supabase' })
-      const infinityai_user_credits = await getUserCredits(email, token!)
+
+      const infinityai_user_credits = await getUserCredits(email)
       setCredits(infinityai_user_credits)
       if (infinityai_user_credits - 1 < 0) {
         toast.warning("积分余额不足")
         return;
       }
-      await updateUserCredits(infinityai_user_credits - 1, email, token!)
+      await updateUserCredits(infinityai_user_credits - 1, email)
       setCredits(infinityai_user_credits - 1)
 
       setIsUpscaling(true);
@@ -400,47 +397,47 @@ export function ImageFullView({
   }
 
   const handleUpscale2xOrSub = async () => {
-    const token = await getToken({ template: 'supabase' })
+
     if (model == "v 5.2") {
-      const infinityai_user_credits = await getUserCredits(email, token!)
+      const infinityai_user_credits = await getUserCredits(email)
       if (infinityai_user_credits - 15 < 0) {
         toast.warning("积分余额不足")
         return;
       }
-      await updateUserCredits(infinityai_user_credits - 15, email, token!)
+      await updateUserCredits(infinityai_user_credits - 15, email)
 
       setUpscale2x(true);
     } else {
-      const infinityai_user_credits = await getUserCredits(email, token!)
+      const infinityai_user_credits = await getUserCredits(email)
       if (infinityai_user_credits - 12 < 0) {
         toast.warning("积分余额不足")
         return;
       }
-      await updateUserCredits(infinityai_user_credits - 12, email, token!)
+      await updateUserCredits(infinityai_user_credits - 12, email)
 
       setUpscaleSub(true);
     }
   }
 
   const handleUpscale4xOrCreative = async () => {
-    const token = await getToken({ template: 'supabase' })
+
     if (model == "v 5.2") {
-      const infinityai_user_credits = await getUserCredits(email, token!)
+      const infinityai_user_credits = await getUserCredits(email)
       if (infinityai_user_credits - 30 < 0) {
         toast.warning("积分余额不足")
         return;
       }
-      await updateUserCredits(infinityai_user_credits - 30, email, token!)
+      await updateUserCredits(infinityai_user_credits - 30, email)
 
 
       setUpscale4x(true);
     } else {
-      const infinityai_user_credits = await getUserCredits(email, token!)
+      const infinityai_user_credits = await getUserCredits(email)
       if (infinityai_user_credits - 12 < 0) {
         toast.warning("积分余额不足")
         return;
       }
-      await updateUserCredits(infinityai_user_credits - 12, email, token!)
+      await updateUserCredits(infinityai_user_credits - 12, email)
 
       setUpscaleCreative(true);
     }

@@ -8,7 +8,7 @@ import { twMerge } from "tailwind-merge";
 import md5 from "md5";
 import axios from "axios";
 import { toast } from "sonner";
-import { supabaseClient, supabaseRealTime } from "./supabase/supabaseClient";
+import { supabaseCli } from "./supabase/supabaseClient";
 import { UserData } from "@/lib/interface/ImageData";
 
 export function cn(...inputs: ClassValue[]) {
@@ -523,8 +523,8 @@ export function convertTimestampToDateTime(timestamp: number) {
   return date;
 }
 
-export const getUserCredits = async (email: string, token: string) => {
-  const supabase = await supabaseClient(token!);
+export const getUserCredits = async (email: string) => {
+  const supabase = supabaseCli();
   const res = await supabase
     .from("infinityai_352020833zsx_users")
     .select()
@@ -535,9 +535,8 @@ export const getUserCredits = async (email: string, token: string) => {
 export const updateUserCredits = async (
   infinityai_user_credits: number,
   email: string,
-  token: string
 ) => {
-  const supabase = await supabaseClient(token!);
+  const supabase = supabaseCli();
   try {
     const res = await supabase
       .from("infinityai_352020833zsx_users")
@@ -554,7 +553,7 @@ export const updateUserCredits = async (
 };
 
 export const createUser = async (user: UserData) => {
-  const supabase = supabaseRealTime();
+  const supabase = supabaseCli();
 
   const createTime = convertTimestampToDateTime(user.created_at);
 

@@ -1,26 +1,84 @@
-import { wxPaySign } from "@/lib/utils";
+import { supabaseCli } from "@/lib/supabase/supabaseClient";
+import { getUserCredits, wxPaySign } from "@/lib/utils";
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const handleCallback = async (req: NextRequest) => {
+const handleCallback = async (req: Request) => {
   try {
-    // const body = await req.json();
-    // console.log(body);
+    const payFormData = await req.formData();
+    const mch_key = process.env.Merchant_KEY;
+    const code = payFormData.get("code")?.toString() || "";
+    const timestamp = payFormData.get("timestamp")?.toString() || "";
+    const mch_id = payFormData.get("mch_id")?.toString() || "";
+    const out_trade_no = payFormData.get("out_trade_no")?.toString() || "";
+    const total_fee = payFormData.get("total_fee")?.toString() || "";
+    const order_no = payFormData.get("order_no")?.toString() || "";
+    const pay_no = payFormData.get("pay_no")?.toString() || "";
 
-    // const timestamp = Math.floor(Date.now() / 1000); // 获取当前时间的秒级时间戳
-    // const tenDigitTimestamp = timestamp.toString().substring(0, 10); // 提取前 10 位数
-    // const signParams = {
-    //   mch_id: merchant_id, //商户号
-    //   out_trade_no: orderId, //商户订单号
-    //   total_fee: fee + "", //支付金额
-    //   body: product_description, //商品描述
-    //   timestamp: tenDigitTimestamp + "", //10位时间戳
-    //   notify_url: callbackUrl, //支付通知url
-    // };
+    const signData = {
+      code,
+      timestamp,
+      mch_id,
+      out_trade_no,
+      total_fee,
+      order_no,
+      pay_no,
+    };
 
-    return NextResponse.json("SUCCESS", {
-      status: 200,
-    });
+    console.log(signData);
+
+    let credits = 0;
+    const sign = payFormData.get("sign")?.toString() || "";
+
+    const email = payFormData.get("attach")?.toString();
+
+    const signCallback = wxPaySign(signData, mch_key!);
+    console.log(signCallback);
+
+    if (total_fee === "0.09") {
+      credits = 100;
+    }
+    if (total_fee === "0.29") {
+      credits = 300;
+    }
+    if (total_fee === "0.99") {
+      credits = 1200;
+    }
+    if (total_fee === "0.02") {
+      credits = 200;
+    }
+    if (total_fee === "0.06") {
+      credits = 500;
+    }
+    if (total_fee === "0.12") {
+      credits = 1000;
+    }
+
+    let isAddCredits = false;
+    if (sign === signCallback) {
+      console.log("签名验证成功！");
+
+      if (isAddCredits === false) {
+        const supabase = supabaseCli();
+        const oldCredits = await getUserCredits(email!);
+
+        console.log(oldCredits);
+
+        const res = await supabase
+          .from("infinityai_352020833zsx_users")
+          .update({
+            infinityai_user_credits: oldCredits + credits,
+          })
+          .eq("email", email)
+          .select();
+        isAddCredits = true;
+        console.log(res);
+      }
+
+      return NextResponse.json("SUCCESS", {
+        status: 200,
+      });
+    }
   } catch (error) {
     console.error(`Error: ${error}`);
 

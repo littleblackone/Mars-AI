@@ -9,7 +9,7 @@ const handlePay = async (req: NextRequest) => {
     const body = await req.json();
 
     const payType = body.payType;
-    console.log("payType", payType);
+    const email = body.email;
 
     const merchant_id = process.env.Merchant_ID || "";
     const merchant_key = process.env.Merchant_KEY || "";
@@ -53,8 +53,9 @@ const handlePay = async (req: NextRequest) => {
     const orderId = generateOrderNumber();
     console.log("orderId", orderId);
 
-    const callbackUrl = "https://infinityai.asia/api/payCallback";
-    // const callbackUrl = "https://funny-friends-accept.loca.lt/api/payCallback";
+    // const callbackUrl = "https://infinityai.asia/api/payCallback";
+    const callbackUrl =
+      "https://d205-2409-8a4c-12-5b50-1113-5e83-14ed-cf01.ngrok-free.app/api/payCallback";
     const timestamp = Math.floor(Date.now() / 1000); // 获取当前时间的秒级时间戳
     const tenDigitTimestamp = timestamp.toString().substring(0, 10); // 提取前 10 位数
     const signParams = {
@@ -68,7 +69,7 @@ const handlePay = async (req: NextRequest) => {
     const sign = wxPaySign(signParams, merchant_key);
     console.log("sign", sign);
 
-    const data = `mch_id=${merchant_id}&out_trade_no=${orderId}&total_fee=${fee}&body=${product_description}&timestamp=${tenDigitTimestamp}&notify_url=${callbackUrl}&time_expire=5m&sign=${sign}`;
+    const data = `mch_id=${merchant_id}&out_trade_no=${orderId}&attach=${email}&total_fee=${fee}&body=${product_description}&timestamp=${tenDigitTimestamp}&notify_url=${callbackUrl}&time_expire=5m&sign=${sign}`;
 
     const options = {
       headers: {
