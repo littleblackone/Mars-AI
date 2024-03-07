@@ -74,7 +74,11 @@ const handleCallback = async (req: Request) => {
         console.log(res);
       }
 
-      return NextResponse.json("SUCCESS", {
+      // return NextResponse.json("SUCCESS", {
+      //   status: 200,
+      // });
+      return NextResponse.json({
+        message: "SUCCESS",
         status: 200,
       });
     }
