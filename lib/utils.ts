@@ -546,7 +546,7 @@ export const updateUserCredits = async (
       })
       .eq("email", email)
       .select();
-    console.log(res);
+
     return res;
   } catch (error) {
     console.log(error);
@@ -567,8 +567,6 @@ export const createUser = async (user: UserData) => {
       user_id: user.user_id,
     },
   ]);
-
-  console.log(res);
 
   return res;
 };

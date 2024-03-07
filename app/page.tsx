@@ -16,16 +16,6 @@ import axios from "axios";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
-
-
-// const handlepay = async (payType: string, email: string, name: string) => {
-//   const payRes = await axios.post('/api/pay', { payType, email });
-//   const QrcodeUrl = payRes.data.data.QRcode_url
-//   console.log(QrcodeUrl);
-
-//   router.push(`/order&QrcodeUrl=${QrcodeUrl}&name=${name}`)
-// }
-
 export default function Home() {
   const { user } = useUser()
 
@@ -83,7 +73,7 @@ export default function Home() {
                         }
                         const payRes = await axios.post('/api/pay', { payType: 'oneMonthPay', email });
                         const QrcodeUrl = payRes.data.data.QRcode_url
-                        console.log(QrcodeUrl);
+
                         router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 一个月订阅`)
                       }} className=" hover:bg-gray-500 bg-gray-700">
                         购买计划
@@ -143,7 +133,7 @@ export default function Home() {
                         }
                         const payRes = await axios.post('/api/pay', { payType: 'threeMonthPay', email });
                         const QrcodeUrl = payRes.data.data.QRcode_url
-                        console.log(QrcodeUrl);
+
                         router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 三个月订阅`)
                       }} type="button" className=" hover:bg-[#8f98ee] bg-[#818CF8]">
                         购买计划
@@ -203,7 +193,7 @@ export default function Home() {
                         }
                         const payRes = await axios.post('/api/pay', { payType: 'twelveMonthPay', email });
                         const QrcodeUrl = payRes.data.data.QRcode_url
-                        console.log(QrcodeUrl);
+
                         router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 十二个月订阅`)
                       }} type="button" className="hover:bg-gray-500 bg-gray-700">
                         购买计划
@@ -266,7 +256,7 @@ export default function Home() {
                         }
                         const payRes = await axios.post('/api/pay', { payType: 'twentyPay', email });
                         const QrcodeUrl = payRes.data.data.QRcode_url
-                        console.log(QrcodeUrl);
+
                         router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 200积分`)
                       }} type="button" className=" hover:bg-gray-500 bg-gray-700">
                         购买计划
@@ -321,7 +311,7 @@ export default function Home() {
                         }
                         const payRes = await axios.post('/api/pay', { payType: 'fiftyPay', email });
                         const QrcodeUrl = payRes.data.data.QRcode_url
-                        console.log(QrcodeUrl);
+
                         router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 500积分`)
                       }} type="button" className=" hover:bg-[#8f98ee] bg-[#818CF8]">
                         购买计划
@@ -376,7 +366,7 @@ export default function Home() {
                         }
                         const payRes = await axios.post('/api/pay', { payType: 'hundredPay', email });
                         const QrcodeUrl = payRes.data.data.QRcode_url
-                        console.log(QrcodeUrl);
+
                         router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 1000积分`)
                       }} type="button" className="hover:bg-gray-500 bg-gray-700">
                         购买计划

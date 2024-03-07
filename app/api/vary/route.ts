@@ -6,7 +6,7 @@ const varyUrl = "https://api.midjourneyapi.xyz/mj/v2/variation";
 const handleVary = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    console.log(body);
+
 
     if (!body.originTaskId || !body.index) {
       console.log("missing origin task id or index");

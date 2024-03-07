@@ -14,8 +14,6 @@ const handlePay = async (req: NextRequest) => {
     const merchant_id = process.env.Merchant_ID || "";
     const merchant_key = process.env.Merchant_KEY || "";
 
-    console.log(merchant_id, merchant_key);
-
     let fee = 0.1;
     let product_description = "";
     if (payType === "oneMonthPay") {
@@ -48,10 +46,8 @@ const handlePay = async (req: NextRequest) => {
       fee = 0.12;
       product_description = "infinityai1000积分";
     }
-    console.log(fee);
 
     const orderId = generateOrderNumber();
-    console.log("orderId", orderId);
 
     const callbackUrl = "https://www.infinityai.asia/api/payCallback";
     const timestamp = Math.floor(Date.now() / 1000); // 获取当前时间的秒级时间戳
@@ -65,7 +61,6 @@ const handlePay = async (req: NextRequest) => {
       notify_url: callbackUrl, //支付通知url
     };
     const sign = wxPaySign(signParams, merchant_key);
-    console.log("sign", sign);
 
     const data = `mch_id=${merchant_id}&out_trade_no=${orderId}&attach=${email}&total_fee=${fee}&body=${product_description}&timestamp=${tenDigitTimestamp}&notify_url=${callbackUrl}&time_expire=5m&sign=${sign}`;
 
@@ -80,7 +75,6 @@ const handlePay = async (req: NextRequest) => {
     };
 
     const response = await axios(options);
-    console.log(response.data);
 
     return NextResponse.json(response.data, {
       status: response.status,

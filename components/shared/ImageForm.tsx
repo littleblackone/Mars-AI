@@ -412,7 +412,6 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleDescribe = async (imageUrl: string) => {
     try {
-
       const infinityai_user_credits = await getUserCredits(email)
       setCredits(infinityai_user_credits)
       if (infinityai_user_credits - 1 < 0) {
@@ -471,7 +470,7 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleVaryStrong = async (originTaskId: string, index: string) => {
     try {
-
+      setFetchTime(0)
       if (useDefaultModel) {
         const infinityai_user_credits = await getUserCredits(email)
         setCredits(infinityai_user_credits)
@@ -515,7 +514,6 @@ export const ImageForm = ({ email }: { email: string }) => {
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
-
             const bast64ImgArr = await cropImageIntoFour(
               taskResult.data.task_result.image_url
             );
@@ -540,7 +538,7 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleVarySubtle = async (originTaskId: string, index: string) => {
     try {
-
+      setFetchTime(0)
       if (useDefaultModel) {
         const infinityai_user_credits = await getUserCredits(email)
         setCredits(infinityai_user_credits)
@@ -655,14 +653,14 @@ export const ImageForm = ({ email }: { email: string }) => {
 
           const infinityai_user_credits = await getUserCredits(email)
           setCredits(infinityai_user_credits)
-          console.log(infinityai_user_credits);
+
           if (infinityai_user_credits - 10 < 0) {
             toast.warning("积分余额不足")
             return;
           }
           const res = await updateUserCredits(infinityai_user_credits - 10, email)
           setCredits(infinityai_user_credits - 10)
-          console.log(res);
+
 
         }
 
@@ -714,12 +712,9 @@ export const ImageForm = ({ email }: { email: string }) => {
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
-            console.log(taskResult.data.task_result.image_url);
-
             const bast64ImgArr = await cropImageIntoFour(
               taskResult.data.task_result.image_url
             );
-
             const prompt = taskResult.data.meta.task_param.prompt;
             setOriginPrompts(prompt);
             setImageArr(bast64ImgArr);
@@ -765,6 +760,10 @@ export const ImageForm = ({ email }: { email: string }) => {
     },
   });
 
+  useEffect(() => {
+    console.log(fetchTime);
+
+  }, [fetchTime])
 
   useEffect(() => {
     if (model === " --v 5.2") {
@@ -811,11 +810,6 @@ export const ImageForm = ({ email }: { email: string }) => {
     }
   }, [useTurbo]);
 
-  useEffect(() => {
-    console.log(fetchTime);
-
-  }, [fetchTime])
-
 
   const onSubmit = async (values: z.infer<typeof ImageValidation>) => {
     if (customASW / customASH < 0.5 || customASW / customASH > 2) {
@@ -825,7 +819,6 @@ export const ImageForm = ({ email }: { email: string }) => {
     setImageArr([]);
     setFetchTime(0);
     setTempFormValue(values);
-    console.log(values);
 
     const finalPrompt = await generateFinalPrompt(
       values,
@@ -837,7 +830,6 @@ export const ImageForm = ({ email }: { email: string }) => {
       customASH,
       stylesList
     );
-    console.log(finalPrompt);
     setFinalPrompt(finalPrompt);
     debounce(() => handleGenerateImage(finalPrompt ?? "a cute cat"), 1000)();
   };
@@ -859,7 +851,7 @@ export const ImageForm = ({ email }: { email: string }) => {
               className=" w-fit active:translate-y-[1px] h-[30px] bg-gray-100 dark:bg-[#1f345e] dark:hover:bg-[#27427e] dark:text-white rounded-md hover:bg-gray-200 transition-all duration-200 p-2 flex-center"
             >
               <ArrowLeftIcon width={20} height={20}></ArrowLeftIcon>
-              <span>返回</span>
+              <span>返回{fetchTime}</span>
             </Link>
 
             <div className="ml-auto gap-2 items-center flex">

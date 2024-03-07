@@ -128,10 +128,6 @@ export default function VaryRegion({
     canvasWidth,
   ]);
 
-  useEffect(() => {
-    console.log(prompt);
-
-  }, [prompt])
 
   const setCredits = useCredits(state => state.setCredits)
   const handleInpaint = async () => {

@@ -6,7 +6,6 @@ export default authMiddleware({
   // Routes that can always be accessed, and have
   // no authentication information
   ignoredRoutes: ["/", "/api/payCallback"],
-  debug: true,
 });
 
 export const config = {

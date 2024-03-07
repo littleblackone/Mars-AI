@@ -89,7 +89,7 @@ export default function HistoryImage() {
                   {originImageList.map((imgUrl, index) => {
                     return (
                       imgUrl !== "" && (
-                        <div className=" w-[140px] h-[140px]">
+                        <div className=" w-[140px] h-[140px]" key={index}>
                           <img
                             src={imgUrl}
                             key={imgUrl}
@@ -126,7 +126,7 @@ export default function HistoryImage() {
                   {varyImageList.map((imgUrl, index) => {
                     return (
                       imgUrl !== "" && (
-                        <div className=" w-[140px] h-[140px]">
+                        <div className=" w-[140px] h-[140px]" key={index}>
                           <img
                             src={imgUrl}
                             onClick={() => {
@@ -163,7 +163,7 @@ export default function HistoryImage() {
                   {upscaleImageList.map((imgUrl, index) => {
                     return (
                       imgUrl !== "" && (
-                        <div className=" w-[140px] h-[140px]">
+                        <div className=" w-[140px] h-[140px]" key={index}>
                           <img
                             src={imgUrl}
                             onClick={() => {
@@ -200,7 +200,7 @@ export default function HistoryImage() {
                   {zoomImageList.map((imgUrl, index) => {
                     return (
                       imgUrl !== "" && (
-                        <div className=" w-[140px] h-[140px]">
+                        <div className=" w-[140px] h-[140px]" key={index}>
                           <img
                             src={imgUrl}
                             onClick={() => {
@@ -237,7 +237,7 @@ export default function HistoryImage() {
                   {expandImageList.map((imgUrl, index) => {
                     return (
                       imgUrl !== "" && (
-                        <div className=" w-[140px] h-[140px]">
+                        <div className=" w-[140px] h-[140px]" key={index}>
                           <img
                             src={imgUrl}
                             key={imgUrl}
@@ -274,7 +274,7 @@ export default function HistoryImage() {
                   {blendImageList.map((imgUrl, index) => {
                     return (
                       imgUrl !== "" && (
-                        <div className=" w-[140px] h-[140px]">
+                        <div className=" w-[140px] h-[140px]" key={index}>
                           <img
                             src={imgUrl}
                             key={imgUrl}
@@ -311,7 +311,7 @@ export default function HistoryImage() {
                   {inpaintImageList.map((imgUrl, index) => {
                     return (
                       imgUrl !== "" && (
-                        <div className=" w-[140px] h-[140px]">
+                        <div className=" w-[140px] h-[140px]" key={index}>
                           <img
                             src={imgUrl}
                             key={imgUrl}
