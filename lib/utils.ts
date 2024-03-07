@@ -532,6 +532,7 @@ export const getUserCredits = async (email: string) => {
   const realData: UserData = res.data && res.data[0];
   return realData.infinityai_user_credits;
 };
+
 export const updateUserCredits = async (
   infinityai_user_credits: number,
   email: string,

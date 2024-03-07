@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
 import { supabaseCli } from "@/lib/supabase/supabaseClient";
-import { getUserCredits, wxPaySign } from "@/lib/utils";
+import {
+  convertTimestampToDateTime,
+  getUserCredits,
+  wxPaySign,
+} from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 const handleCallback = async (req: Request) => {
@@ -27,24 +30,39 @@ const handleCallback = async (req: Request) => {
 
     let credits = 0;
     let subscriptionType = "";
+
     const sign = payFormData.get("sign")?.toString() || "";
 
     const email = payFormData.get("attach")?.toString();
 
     const signCallback = wxPaySign(signData, mch_key!);
-    console.log(signCallback);
+
+    let subscriptionExpiry;
+
+    // 假设现在的时间戳为 currentTimestamp
+    const currentTimestamp = Date.now();
 
     if (total_fee === "0.09") {
       credits = 1000;
       subscriptionType = "month";
+      // 假设一个月是30天
+      const expiryTimestamp = currentTimestamp + 30 * 24 * 60 * 60 * 1000;
+      subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
+
     if (total_fee === "0.29") {
       credits = 3000;
       subscriptionType = "month";
+      const expiryTimestamp = currentTimestamp + 30 * 3 * 24 * 60 * 60 * 1000;
+      subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
+
     if (total_fee === "0.99") {
       credits = 12000;
       subscriptionType = "year";
+      // 假设一年是365天
+      const expiryTimestamp = currentTimestamp + 365 * 24 * 60 * 60 * 1000;
+      subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
     if (total_fee === "0.02") {
       credits = 200;
@@ -59,14 +77,18 @@ const handleCallback = async (req: Request) => {
       subscriptionType = "peruse";
     }
 
+    const subscriptionStartAt = convertTimestampToDateTime(Date.now());
+
     if (sign === signCallback) {
       const supabase = supabaseCli();
       const oldCredits = await getUserCredits(email!);
-
       await supabase
         .from("infinityai_352020833zsx_users")
         .update({
           infinityai_user_credits: oldCredits + credits,
+          subscription_type: subscriptionType,
+          subscription_startAt: subscriptionStartAt,
+          subscription_expiry: subscriptionExpiry,
         })
         .eq("email", email)
         .select();
