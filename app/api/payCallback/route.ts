@@ -76,8 +76,11 @@ const handleCallback = async (req: Request) => {
       }
 
       // prettier-ignore
-      return NextResponse.json('SUCCESS', {
+      return new Response('SUCCESS', {
         status: 200,
+        headers: {
+          "Content-Type": "text/plain",
+        },
       });
       // return NextResponse.json({
       //   message: "SUCCESS",
