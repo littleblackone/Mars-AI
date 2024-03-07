@@ -14,15 +14,22 @@ import {
 } from "@/components/ui/accordion"
 import axios from "axios";
 import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
-const handlepay = async (payType: string, email: string) => {
-  const payRes = await axios.post('/api/pay', { payType, email });
-  console.log(payRes.data);
-}
+
+
+// const handlepay = async (payType: string, email: string, name: string) => {
+//   const payRes = await axios.post('/api/pay', { payType, email });
+//   const QrcodeUrl = payRes.data.data.QRcode_url
+//   console.log(QrcodeUrl);
+
+//   router.push(`/order&QrcodeUrl=${QrcodeUrl}&name=${name}`)
+// }
 
 export default function Home() {
   const { user } = useUser()
 
+  const router = useRouter()
   const email = user?.emailAddresses[0].emailAddress
   return (
     <div className="bg-[#111827]">
@@ -69,8 +76,15 @@ export default function Home() {
                         <p className="text-white text-4xl font-bold">99元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
-                      <Button type="button" onClick={() => {
-                        handlepay('oneMonthPay', email!)
+                      <Button type="button" onClick={async () => {
+                        if (!user) {
+                          router.push('/sign-in')
+                          return
+                        }
+                        const payRes = await axios.post('/api/pay', { payType: 'oneMonthPay', email });
+                        const QrcodeUrl = payRes.data.data.QRcode_url
+                        console.log(QrcodeUrl);
+                        router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 一个月订阅`)
                       }} className=" hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>
@@ -122,8 +136,15 @@ export default function Home() {
                         <p className="text-white text-4xl font-bold">297元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
-                      <Button onClick={() => {
-                        handlepay('threeMonthPay', email!)
+                      <Button onClick={async () => {
+                        if (!user) {
+                          router.push('/sign-in')
+                          return
+                        }
+                        const payRes = await axios.post('/api/pay', { payType: 'oneMonthPay', email });
+                        const QrcodeUrl = payRes.data.data.QRcode_url
+                        console.log(QrcodeUrl);
+                        router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 三个月订阅`)
                       }} type="button" className=" hover:bg-[#8f98ee] bg-[#818CF8]">
                         购买计划
                       </Button>
@@ -175,8 +196,15 @@ export default function Home() {
                         <p className="text-white text-4xl font-bold">999元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
-                      <Button onClick={() => {
-                        handlepay('twelveMonthPay', email!)
+                      <Button onClick={async () => {
+                        if (!user) {
+                          router.push('/sign-in')
+                          return
+                        }
+                        const payRes = await axios.post('/api/pay', { payType: 'oneMonthPay', email });
+                        const QrcodeUrl = payRes.data.data.QRcode_url
+                        console.log(QrcodeUrl);
+                        router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 十二个月订阅`)
                       }} type="button" className="hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>
@@ -231,8 +259,15 @@ export default function Home() {
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">24元</p>
                       </div>
-                      <Button onClick={() => {
-                        handlepay('twentyPay', email!)
+                      <Button onClick={async () => {
+                        if (!user) {
+                          router.push('/sign-in')
+                          return
+                        }
+                        const payRes = await axios.post('/api/pay', { payType: 'oneMonthPay', email });
+                        const QrcodeUrl = payRes.data.data.QRcode_url
+                        console.log(QrcodeUrl);
+                        router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 200积分`)
                       }} type="button" className=" hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>
@@ -279,8 +314,15 @@ export default function Home() {
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">60元</p>
                       </div>
-                      <Button onClick={() => {
-                        handlepay('fiftyPay', email!)
+                      <Button onClick={async () => {
+                        if (!user) {
+                          router.push('/sign-in')
+                          return
+                        }
+                        const payRes = await axios.post('/api/pay', { payType: 'oneMonthPay', email });
+                        const QrcodeUrl = payRes.data.data.QRcode_url
+                        console.log(QrcodeUrl);
+                        router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 500积分`)
                       }} type="button" className=" hover:bg-[#8f98ee] bg-[#818CF8]">
                         购买计划
                       </Button>
@@ -327,8 +369,15 @@ export default function Home() {
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">120元</p>
                       </div>
-                      <Button onClick={() => {
-                        handlepay('hundredPay', email!)
+                      <Button onClick={async () => {
+                        if (!user) {
+                          router.push('/sign-in')
+                          return
+                        }
+                        const payRes = await axios.post('/api/pay', { payType: 'oneMonthPay', email });
+                        const QrcodeUrl = payRes.data.data.QRcode_url
+                        console.log(QrcodeUrl);
+                        router.push(`/order?QrcodeUrl=${QrcodeUrl}&name=infinity AI 1000积分`)
                       }} type="button" className="hover:bg-gray-500 bg-gray-700">
                         购买计划
                       </Button>

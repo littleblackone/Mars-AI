@@ -1,7 +1,7 @@
-/* prettier-ignore-file */
 import { NextResponse } from "next/server";
 import { supabaseCli } from "@/lib/supabase/supabaseClient";
 import { getUserCredits, wxPaySign } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
 const handleCallback = async (req: Request) => {
   try {
@@ -24,8 +24,6 @@ const handleCallback = async (req: Request) => {
       order_no,
       pay_no,
     };
-
-    console.log(signData);
 
     let credits = 0;
     const sign = payFormData.get("sign")?.toString() || "";
@@ -54,43 +52,36 @@ const handleCallback = async (req: Request) => {
       credits = 1000;
     }
 
-    let isAddCredits = false;
     if (sign === signCallback) {
-      console.log("签名验证成功！");
+      const supabase = supabaseCli();
+      const oldCredits = await getUserCredits(email!);
 
-      if (isAddCredits === false) {
-        const supabase = supabaseCli();
-        const oldCredits = await getUserCredits(email!);
+      await supabase
+        .from("infinityai_352020833zsx_users")
+        .update({
+          infinityai_user_credits: oldCredits + credits,
+        })
+        .eq("email", email)
+        .select();
 
-        console.log(oldCredits);
-
-        const res = await supabase
-          .from("infinityai_352020833zsx_users")
-          .update({
-            infinityai_user_credits: oldCredits + credits,
-          })
-          .eq("email", email)
-          .select();
-        isAddCredits = true;
-        console.log(res);
-      }
-
-      // prettier-ignore
-      return new Response('SUCCESS', {
+      return new Response("SUCCESS", {
         status: 200,
         headers: {
           "Content-Type": "text/plain",
         },
       });
-      // return NextResponse.json({
-      //   message: "SUCCESS",
-      //   status: 200,
-      // });
     }
   } catch (error) {
     console.error(`Error: ${error}`);
 
-    return NextResponse.json("FAIL", { status: 500 });
+    return new Response("FAIL", {
+      status: 500,
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+  } finally {
+    redirect("/create");
   }
 };
 

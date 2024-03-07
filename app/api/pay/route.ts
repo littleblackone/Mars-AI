@@ -53,7 +53,6 @@ const handlePay = async (req: NextRequest) => {
     const orderId = generateOrderNumber();
     console.log("orderId", orderId);
 
-    // const callbackUrl = "https://infinityai.asia/api/payCallback";
     const callbackUrl = "https://www.infinityai.asia/api/payCallback";
     const timestamp = Math.floor(Date.now() / 1000); // 获取当前时间的秒级时间戳
     const tenDigitTimestamp = timestamp.toString().substring(0, 10); // 提取前 10 位数
