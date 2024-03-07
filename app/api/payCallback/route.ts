@@ -1,11 +1,10 @@
+import { UserData } from "@/lib/interface/ImageData";
 import { supabaseCli } from "@/lib/supabase/supabaseClient";
 import {
   convertTimestampToDateTime,
   getUserCredits,
   wxPaySign,
 } from "@/lib/utils";
-import { redirect } from "next/navigation";
-import { NextResponse } from "next/server";
 
 const handleCallback = async (req: Request) => {
   try {
@@ -83,16 +82,30 @@ const handleCallback = async (req: Request) => {
     if (sign === signCallback) {
       const supabase = supabaseCli();
       const oldCredits = await getUserCredits(email!);
-      await supabase
+
+      const res = await supabase
         .from("infinityai_352020833zsx_users")
-        .update({
-          infinityai_user_credits: oldCredits + credits,
-          subscription_type: subscriptionType,
-          subscription_startAt: subscriptionStartAt,
-          subscription_expiry: subscriptionExpiry,
-        })
-        .eq("email", email)
-        .select();
+        .select()
+        .eq("email", email);
+
+      const realData: UserData = res.data && res.data[0];
+      const userOrderID = realData.user_order_id;
+
+      if (
+        userOrderID === "" ||
+        (userOrderID !== "" && userOrderID !== out_trade_no)
+      ) {
+        await supabase
+          .from("infinityai_352020833zsx_users")
+          .update({
+            infinityai_user_credits: oldCredits + credits,
+            subscription_type: subscriptionType,
+            subscription_startAt: subscriptionStartAt,
+            subscription_expiry: subscriptionExpiry,
+          })
+          .eq("email", email)
+          .select();
+      }
 
       return new Response("SUCCESS", {
         status: 200,

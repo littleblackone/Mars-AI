@@ -142,4 +142,5 @@ export interface UserData {
   subscription_startAt: number;
   infinityai_user_credits: number;
   user_id: string;
+  user_order_id: string;
 }

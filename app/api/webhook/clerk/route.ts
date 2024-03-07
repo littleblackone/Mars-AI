@@ -64,8 +64,9 @@ export async function POST(req: Request) {
       subscription_startAt: 123456,
       subscription_type: "free",
       infinityai_user_credits: 50,
+      user_order_id: "",
     };
-   
+
     const res = await createUser(user);
 
     return NextResponse.json({ message: "OK" });
