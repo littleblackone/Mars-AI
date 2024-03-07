@@ -102,6 +102,7 @@ const handleCallback = async (req: Request) => {
             subscription_type: subscriptionType,
             subscription_startAt: subscriptionStartAt,
             subscription_expiry: subscriptionExpiry,
+            user_order_id: out_trade_no,
           })
           .eq("email", email)
           .select();
