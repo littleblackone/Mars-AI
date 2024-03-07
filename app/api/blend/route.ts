@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const blendUrl = "https://api.midjourneyapi.xyz/mj/v2/blend";
+const blendUrl = "https://api.goapi.ai/mj/v2/blend";
 
 const handleBlend = async (req: NextRequest) => {
   try {

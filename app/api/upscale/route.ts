@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/upscale";
+const imagineUrl = "https://api.goapi.ai/mj/v2/upscale";
 
 const handleUpscale = async (req: NextRequest) => {
   try {

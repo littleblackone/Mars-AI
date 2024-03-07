@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const panUrl = "https://api.midjourneyapi.xyz/mj/v2/pan";
+const panUrl = "https://api.goapi.ai/mj/v2/pan";
 
 const handlePan = async (req: NextRequest) => {
   try {

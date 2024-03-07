@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const fetchUrl = "https://api.midjourneyapi.xyz/mj/v2/fetch";
+const fetchUrl = "https://api.goapi.ai/mj/v2/fetch";
 const handleFetch = async (req: NextRequest) => {
   try {
     const body = await req.json();

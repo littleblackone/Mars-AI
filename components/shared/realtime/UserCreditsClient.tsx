@@ -11,7 +11,7 @@ export default function UserCreditsClient({ userData, email, }: { userData: User
 
   const infinityai_user_credits = useCredits(state => state.infinityai_user_credits)
   const router = useRouter()
-  const expiryDate = userData.subscription_expiry + ''
+  const expiryDate = userData.subscription_expiry + '' || ''
   return (
     <HoverCard openDelay={300}>
       <HoverCardTrigger>
@@ -21,7 +21,7 @@ export default function UserCreditsClient({ userData, email, }: { userData: User
         </div>
       </HoverCardTrigger>
       <HoverCardContent className='text-white flex-center flex-col gap-2 w-fit'>
-        到期时间:{expiryDate.split('T')[0]}
+        到期时间:{expiryDate.split('T')[0] || ''}
         <Button onClick={() => router.push('/#price')} className='flex gap-2 items-center w-full dark:text-white bg-[#818CF8] dark:bg-[#818CF8] dark:hover:bg-[#5b65c5] hover:bg-[#5b65c5]' type='button'>
           <CrownIcon width={25} height={25} color="white"></CrownIcon>
           <span className=' text-lg font-medium'>升级</span>

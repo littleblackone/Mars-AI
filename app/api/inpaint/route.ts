@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const inpaintUrl = "https://api.midjourneyapi.xyz/mj/v2/inpaint";
+const inpaintUrl = "https://api.goapi.ai/mj/v2/inpaint";
 
 const handleInPaint = async (req: NextRequest) => {
   try {

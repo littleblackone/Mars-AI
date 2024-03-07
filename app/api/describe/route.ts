@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const describeUrl = "https://api.midjourneyapi.xyz/mj/v2/describe";
+const describeUrl = "https://api.goapi.ai/mj/v2/describe";
 
 const handleDescribe = async (req: NextRequest) => {
   try {

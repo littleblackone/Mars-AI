@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const seedUrl = "https://api.midjourneyapi.xyz/mj/v2/seed";
+const seedUrl = "https://api.goapi.ai/mj/v2/seed";
 
 const handleGetSeed = async (req: NextRequest) => {
   try {

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const imagineUrl = "https://api.midjourneyapi.xyz/mj/v2/imagine";
+const imagineUrl = "https://api.goapi.ai/mj/v2/imagine";
 
 const handleImagine = async (req: NextRequest) => {
   try {

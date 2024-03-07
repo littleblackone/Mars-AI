@@ -1,12 +1,11 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-const varyUrl = "https://api.midjourneyapi.xyz/mj/v2/variation";
+const varyUrl = "https://api.goapi.ai/mj/v2/variation";
 
 const handleVary = async (req: NextRequest) => {
   try {
     const body = await req.json();
-
 
     if (!body.originTaskId || !body.index) {
       console.log("missing origin task id or index");
