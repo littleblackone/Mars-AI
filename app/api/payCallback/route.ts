@@ -41,7 +41,7 @@ const handleCallback = async (req: Request) => {
 
     // 假设现在的时间戳为 currentTimestamp
     const currentTimestamp = Date.now();
-
+    //circle time
     if (total_fee === "0.09") {
       credits = 1000;
       subscriptionType = "month";
@@ -64,17 +64,25 @@ const handleCallback = async (req: Request) => {
       const expiryTimestamp = currentTimestamp + 365 * 24 * 60 * 60 * 1000;
       subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
+
+    //forever long
     if (total_fee === "0.02") {
       credits = 200;
       subscriptionType = "peruse";
+      const expiryTimestamp = currentTimestamp + 365 * 10 * 24 * 60 * 60 * 1000;
+      subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
     if (total_fee === "0.06") {
       credits = 500;
       subscriptionType = "peruse";
+      const expiryTimestamp = currentTimestamp + 365 * 10 * 24 * 60 * 60 * 1000;
+      subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
     if (total_fee === "0.12") {
       credits = 1000;
       subscriptionType = "peruse";
+      const expiryTimestamp = currentTimestamp + 365 * 10 * 24 * 60 * 60 * 1000;
+      subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
 
     const subscriptionStartAt = convertTimestampToDateTime(Date.now());

@@ -761,11 +761,6 @@ export const ImageForm = ({ email }: { email: string }) => {
   });
 
   useEffect(() => {
-    console.log(fetchTime);
-
-  }, [fetchTime])
-
-  useEffect(() => {
     if (model === " --v 5.2") {
       setUseDefaultModel(true);
     } else {

@@ -57,8 +57,7 @@ export default function HistoryImage() {
         .select()
         .eq("email", email);
       const realData: UserData = res.data && res.data[0];
-      console.log(realData.subscription_type);
-
+    
       if (realData?.subscription_type === "month" || realData?.subscription_type === "year") {
         setCanUseAllDownload(true)
       } else {
