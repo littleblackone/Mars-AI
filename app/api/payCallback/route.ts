@@ -5,9 +5,17 @@ import {
   wxPaySign,
 } from "@/lib/utils";
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 
 const handleCallback = async (req: Request) => {
   try {
+    return new Response("SUCCESS", {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+
     const payFormData = await req.formData();
     const mch_key = process.env.Merchant_KEY;
     const code = payFormData.get("code")?.toString() || "";
