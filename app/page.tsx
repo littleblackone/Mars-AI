@@ -463,6 +463,18 @@ export default function Home() {
                   历史图片区域包括你生成的每一张图片, 都可以免费下载, 由于我们会手动把图片转化为base64数据, 所以下载没有延迟, 实现光速下载
                 </AccordionContent>
               </AccordionItem>
+              <AccordionItem value="item-6">
+                <AccordionTrigger className=" text-xl text-gray-200">国内可以使用吗?</AccordionTrigger>
+                <AccordionContent className="text-gray-300 text-base">
+                  目前国内只能访问网站,画图需要使用科学上网,网越快越稳定出图越快,后续应该会使用服务器代理让国内用户也能快速出图
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-7">
+                <AccordionTrigger className=" text-xl text-gray-200">生成时间太久怎么办?</AccordionTrigger>
+                <AccordionContent className="text-gray-300 text-base">
+                  请使用更快更稳定的网络,如果不想等待想画下一张图,直接先点击返回按钮回到主页,再进入画图页面就可以重新画图,只要你不刷新页面,之前的任务会一直存在直到出现在历史图片区域
+                </AccordionContent>
+              </AccordionItem>
             </Accordion>
           </div>
         </main>
