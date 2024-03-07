@@ -851,7 +851,7 @@ export const ImageForm = ({ email }: { email: string }) => {
               className=" w-fit active:translate-y-[1px] h-[30px] bg-gray-100 dark:bg-[#1f345e] dark:hover:bg-[#27427e] dark:text-white rounded-md hover:bg-gray-200 transition-all duration-200 p-2 flex-center"
             >
               <ArrowLeftIcon width={20} height={20}></ArrowLeftIcon>
-              <span>返回{fetchTime}</span>
+              <span>返回</span>
             </Link>
 
             <div className="ml-auto gap-2 items-center flex">

@@ -22,25 +22,52 @@ import {
 import { CrownIcon, HistoryIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { handleDownloadBase64s } from "@/lib/utils";
+import { useUser } from "@clerk/nextjs";
+import { supabaseCli } from "@/lib/supabase/supabaseClient";
+import { UserData } from "@/lib/interface/ImageData";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card";
 
 export default function HistoryImage() {
   const originImageList = useOriginImage((state) => state.images);
-  // const originImageList = ['https://cdn.midjourney.com/b944e6f2-471e-4a2e-84f1-f68288849407/0_0.webp', 'https://cdn.midjourney.com/fbb38c35-9cc2-44bb-8698-d49e194c0b0d/0_2.webp']
+
   const varyImageList = useVaryImage((state) => state.images);
-  // const varyImageList = ['https://cdn.midjourney.com/20c41fcd-880c-48e6-a118-5dd6489567a4/0_1.webp', 'https://cdn.midjourney.com/5f5de889-e361-4774-bf8c-665ce4ce001e/0_2.webp']
+
   const upscaleImageList = useUpscaleImage((state) => state.images);
-  // const upscaleImageList = ['https://cdn.midjourney.com/aad5febf-145b-40f1-a640-6bbd8f693357/0_0.webp', 'https://cdn.midjourney.com/44339176-fc90-41c9-804c-2d941bf498d4/0_0.webp']
 
   const zoomImageList = useZoomImages((state) => state.images);
-  // const zoomImageList = ['https://cdn.midjourney.com/f7edb641-bc1b-44ba-93a3-1c6c0430b64c/0_0.webp', 'https://cdn.midjourney.com/57be4dbd-deae-47f5-a193-2b7018f06f1a/0_1.webp']
+
   const expandImageList = useExpandImages((state) => state.images);
-  // const expandImageList = ['https://cdn.midjourney.com/aad5febf-145b-40f1-a640-6bbd8f693357/0_0.webp', 'https://cdn.midjourney.com/44339176-fc90-41c9-804c-2d941bf498d4/0_0.webp']
+
   const blendImageList = useBlendImages((state) => state.images);
-  // const blendImageList = ['https://cdn.midjourney.com/b944e6f2-471e-4a2e-84f1-f68288849407/0_0.webp', 'https://cdn.midjourney.com/fbb38c35-9cc2-44bb-8698-d49e194c0b0d/0_2.webp']
+
   const inpaintImageList = useInpaintImages((state) => state.images);
-  // const inpaintImageList = ['https://cdn.midjourney.com/aad5febf-145b-40f1-a640-6bbd8f693357/0_0.webp', 'https://cdn.midjourney.com/44339176-fc90-41c9-804c-2d941bf498d4/0_0.webp']
+
   const allImages = [...originImageList, ...varyImageList, ...expandImageList, ...zoomImageList, ...upscaleImageList, ...blendImageList, ...inpaintImageList]
   const [allImg, setAllImg] = useState(allImages)
+  const [canUseAllDownload, setCanUseAllDownload] = useState(false)
+
+  const { user } = useUser()
+  const email = user?.emailAddresses[0].emailAddress
+
+  useEffect(() => {
+    const getUserSubsType = async () => {
+      const supabase = supabaseCli();
+      const res = await supabase
+        .from("infinityai_352020833zsx_users")
+        .select()
+        .eq("email", email);
+      const realData: UserData = res.data && res.data[0];
+      console.log(realData.subscription_type);
+
+      if (realData?.subscription_type === "month" || realData?.subscription_type === "year") {
+        setCanUseAllDownload(true)
+      } else {
+        setCanUseAllDownload(false)
+      }
+    };
+    getUserSubsType()
+  }, [])
+
 
   useEffect(() => {
     setAllImg([...originImageList, ...varyImageList, ...expandImageList, ...zoomImageList, ...upscaleImageList, ...blendImageList, ...inpaintImageList])
@@ -52,6 +79,7 @@ export default function HistoryImage() {
   const setImgUrl = useFullViewImage((state) => state.setImgUrl);
   const setImgListName = useFullViewImage((state) => state.setImgListName);
 
+
   return (
     <>
       <div className=" relative">
@@ -62,12 +90,22 @@ export default function HistoryImage() {
               历史图片
             </span>
           </div>
-          <Button type="button" variant='outline' onClick={() => {
-            handleDownloadBase64s(allImg)
-          }} className="flex dark:text-white dark:bg-[#2e426b] gap-2">
-            下载全部
-            <CrownIcon width={20} height={20} color="#818CF8"></CrownIcon>
-          </Button>
+          <HoverCard openDelay={300}>
+            <HoverCardTrigger>
+              <Button type="button" disabled={canUseAllDownload === false || allImg.length === 0} variant='outline' onClick={() => {
+                handleDownloadBase64s(allImg)
+              }} className="flex dark:text-white dark:bg-[#2e426b] gap-2 cursor-pointer">
+                下载全部{canUseAllDownload}
+                <CrownIcon width={20} height={20} color="#818CF8"></CrownIcon>
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className=" w-fit">
+              <p className="text-white text-sm">
+                仅提供給按周期订阅用户使用
+              </p>
+            </HoverCardContent>
+          </HoverCard>
+
         </div>
         <Accordion
           type="multiple"
