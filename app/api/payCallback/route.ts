@@ -1,6 +1,7 @@
+/* prettier-ignore-file */
+import { NextResponse } from "next/server";
 import { supabaseCli } from "@/lib/supabase/supabaseClient";
 import { getUserCredits, wxPaySign } from "@/lib/utils";
-import { NextResponse } from "next/server";
 
 const handleCallback = async (req: Request) => {
   try {
@@ -74,13 +75,14 @@ const handleCallback = async (req: Request) => {
         console.log(res);
       }
 
-      // return NextResponse.json("SUCCESS", {
-      //   status: 200,
-      // });
-      return NextResponse.json({
-        message: "SUCCESS",
+      // prettier-ignore
+      return NextResponse.json('SUCCESS', {
         status: 200,
       });
+      // return NextResponse.json({
+      //   message: "SUCCESS",
+      //   status: 200,
+      // });
     }
   } catch (error) {
     console.error(`Error: ${error}`);
