@@ -1,7 +1,6 @@
 import { supabaseCli } from "@/lib/supabase/supabaseClient";
 import { getUserCredits, wxPaySign } from "@/lib/utils";
-import axios from "axios";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 const handleCallback = async (req: Request) => {
   try {
