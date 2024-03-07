@@ -26,6 +26,7 @@ const handleCallback = async (req: Request) => {
     };
 
     let credits = 0;
+    let subscriptionType = "";
     const sign = payFormData.get("sign")?.toString() || "";
 
     const email = payFormData.get("attach")?.toString();
@@ -34,22 +35,28 @@ const handleCallback = async (req: Request) => {
     console.log(signCallback);
 
     if (total_fee === "0.09") {
-      credits = 100;
+      credits = 1000;
+      subscriptionType = "month";
     }
     if (total_fee === "0.29") {
-      credits = 300;
+      credits = 3000;
+      subscriptionType = "month";
     }
     if (total_fee === "0.99") {
-      credits = 1200;
+      credits = 12000;
+      subscriptionType = "year";
     }
     if (total_fee === "0.02") {
       credits = 200;
+      subscriptionType = "peruse";
     }
     if (total_fee === "0.06") {
       credits = 500;
+      subscriptionType = "peruse";
     }
     if (total_fee === "0.12") {
       credits = 1000;
+      subscriptionType = "peruse";
     }
 
     if (sign === signCallback) {
