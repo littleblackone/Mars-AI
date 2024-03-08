@@ -109,6 +109,7 @@ export async function generateFinalPrompt(
 
   let handledPrompt = cleanInput(prompt);
 
+  //remove prompt check because it is not stable
   // const response = await axios.post("https://api.goapi.ai/mj/v2/validation", {
   //   prompt: handledPrompt,
   // });
