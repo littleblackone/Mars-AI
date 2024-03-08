@@ -17,33 +17,33 @@ const handlePay = async (req: NextRequest) => {
     let fee = 0.1;
     let product_description = "";
     if (payType === "oneMonthPay") {
-      // fee = 99;
-      fee = 0.09;
+      fee = 99;
+
       product_description = "infinityai一个月订阅";
     }
     if (payType === "threeMonthPay") {
-      // fee = 297;
-      fee = 0.29;
+      fee = 297;
+
       product_description = "infinityai三个月订阅";
     }
     if (payType === "twelveMonthPay") {
-      // fee = 999;
-      fee = 0.99;
+      fee = 999;
+
       product_description = "infinityai十二个月订阅";
     }
     if (payType === "twentyPay") {
-      // fee = 24;
-      fee = 0.02;
+      fee = 24;
+
       product_description = "infinityai200积分";
     }
     if (payType === "fiftyPay") {
-      // fee = 60;
-      fee = 0.06;
+      fee = 60;
+
       product_description = "infinityai500积分";
     }
     if (payType === "hundredPay") {
-      // fee = 120;
-      fee = 0.12;
+      fee = 120;
+
       product_description = "infinityai1000积分";
     }
 
