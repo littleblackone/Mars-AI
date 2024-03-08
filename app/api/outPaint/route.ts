@@ -25,6 +25,7 @@ const handleOutPaint = async (req: NextRequest) => {
         origin_task_id: body.originTaskId,
         zoom_ratio: body.zoomRatio,
         notify_progress: true,
+        skip_prompt_check: true,
       },
       url: outPaintUrl,
       method: "post",

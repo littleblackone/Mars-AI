@@ -826,6 +826,8 @@ export const ImageForm = ({ email }: { email: string }) => {
       stylesList
     );
     setFinalPrompt(finalPrompt);
+    console.log(finalPrompt);
+
     debounce(() => handleGenerateImage(finalPrompt ?? "a cute cat"), 1000)();
   };
 

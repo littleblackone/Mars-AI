@@ -109,14 +109,14 @@ export async function generateFinalPrompt(
 
   let handledPrompt = cleanInput(prompt);
 
-  const response = await axios.post("https://api.goapi.ai/mj/v2/validation", {
-    prompt: handledPrompt,
-  });
+  // const response = await axios.post("https://api.goapi.ai/mj/v2/validation", {
+  //   prompt: handledPrompt,
+  // });
 
-  if (response.data.ErrorMessage !== "") {
-    toast.error(response.data.ErrorMessage, { duration: 3500 });
-    return;
-  }
+  // if (response.data.ErrorMessage !== "") {
+  //   toast.error(response.data.ErrorMessage, { duration: 3500 });
+  //   return;
+  // }
 
   finalPromptArray.push(handledPrompt);
 
