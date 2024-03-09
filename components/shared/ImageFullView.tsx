@@ -155,7 +155,7 @@ export function ImageFullView({
             zoomId = responseNew.data.task_id;
           }
         } catch (error) {
-          console.error("Error ", error);
+       
         }
       }, 1000);
 
@@ -195,11 +195,11 @@ export function ImageFullView({
 
           }
         } catch (error) {
-          console.error("Error fetching image:", error);
+        
         }
       }, 1000);
     } catch (error) {
-      console.error("Error sending prompt:", error);
+   
     }
   }
 
@@ -257,7 +257,7 @@ export function ImageFullView({
             expandId = responseNew.data.task_id;
           }
         } catch (error) {
-          console.error("Error ", error);
+       
         }
       }, 1000);
 
@@ -297,11 +297,11 @@ export function ImageFullView({
             setIsExpanding(false);
           }
         } catch (error) {
-          console.error("Error fetching image:", error);
+  
         }
       }, 1000);
     } catch (error) {
-      console.error("Error sending prompt:", error);
+
     }
   }
 
@@ -359,7 +359,7 @@ export function ImageFullView({
             upscaleId = responseNew.data.task_id;
           }
         } catch (error) {
-          console.error("Error ", error);
+     
         }
       }, 1000);
 
@@ -390,11 +390,11 @@ export function ImageFullView({
             setIsUpscaling(false);
           }
         } catch (error) {
-          console.error("Error fetching image:", error);
+       
         }
       }, 1000);
     } catch (error) {
-      console.error("Error sending prompt:", error);
+   
     }
   }
 

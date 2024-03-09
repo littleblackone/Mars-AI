@@ -197,7 +197,7 @@ export const handleDownload = (url: string, index: number) => {
       });
   } catch (error) {
     toast.error("服务器繁忙，请稍后重试");
-    console.error("Error downloading image:", error);
+
   }
 };
 
@@ -226,7 +226,7 @@ export async function imageUrlToBase64(imageUrl: string) {
     const base64Data = Buffer.from(response.data, "binary").toString("base64");
     return `data:image/jpeg;base64,${base64Data}`;
   } catch (error) {
-    console.error("Error converting image to base64:", error);
+
     throw error;
   }
 }
@@ -254,7 +254,7 @@ export const handleCopy = async (text: string) => {
     await navigator.clipboard.writeText(text);
     toast.success("prompt已复制到剪贴板");
   } catch (error) {
-    console.error("Failed to copy: ", error);
+
   }
 };
 
@@ -302,7 +302,7 @@ export const handleGetSeed = async (taskId: string, setSeed: any) => {
       }
     }, 1000);
   } catch (error) {
-    console.error("Error fetching seed:", error);
+ 
   }
 };
 
@@ -460,7 +460,7 @@ export const handleDownloadBase64 = (base64Data: string, index: number) => {
     URL.revokeObjectURL(blobUrl);
   } catch (error) {
     toast.error("服务器繁忙，请稍后重试");
-    console.error("Error downloading image:", error);
+   
   }
 };
 
@@ -488,7 +488,6 @@ export const handleDownloadBase64s = (base64Datas: string[]) => {
     });
   } catch (error) {
     toast.error("服务器繁忙，请稍后重试");
-    console.error("Error downloading image:", error);
   }
 };
 

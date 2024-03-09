@@ -73,7 +73,6 @@ import { useVaryImage } from "@/lib/store/ImagesList/useVaryImage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 import VaryRegion from "./VaryRegion";
-import { useIsInpainting } from "@/lib/store/useisInpainting";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import {
@@ -88,7 +87,7 @@ import FullViewImg from "./FullViewImg";
 import { useFullViewImage } from "@/lib/store/useFullViewImage";
 import { Textarea } from "../ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { UserButton, useAuth } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import { useCredits } from "@/lib/store/useCredits";
 import useThemeSwitcher from "../hooks/useThemeSwitcher";
 import { MoonIcon, SunIcon } from "../ui/icons";
@@ -216,7 +215,6 @@ export const ImageForm = ({ email }: { email: string }) => {
       const response = await fetch(url, { method: "HEAD" });
       return response.ok;
     } catch (error) {
-      console.error("Error checking URL accessibility:", error);
       return false;
     }
   };
@@ -240,7 +238,6 @@ export const ImageForm = ({ email }: { email: string }) => {
       }
       return response.ok;
     } catch (error) {
-      console.error("Error checking URL accessibility:", error);
       return false;
     }
   };
@@ -293,7 +290,6 @@ export const ImageForm = ({ email }: { email: string }) => {
       }
     } catch (error) {
       toast.error("上传失败，请检查文件格式或重新上传");
-      console.error("Error upload image:", error);
     }
   };
 
@@ -330,7 +326,6 @@ export const ImageForm = ({ email }: { email: string }) => {
     } catch (error) {
       toast.error("上传失败，请检查文件格式或重新上传");
 
-      console.error("Error upload image:", error);
     }
   };
 
@@ -404,7 +399,6 @@ export const ImageForm = ({ email }: { email: string }) => {
     } catch (error) {
       toast.error("请求失败，请查看图片地址格式是否正确");
       setIsBlending(false);
-      console.error("Error handle describe:", error);
     }
   };
 
@@ -462,7 +456,6 @@ export const ImageForm = ({ email }: { email: string }) => {
     } catch (error) {
       toast.error("请求失败，请查看图片地址格式是否正确");
       setIsDescribe(false);
-      console.error("Error handle describe:", error);
     }
   };
 
@@ -519,18 +512,17 @@ export const ImageForm = ({ email }: { email: string }) => {
             setVaryPrompts(prompt);
             setImageArr(bast64ImgArr);
             setVaryImages(bast64ImgArr);
+            toast.success('vary(strong)成功', { duration: 1500 })
             setTaskId(taskResult.data.task_id);
             await handleGetSeed(taskResult.data.task_id, setSeed);
             setIsFetching(false);
           }
         } catch (error) {
-          console.error("Error fetching image:", error);
         }
       }, 1000);
     } catch (error) {
       toast.error("请求失败,请查看midjourney服务器状态或过一段时间重试");
       setIsFetching(false);
-      console.error("Error vary(strong) image:", error);
     }
   };
 
@@ -587,7 +579,6 @@ export const ImageForm = ({ email }: { email: string }) => {
             varySubId = response.data.task_id;
           }
         } catch (error) {
-          console.error("Error", error);
         }
       }, 1000);
 
@@ -619,18 +610,17 @@ export const ImageForm = ({ email }: { email: string }) => {
             setVaryPrompts(prompt);
             setImageArr(bast64ImgArr);
             setVaryImages(bast64ImgArr);
+            toast.success('vary(subtle)成功', { duration: 1500 })
             setTaskId(taskResult.data.task_id);
             await handleGetSeed(taskResult.data.task_id, setSeed);
             setIsFetching(false);
           }
         } catch (error) {
-          console.error("Error fetch image:", error);
         }
       }, 1000);
     } catch (error) {
       toast.error("请求失败,请查看midjourney服务器状态或过一段时间重试");
       setIsFetching(false);
-      console.error("Error vary(subtle) image:", error);
     }
   };
 
@@ -698,10 +688,6 @@ export const ImageForm = ({ email }: { email: string }) => {
           if (taskResult.data.task_result.error_messages.length > 0) {
             clearInterval(intervalId);
             setIsFetching(false);
-            console.error(
-              "Error imagine:",
-              taskResult.data.task_result.error_messages[0]
-            );
             toast.error(taskResult.data.task_result.error_messages[0], {
               duration: 5000,
             });
@@ -717,13 +703,12 @@ export const ImageForm = ({ email }: { email: string }) => {
             setImageArr(bast64ImgArr);
 
             setOriginImages(bast64ImgArr);
-
+            toast.success('imagine成功', { duration: 1500 })
             form.setValue('prompt', '')
             setIsFetching(false);
             await handleGetSeed(taskId, setSeed);
           }
         } catch (error) {
-          console.error("Error fetching image:", error);
           setIsFetching(false);
         }
       }, 1000);
@@ -735,7 +720,6 @@ export const ImageForm = ({ email }: { email: string }) => {
         { duration: 5000 }
       );
       setIsFetching(false);
-      console.error("Error sending prompt:", error);
     }
   }
 

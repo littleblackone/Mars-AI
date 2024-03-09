@@ -36,8 +36,7 @@ const handleDescribe = async (req: NextRequest) => {
       status: response.status,
     });
   } catch (error) {
-    console.log(error);
-
+   
     console.error(`Error: ${error}`);
 
     return NextResponse.json(

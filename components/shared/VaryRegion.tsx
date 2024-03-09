@@ -173,7 +173,7 @@ export default function VaryRegion({
             isFirstIntervalCompleted = true;
           }
         } catch (error) {
-          console.error("Error ", error);
+   
         }
       }, 1000);
 
@@ -208,7 +208,7 @@ export default function VaryRegion({
       }, 1000);
     } catch (error) {
       toast.error("请求失败，请查看图片地址格式是否正确");
-      console.error("Error handle describe:", error);
+
     }
   };
 

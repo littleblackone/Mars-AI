@@ -43,7 +43,6 @@ export async function POST(req: Request) {
       "svix-signature": svix_signature,
     }) as WebhookEvent;
   } catch (err) {
-    console.error("Error verifying webhook:", err);
     return new Response("Error occured", {
       status: 400,
     });
@@ -63,7 +62,7 @@ export async function POST(req: Request) {
       subscription_expiry: 123456,
       subscription_startAt: 123456,
       subscription_type: "free",
-      infinityai_user_credits: 50,
+      infinityai_user_credits: 150,
       user_order_id: "",
     };
 
@@ -71,8 +70,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: "OK" });
   }
-
-
 
   return new Response("", { status: 200 });
 }
