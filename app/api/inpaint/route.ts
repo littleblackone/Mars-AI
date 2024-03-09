@@ -27,7 +27,7 @@ const handleInPaint = async (req: NextRequest) => {
         prompt: body.prompt,
         mask: body.mask,
         notify_progress: true,
-        skip_prompt_check: true,
+        
       },
       url: inpaintUrl,
       method: "post",

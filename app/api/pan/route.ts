@@ -25,7 +25,6 @@ const handlePan = async (req: NextRequest) => {
         origin_task_id: body.originTaskId,
         direction: body.direction,
         notify_progress: true,
-        skip_prompt_check: true,
       },
       url: panUrl,
       method: "post",

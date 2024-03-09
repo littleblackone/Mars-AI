@@ -152,8 +152,6 @@ export const ImageForm = ({ email }: { email: string }) => {
   const setVaryPrompts = useVaryImage((state) => state.setPrompts);
   const setHistoryBlendImgs = useBlendImages((state) => state.setImages);
 
-  const isInpainting = useIsInpainting((state) => state.isInpainting);
-
   const fullImgIndex = useFullViewImage((state) => state.index);
   const fullImgOpen = useFullViewImage((state) => state.open);
   const fullImgImgUrl = useFullViewImage((state) => state.imgUrl);
@@ -638,7 +636,6 @@ export const ImageForm = ({ email }: { email: string }) => {
 
   const handleGenerateImage = async (prompt: string) => {
     try {
-
       if (useDefaultModel) {
         if (useTurbo) {
           const infinityai_user_credits = await getUserCredits(email)
@@ -826,8 +823,6 @@ export const ImageForm = ({ email }: { email: string }) => {
       stylesList
     );
     setFinalPrompt(finalPrompt);
-    console.log(finalPrompt);
-
     debounce(() => handleGenerateImage(finalPrompt ?? "a cute cat"), 1000)();
   };
 
@@ -1757,17 +1752,17 @@ export const ImageForm = ({ email }: { email: string }) => {
                       >
                         <div className=" w-full h-[105%] mb-[8rem] flex-center">
                           <div
-                            className={`w-fit h-full ${(imageArr.length === 0 || isInpainting) &&
+                            className={`w-fit h-full ${(imageArr.length === 0) &&
                               "!flex-center flex-col !justify-between"
                               } grid gap-1 grid-cols-2 items-center justify-center`}
                           >
-                            {(imageArr.length === 0 || isInpainting) && (
+                            {(imageArr.length === 0) && (
                               <div className="flex-center mt-[6rem] max-w-[450px] max-h-[450px] aspect-square">
                                 {
                                   <img
                                     src={"/pending2.png"}
                                     alt="midjourney image"
-                                    className={`rounded-xl max-w-[100%] max-h-[100%] aspect-square ${(isFetching || isInpainting) && "flicker"
+                                    className={`rounded-xl max-w-[100%] max-h-[100%] aspect-square ${(isFetching) && "flicker"
                                       }`}
                                   ></img>
                                 }
@@ -1775,7 +1770,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                             )}
 
                             {imageArr.length === 4 &&
-                              isInpainting === false &&
                               imageArr.map((imgUrl, index) => (
                                 <div
                                   key={index}
@@ -2084,11 +2078,10 @@ export const ImageForm = ({ email }: { email: string }) => {
                                     className="w-fit dark:text-white button-85 active:translate-y-[1px] transition-all duration-200 ml-2 self-end text-lg"
                                     disabled={
                                       isFetching ||
-                                      isInpainting ||
                                       field.value.trim() === ""
                                     }
                                   >
-                                    {isInpainting || isFetching ? (
+                                    {isFetching ? (
                                       <span className="flicker">生成中...</span>
                                     ) : (
                                       "生成"
@@ -2327,7 +2320,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                   }}
                                   defaultValue={"square"}
                                 >
-                                  <SelectTrigger className="bg-gray-100 dark:focus:ring-transparent dark:ring-offset-transparent dark:focus:ring-transparent dark:ring-offset-transparent dark:text-white dark:bg-[#31456e] border border-gray-800 py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
+                                  <SelectTrigger className="bg-gray-100  dark:focus:ring-transparent dark:ring-offset-transparent dark:text-white dark:bg-[#31456e] border border-gray-800 py-1 px-2 h-8 focus:ring-offset-transparent focus:ring-transparent">
                                     <SelectValue placeholder="dimension"></SelectValue>
                                   </SelectTrigger>
 

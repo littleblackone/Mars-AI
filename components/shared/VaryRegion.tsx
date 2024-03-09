@@ -23,7 +23,6 @@ import {
 } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useIsInpainting } from "@/lib/store/useisInpainting";
-import { useAuth } from "@clerk/nextjs";
 import { useCredits } from "@/lib/store/useCredits";
 
 
@@ -53,9 +52,8 @@ export default function VaryRegion({
   const [cropBoxY, setcropBoxY] = useState(0);
 
   const [blackWhiteImg, setBlackWhiteImg] = useState("");
+  const [isInpainting, setIsInpainting] = useState(false)
 
-  const isInpainting = useIsInpainting((state) => state.isInpainting);
-  const setIsInpainting = useIsInpainting((state) => state.setIsInpainting);
   const setInpaintImages = useInpaintImages((state) => state.setImages);
   const setInpaintPrompts = useInpaintImages((state) => state.setPrompts);
 
@@ -202,6 +200,7 @@ export default function VaryRegion({
           setIsInpainting(false);
           setParentImageArr(bast64ImgArr);
           setInpaintImages(bast64ImgArr);
+          toast.info('vary(region)任务已完成,请在在历史图片区域查看', { duration: 3000 })
           setOriginTaskId(taskResult.data.task_id);
           await handleGetSeed(inpaintId, setParentSeed);
           toast.success("Vary(Region)成功!");
@@ -249,6 +248,7 @@ export default function VaryRegion({
             variant='default'
             className=" rounded-xl mr-2"
             onClick={() => {
+              toast.info('vary(region)任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
               debounce(() => handleInpaint(), 1000)();
               setOpen(false);
             }}
@@ -258,7 +258,6 @@ export default function VaryRegion({
           </Button>
         </div>
         <DialogClose
-          disabled={isInpainting}
           className="absolute right-2 top-2 rounded-sm opacity-70  transition-opacity hover:opacity-100  disabled:pointer-events-none "
         >
           <X className="h-5 w-5" />

@@ -466,13 +466,13 @@ export default function Home() {
               <AccordionItem value="item-6">
                 <AccordionTrigger className=" text-xl text-gray-200">国内可以使用吗?</AccordionTrigger>
                 <AccordionContent className="text-gray-300 text-base">
-                  目前国内只能访问网站,画图需要使用科学上网,网越快越稳定出图越快,后续应该会使用服务器代理让国内用户也能快速出图
+                  国内可以使用,如果只是简单的进行imagine操作没什么问题,但是涉及到其他耗时的任务比如upscale,建议使用科学上网,网越快越稳定出图越快,后续应该会使用服务器代理让国内用户也能快速出图
                 </AccordionContent>
               </AccordionItem>
-              <AccordionItem value="item-7">
-                <AccordionTrigger className=" text-xl text-gray-200">生成时间太久怎么办?</AccordionTrigger>
+              <AccordionItem value="item-8">
+                <AccordionTrigger className=" text-xl text-gray-200">可以同时进行多个任务吗?</AccordionTrigger>
                 <AccordionContent className="text-gray-300 text-base">
-                  请使用更快更稳定的网络,如果不想等待想画下一张图,直接先点击返回按钮回到主页,再进入画图页面就可以重新画图,只要你不刷新页面,之前的任务会一直存在直到出现在历史图片区域
+                  可以的,多个任务会进入等待队列,任务完成后会通知并自动出现在历史图片区域,不过请注意imagine,zoom,expand,vary(region)这四个操作生成的4张图片会占据中间的4个图,比如你用imagine生成了4张图,对其中某一张进行了expand,expand任务进入等待队列,如果任务完成,expand生成的4张图会代替之前imagine生成的4张图,这是为了能继续操作不同类型的图片
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

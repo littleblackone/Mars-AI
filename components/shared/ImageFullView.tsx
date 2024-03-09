@@ -41,7 +41,6 @@ import { useZoomImages } from "@/lib/store/ImagesList/useZoomImages";
 import { useExpandImages } from "@/lib/store/ImagesList/useExpandImages";
 import { useIsUpscaled } from "@/lib/store/useIsUpscaled";
 import { toast } from "sonner";
-import { useAuth } from "@clerk/nextjs";
 import { useCredits } from "@/lib/store/useCredits";
 
 export function ImageFullView({
@@ -181,6 +180,7 @@ export function ImageFullView({
 
           if (taskResult.data.status === "finished") {
             clearInterval(intervalId);
+            setIsZooming(false);
             setOriginTaskId(taskResult.data.task_id);
             const bast64ImgArr = await cropImageIntoFour(
               taskResult.data.task_result.image_url
@@ -189,10 +189,10 @@ export function ImageFullView({
             setZoomPrompt(prompt);
             setParentImgArr(bast64ImgArr);
             setZoomImages(bast64ImgArr);
+            toast.info('zoom任务已完成,请在历史图片区域查看', { duration: 3000 })
 
             await handleGetSeed(zoomId, setParentSeed);
 
-            setIsZooming(false);
           }
         } catch (error) {
           console.error("Error fetching image:", error);
@@ -290,6 +290,7 @@ export function ImageFullView({
             setExpandPrompt(prompt);
             setParentImgArr(bast64ImgArr);
             setExpandImages(bast64ImgArr);
+            toast.info('expand任务已完成,请在历史图片区域查看', { duration: 3000 })
 
             await handleGetSeed(expandId, setParentSeed);
 
@@ -303,6 +304,7 @@ export function ImageFullView({
       console.error("Error sending prompt:", error);
     }
   }
+
   const handleUpscaleImage = async () => {
     try {
 
@@ -383,8 +385,8 @@ export function ImageFullView({
             const prompt = taskResult.data.meta.task_param.prompt;
             setUpscalePrompt(prompt);
             const upscaledBase64 = await imageUrlToBase64(taskResult.data.task_result.image_url)
-            toast.success('Upscale成功, 请在历史图片区域查看', { duration: 3500 })
             setUpscaleImages(upscaledBase64);
+            toast.info('upscale任务已完成,请在历史图片区域查看', { duration: 3000 })
             setIsUpscaling(false);
           }
         } catch (error) {
@@ -477,6 +479,9 @@ export function ImageFullView({
     setUpscale4x(false);
     setUpscaleCreative(false);
     setUpscaleSub(false);
+    setIsExpanding(false)
+    setIsUpscaling(false)
+    setIsZooming(false)
   };
 
   return (
@@ -491,18 +496,18 @@ export function ImageFullView({
       }}
     >
       <DialogContent
-        onPointerDownOutside={(e) => {
-          if (isFetching) {
-            e.preventDefault();
-          }
-        }}
+        // onPointerDownOutside={(e) => {
+        //   if (isFetching) {
+        //     e.preventDefault();
+        //   }
+        // }}
         className=" !h-[800px]  min-w-[1260px]"
       >
         <div className="flex w-full h-full">
           <div className=" relative flex-1 w-full h-full flex-center dark:bg-[#131d33] bg-gray-300/25 rounded-l-md">
             <Button
               type="button"
-              disabled={isFetching}
+              // disabled={isFetching}
               variant="outline"
               className="absolute px-2.5 dark:bg-[#364e83] right-2 top-2 active:translate-y-[1px] rounded-md"
               onClick={() => {
@@ -686,8 +691,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2 dark:bg-[#3558a3] dark:text-white hover:dark:bg-[#2e4d91]"
-                disabled={isFetching}
+                // disabled={isFetching}
                 onClick={async () => {
+                  toast.info('upscale任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   debounce(() => handleUpscale2xOrSub(), 1000)()
                 }
                 }
@@ -710,8 +716,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
-                disabled={isFetching}
+                // disabled={isFetching}
                 onClick={async () => {
+                  toast.info('upscale任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   debounce(() => handleUpscale4xOrCreative(), 1000)()
                 }}
               >
@@ -736,8 +743,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
-                disabled={isFetching || isUpscaled}
+                // disabled={isFetching || isUpscaled}
                 onClick={() => {
+                  toast.info('zoom任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   debounce(() => handleZoom("1.5"), 1000)();
                 }}
               >
@@ -757,8 +765,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
-                disabled={isFetching || isUpscaled}
+                // disabled={isFetching || isUpscaled}
                 onClick={() => {
+                  toast.info('zoom任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   debounce(() => handleZoom("2"), 1000)();
                 }}
               >
@@ -779,8 +788,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className={`px-2 flex dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white`}
-                disabled={isFetching || isUpscaled}
+                // disabled={isFetching || isUpscaled}
                 onClick={() => {
+                  toast.info('zoom任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   debounce(() => handleZoom("1"), 1000)();
                 }}
               >
@@ -803,7 +813,7 @@ export function ImageFullView({
                     type="button"
                     variant="outline"
                     className="px-2 w-full dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
-                    disabled={isFetching || isUpscaled}
+                  // disabled={isFetching || isUpscaled}
                   >
                     {isZooming ? (
                       <>
@@ -830,6 +840,7 @@ export function ImageFullView({
                   />
                   <PopoverClose
                     onClick={() => {
+                      toast.info('zoom任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                       debounce(() => handleZoom(zoomValue), 1000)();
                     }}
                     className=" p-2  rounded-md bg-black/80 text-white transition-all
@@ -848,8 +859,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
-                disabled={isFetching || isUpscaled}
+                // disabled={isFetching || isUpscaled}
                 onClick={() => {
+                  toast.info('expand任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   setExpandDirction("up");
                 }}
               >
@@ -869,8 +881,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
-                disabled={isFetching || isUpscaled}
+                // disabled={isFetching || isUpscaled}
                 onClick={() => {
+                  toast.info('expand任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   setExpandDirction("down");
                 }}
               >
@@ -890,8 +903,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
-                disabled={isFetching || isUpscaled}
+                // disabled={isFetching || isUpscaled}
                 onClick={() => {
+                  toast.info('expand任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   setExpandDirction("right");
                 }}
               >
@@ -911,8 +925,9 @@ export function ImageFullView({
                 type="button"
                 variant="outline"
                 className="px-2 dark:bg-[#3558a3] hover:dark:bg-[#2e4d91] dark:text-white"
-                disabled={isFetching || isUpscaled}
+                // disabled={isFetching || isUpscaled}
                 onClick={() => {
+                  toast.info('expand任务已加入等待队列中,完成后会出现在历史图片区域', { duration: 3000 })
                   setExpandDirction("left");
                 }}
               >
@@ -932,7 +947,7 @@ export function ImageFullView({
           </div>
         </div>
         <DialogClose
-          disabled={isFetching}
+          // disabled={isFetching}
           className="absolute right-2 top-2 rounded-sm opacity-70  transition-opacity hover:opacity-100  disabled:pointer-events-none "
         >
           <X className="h-5 w-5 dark:text-white" />

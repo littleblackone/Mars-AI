@@ -57,7 +57,7 @@ export default function HistoryImage() {
         .select()
         .eq("email", email);
       const realData: UserData = res.data && res.data[0];
-    
+
       if (realData?.subscription_type === "month" || realData?.subscription_type === "year") {
         setCanUseAllDownload(true)
       } else {
@@ -91,9 +91,10 @@ export default function HistoryImage() {
           </div>
           <HoverCard openDelay={300}>
             <HoverCardTrigger>
-              <Button type="button" disabled={canUseAllDownload === false || allImg.length === 0} variant='outline' onClick={() => {
-                handleDownloadBase64s(allImg)
-              }} className="flex dark:text-white dark:bg-[#2e426b] gap-2 cursor-pointer">
+              <Button type="button" disabled={canUseAllDownload === false || allImg.length === 0}
+                variant='outline' onClick={() => {
+                  handleDownloadBase64s(allImg)
+                }} className="flex dark:text-white dark:bg-[#2e426b] gap-2 cursor-pointer">
                 下载全部{canUseAllDownload}
                 <CrownIcon width={20} height={20} color="#818CF8"></CrownIcon>
               </Button>
@@ -118,7 +119,7 @@ export default function HistoryImage() {
                   className={`self-start  mb-2 text-neutral-800 dark:text-gray-300  text-sm hidden ${originImageList.length > 0 && "!block"
                     }`}
                 >
-                  imagine Images
+                  Imagine Images
                 </span>
               </AccordionTrigger>
               <AccordionContent>

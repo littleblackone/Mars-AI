@@ -26,7 +26,7 @@ const handleImagine = async (req: NextRequest) => {
         aspect_ratio: "",
         process_mode: useTurbo ? "turbo" : "fast",
         notify_progress: true,
-        skip_prompt_check: true,
+        
       },
       url: imagineUrl,
       method: "post",
