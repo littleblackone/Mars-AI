@@ -63,7 +63,7 @@ export default function Home() {
                       </div>
                       <p className=" text-gray-200 text-sm">相当于100张v5.2模型快速图</p>
                       <div className="flex">
-                        <p className="text-white text-4xl font-bold">99元</p>
+                        <p className="text-white text-4xl font-bold">79元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
                       <Button type="button" onClick={async () => {
@@ -123,7 +123,7 @@ export default function Home() {
                       </div>
                       <p className=" text-gray-200 text-sm">相当于300张v5.2模型快速图</p>
                       <div className="flex">
-                        <p className="text-white text-4xl font-bold">297元</p>
+                        <p className="text-white text-4xl font-bold">237元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
                       <Button onClick={async () => {
@@ -183,7 +183,7 @@ export default function Home() {
                       </div>
                       <p className=" text-gray-200 text-sm">相当于1200张v5.2模型快速图</p>
                       <div className="flex">
-                        <p className="text-white text-4xl font-bold">999元</p>
+                        <p className="text-white text-4xl font-bold">948元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
                       </div>
                       <Button onClick={async () => {
@@ -247,7 +247,7 @@ export default function Home() {
                       </div>
                       <p className=" text-gray-200 text-sm">相当于20张v5.2模型快速图</p>
                       <div className="flex">
-                        <p className="text-white text-4xl font-bold">24元</p>
+                        <p className="text-white text-4xl font-bold">20元</p>
                       </div>
                       <Button onClick={async () => {
                         if (!user) {
@@ -302,7 +302,7 @@ export default function Home() {
                       </div>
                       <p className=" text-gray-200 text-sm">相当于50张v5.2模型快速图</p>
                       <div className="flex">
-                        <p className="text-white text-4xl font-bold">60元</p>
+                        <p className="text-white text-4xl font-bold">50元</p>
                       </div>
                       <Button onClick={async () => {
                         if (!user) {
@@ -357,7 +357,7 @@ export default function Home() {
                       </div>
                       <p className=" text-gray-200 text-sm">相当于100张v5.2模型快速图</p>
                       <div className="flex">
-                        <p className="text-white text-4xl font-bold">120元</p>
+                        <p className="text-white text-4xl font-bold">100元</p>
                       </div>
                       <Button onClick={async () => {
                         if (!user) {
