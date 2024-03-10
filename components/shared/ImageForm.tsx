@@ -704,7 +704,6 @@ export const ImageForm = ({ email }: { email: string }) => {
 
             setOriginImages(bast64ImgArr);
             toast.success('imagine成功', { duration: 1500 })
-            form.setValue('prompt', '')
             setIsFetching(false);
             await handleGetSeed(taskId, setSeed);
           }
@@ -866,7 +865,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                             命令: --v 5.2<br></br>
                             midjourney模型,目前提供v5.2, v6, niji 6 这3个模型,
                             niji 6 用于生成动漫风格图片,默认为
-                            v5.2。如果你想使用其他模型,可以自己在prompt中添加命令,详情查看
+                            v5.2
                             <Link
                               target="_blank"
                               rel="stylesheet"
