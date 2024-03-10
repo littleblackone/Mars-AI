@@ -42,7 +42,7 @@ const handleCallback = async (req: Request) => {
     // 假设现在的时间戳为 currentTimestamp
     const currentTimestamp = Date.now();
     //circle time
-    if (total_fee === "79") {
+    if (total_fee === "59") {
       credits = 1000;
       subscriptionType = "month";
       // 假设一个月是30天
@@ -50,14 +50,14 @@ const handleCallback = async (req: Request) => {
       subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
 
-    if (total_fee === "237") {
+    if (total_fee === "169") {
       credits = 3000;
       subscriptionType = "month";
       const expiryTimestamp = currentTimestamp + 30 * 3 * 24 * 60 * 60 * 1000;
       subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
 
-    if (total_fee === "948") {
+    if (total_fee === "699") {
       credits = 12000;
       subscriptionType = "year";
       // 假设一年是365天
@@ -66,19 +66,19 @@ const handleCallback = async (req: Request) => {
     }
 
     //forever long
-    if (total_fee === "20") {
+    if (total_fee === "19") {
       credits = 200;
       subscriptionType = "peruse";
       const expiryTimestamp = currentTimestamp + 365 * 10 * 24 * 60 * 60 * 1000;
       subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
-    if (total_fee === "50") {
+    if (total_fee === "49") {
       credits = 500;
       subscriptionType = "peruse";
       const expiryTimestamp = currentTimestamp + 365 * 10 * 24 * 60 * 60 * 1000;
       subscriptionExpiry = convertTimestampToDateTime(expiryTimestamp);
     }
-    if (total_fee === "100") {
+    if (total_fee === "99") {
       credits = 1000;
       subscriptionType = "peruse";
       const expiryTimestamp = currentTimestamp + 365 * 10 * 24 * 60 * 60 * 1000;
