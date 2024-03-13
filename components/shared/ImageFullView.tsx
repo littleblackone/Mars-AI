@@ -155,7 +155,7 @@ export function ImageFullView({
             zoomId = responseNew.data.task_id;
           }
         } catch (error) {
-       
+
         }
       }, 1000);
 
@@ -195,11 +195,11 @@ export function ImageFullView({
 
           }
         } catch (error) {
-        
+
         }
       }, 1000);
     } catch (error) {
-   
+
     }
   }
 
@@ -257,7 +257,7 @@ export function ImageFullView({
             expandId = responseNew.data.task_id;
           }
         } catch (error) {
-       
+
         }
       }, 1000);
 
@@ -297,7 +297,7 @@ export function ImageFullView({
             setIsExpanding(false);
           }
         } catch (error) {
-  
+
         }
       }, 1000);
     } catch (error) {
@@ -359,7 +359,7 @@ export function ImageFullView({
             upscaleId = responseNew.data.task_id;
           }
         } catch (error) {
-     
+
         }
       }, 1000);
 
@@ -390,11 +390,11 @@ export function ImageFullView({
             setIsUpscaling(false);
           }
         } catch (error) {
-       
+
         }
       }, 1000);
     } catch (error) {
-   
+
     }
   }
 
@@ -701,13 +701,13 @@ export function ImageFullView({
                 {isUpscaling ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Upscaling...&nbsp;</span>
+                    <span className="flicker ">提高中...&nbsp;</span>
                   </>
                 ) : (
                   <>
                     <UpscaleSvg></UpscaleSvg>
                     <span className="ml-1 text-sm">
-                      {model === "v 5.2" ? `Upscale(2x)` : `Upscale(subtle)`}
+                      {model === "v 5.2" ? `提高分辨率(2倍)` : `提高分辨率(细微)`}
                     </span>
                   </>
                 )}
@@ -725,13 +725,13 @@ export function ImageFullView({
                 {isUpscaling ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Upscaling...&nbsp;</span>
+                    <span className="flicker ">提高中...&nbsp;</span>
                   </>
                 ) : (
                   <>
                     <UpscaleSvg></UpscaleSvg>
                     <span className="ml-1 text-sm">
-                      {model === "v 5.2" ? `Upscale(4x)` : `Upscale(creative)`}
+                      {model === "v 5.2" ? `提高分辨率(4倍)` : `提高分辨率(创意)`}
                     </span>
                   </>
                 )}
@@ -752,12 +752,12 @@ export function ImageFullView({
                 {isZooming ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Zooming...&nbsp;</span>
+                    <span className="flicker ">放大中...&nbsp;</span>
                   </>
                 ) : (
                   <>
                     <ZoomIn className=" scale-75"></ZoomIn>
-                    <span className="ml-1 text-sm">Zoom out(1.5x)</span>
+                    <span className="ml-1 text-sm">放大(1.5倍)</span>
                   </>
                 )}
               </Button>
@@ -774,12 +774,12 @@ export function ImageFullView({
                 {isZooming ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Zooming...&nbsp;</span>
+                    <span className="flicker ">放大中...&nbsp;</span>
                   </>
                 ) : (
                   <>
                     <ZoomIn className=" scale-90"></ZoomIn>
-                    <span className="ml-1 text-sm">Zoom out(2x)</span>
+                    <span className="ml-1 text-sm">放大(2倍)</span>
                   </>
                 )}
               </Button>
@@ -797,12 +797,12 @@ export function ImageFullView({
                 {isZooming ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Zooming...&nbsp;</span>
+                    <span className="flicker ">放大中...&nbsp;</span>
                   </>
                 ) : (
                   <>
                     <MoveIcon className=" scale-90"></MoveIcon>
-                    <span className="ml-1 text-sm">Make Square</span>
+                    <span className="ml-1 text-sm">图片比例1:1</span>
                   </>
                 )}
               </Button>
@@ -818,12 +818,12 @@ export function ImageFullView({
                     {isZooming ? (
                       <>
                         <GearIcon className="gear-icon mr-1"></GearIcon>
-                        <span className="flicker ">Zooming...&nbsp;</span>
+                        <span className="flicker ">放大中...&nbsp;</span>
                       </>
                     ) : (
                       <>
                         <GearIcon></GearIcon>
-                        <span className="ml-1 text-sm">Custom Zoom</span>
+                        <span className="ml-1 text-sm">自定义放大</span>
                       </>
                     )}
                   </Button>
@@ -868,11 +868,11 @@ export function ImageFullView({
                 {isExpanding ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Expanding...&nbsp;</span>
+                    <span className="flicker ">扩展中...&nbsp;</span>
                   </>
                 ) : (
                   <>
-                    <span className="ml-1 text-sm">Expand</span>
+                    <span className="ml-1 text-sm">向上扩展</span>
                     <PinTopIcon className=" scale-125 ml-2"></PinTopIcon>
                   </>
                 )}
@@ -890,11 +890,11 @@ export function ImageFullView({
                 {isExpanding ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Expanding...&nbsp;</span>
+                    <span className="flicker ">扩展中...&nbsp;</span>
                   </>
                 ) : (
                   <>
-                    <span className="ml-1 text-sm">Expand</span>
+                    <span className="ml-1 text-sm">向下扩展</span>
                     <PinBottomIcon className=" scale-125 ml-2"></PinBottomIcon>
                   </>
                 )}
@@ -912,11 +912,11 @@ export function ImageFullView({
                 {isExpanding ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Expanding...&nbsp;</span>
+                    <span className="flicker ">扩展中...&nbsp;</span>
                   </>
                 ) : (
                   <>
-                    <span className="ml-1 text-sm">Expand</span>
+                    <span className="ml-1 text-sm">向右扩展</span>
                     <PinRightIcon className=" scale-125 ml-2"></PinRightIcon>
                   </>
                 )}
@@ -934,11 +934,11 @@ export function ImageFullView({
                 {isExpanding ? (
                   <>
                     <LoaderIcon width={15} height={15} className=" animate-spin mr-1"></LoaderIcon>
-                    <span className="flicker ">Expanding...&nbsp;</span>
+                    <span className="flicker ">扩展中...&nbsp;</span>
                   </>
                 ) : (
                   <>
-                    <span className="ml-1 text-sm">Expand</span>
+                    <span className="ml-1 text-sm">向左扩展</span>
                     <PinLeftIcon className=" scale-125 ml-2"></PinLeftIcon>
                   </>
                 )}

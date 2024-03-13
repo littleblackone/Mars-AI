@@ -121,7 +121,7 @@ export default function Home() {
                           <Sparkles width={15} hanging={15}></Sparkles>
                         </div>
                       </div>
-                      <p className=" text-gray-200 text-sm">相当于300张v5.2模型快速图(一共1200张)</p>
+                      <p className=" text-gray-200 text-sm">300张v5.2模型快速图(一共1200张)</p>
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">169元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
@@ -181,7 +181,7 @@ export default function Home() {
                           <Sparkles width={15} hanging={15}></Sparkles>
                         </div>
                       </div>
-                      <p className=" text-gray-200 text-sm">相当于1200张v5.2模型快速图(一共4800张)</p>
+                      <p className=" text-gray-200 text-sm">1200张v5.2模型快速图(一共4800张)</p>
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">699元</p>
                         <span className=" text-gray-200 text-base self-end translate-y-[-1.5px]">/月</span>
@@ -245,7 +245,7 @@ export default function Home() {
                           <Sparkles width={15} hanging={15}></Sparkles>
                         </div>
                       </div>
-                      <p className=" text-gray-200 text-sm">相当于20张v5.2模型快速图(一共80张)</p>
+                      <p className=" text-gray-200 text-sm">20张v5.2模型快速图(一共80张)</p>
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">19元</p>
                       </div>
@@ -300,7 +300,7 @@ export default function Home() {
                           <Sparkles width={15} hanging={15}></Sparkles>
                         </div>
                       </div>
-                      <p className=" text-gray-200 text-sm">相当于50张v5.2模型快速图(一共200张)</p>
+                      <p className=" text-gray-200 text-sm">50张v5.2模型快速图(一共200张)</p>
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">49元</p>
                       </div>
@@ -355,7 +355,7 @@ export default function Home() {
                           <Sparkles width={15} hanging={15}></Sparkles>
                         </div>
                       </div>
-                      <p className=" text-gray-200 text-sm">相当于100张v5.2模型快速图(一共400张)</p>
+                      <p className=" text-gray-200 text-sm">100张v5.2模型快速图(一共400张)</p>
                       <div className="flex">
                         <p className="text-white text-4xl font-bold">99元</p>
                       </div>

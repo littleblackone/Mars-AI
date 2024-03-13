@@ -119,7 +119,7 @@ export default function HistoryImage() {
                   className={`self-start  mb-2 text-neutral-800 dark:text-gray-300  text-sm hidden ${originImageList.length > 0 && "!block"
                     }`}
                 >
-                  Imagine Images
+                  文生图
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -156,7 +156,7 @@ export default function HistoryImage() {
                   className={`self-start mb-2 text-neutral-800 dark:text-gray-300 text-sm  hidden ${varyImageList.length > 0 && "!block"
                     }`}
                 >
-                  Vary Images
+                  变化图
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -193,7 +193,7 @@ export default function HistoryImage() {
                   className={`self-start mb-2 text-neutral-800 dark:text-gray-300 text-sm  hidden ${upscaleImageList.length > 0 && "!block"
                     }`}
                 >
-                  Upscale Images
+                  提高分辨率图
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -230,7 +230,7 @@ export default function HistoryImage() {
                   className={`self-start mb-2 text-neutral-800 dark:text-gray-300 text-sm  hidden ${zoomImageList.length > 0 && "!block"
                     }`}
                 >
-                  Zoom Images
+                  放大图
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -267,7 +267,7 @@ export default function HistoryImage() {
                   className={`self-start mb-2 text-neutral-800 dark:text-gray-300 text-sm  hidden ${expandImageList.length > 0 && "!block"
                     }`}
                 >
-                  Expand Images
+                  扩展图
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -304,7 +304,7 @@ export default function HistoryImage() {
                   className={`self-start mb-2 text-neutral-800 dark:text-gray-300 text-sm  hidden ${blendImageList.length > 0 && "!block"
                     }`}
                 >
-                  Blend Images
+                  图生图
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -341,7 +341,7 @@ export default function HistoryImage() {
                   className={`self-start mb-2 text-neutral-800 dark:text-gray-300 text-sm  hidden ${inpaintImageList.length > 0 && "!block"
                     }`}
                 >
-                  Inpaint Images
+                  区域变化图
                 </span>
               </AccordionTrigger>
               <AccordionContent>

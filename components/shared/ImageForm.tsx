@@ -130,7 +130,8 @@ export const ImageForm = ({ email }: { email: string }) => {
   const [isDescribe, setIsDescribe] = useState(false);
 
   const [imgPromptUrls, setImgPromptUrls] = useState([""]);
-  const [sreftUrl, setSrefUrl] = useState("");
+  const [srefUrl, setSrefUrl] = useState("");
+  const [crefUrl, setCrefUrl] = useState("");
   const [asRatio, setAsRatio] = useState("");
   const [customAs, setCustomAs] = useState(false);
   const [customASW, setCustomASW] = useState(1);
@@ -200,12 +201,21 @@ export const ImageForm = ({ email }: { email: string }) => {
       }
     }
     if (type === "srefUrls") {
-      const canAccessImg = await isUrlAccessibleImgPrompt(sreftUrl);
-      if (!isValidImageUrl(sreftUrl) || canAccessImg === false) {
-        toast.error(`Style references Images Url 格式错误或图片地址不存在`, {
+      const canAccessImg = await isUrlAccessibleImgPrompt(srefUrl);
+      if (!isValidImageUrl(srefUrl) || canAccessImg === false) {
+        toast.error(`风格一致图片地址格式错误或图片地址不存在`, {
           duration: 3500,
         });
         setSrefUrl(""); // 清空输入框
+      }
+    }
+    if (type === "crefUrls") {
+      const canAccessImg = await isUrlAccessibleImgPrompt(crefUrl);
+      if (!isValidImageUrl(crefUrl) || canAccessImg === false) {
+        toast.error(`角色一致图片地址格式错误或图片地址不存在`, {
+          duration: 3500,
+        });
+        setCrefUrl('')
       }
     }
   };
@@ -800,7 +810,8 @@ export const ImageForm = ({ email }: { email: string }) => {
       useStyleRow,
       useTile,
       imgPromptUrls,
-      sreftUrl,
+      srefUrl,
+      crefUrl,
       customASW,
       customASH,
       stylesList
@@ -854,7 +865,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex items-center justify-between w-[200px]">
                     <div className=" flex gap-2 items-center">
                       <FormLabel className=" text-neutral-800 dark:text-white text-nowrap text-sm">
-                        Models:
+                        模型:
                       </FormLabel>
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
@@ -862,7 +873,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
-                            命令: --v 5.2<br></br>
                             midjourney模型,目前提供v5.2, v6, niji 6 这3个模型,
                             niji 6 用于生成动漫风格图片,默认为
                             v5.2
@@ -914,7 +924,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                     <div className=" flex justify-between items-center w-full">
                       <div className=" flex gap-2 items-center">
                         <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                          AspectRatio:
+                          图片比例:
                         </FormLabel>
 
                         <HoverCard openDelay={300}>
@@ -923,7 +933,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
-                              命令: --aspect 或 --ar<br></br>
                               生成图片的宽高比,默认为1:1,如果你想自定义,请选择最后一个选项(限制长宽比在
                               0.5-2 之间)。详情查看
                               <Link
@@ -1035,7 +1044,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex items-center justify-between  w-[200px]">
                     <div className=" flex gap-2 items-center">
                       <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                        Quality:
+                        图片质量:
                       </FormLabel>
 
                       <HoverCard openDelay={300}>
@@ -1044,8 +1053,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
-                            命令: --quality 或 --q<br></br>
-                            quality参数会更改生成图像所花费的时间。更高质量的设置需要更长的时间来处理和生成更多的细节,值越高也意味着每个作业使用的GPU分钟数越多,质量设置不会影响分辨率,默认为高质量。
+                            更高质量的设置需要更长的时间来处理和生成更多的细节,值越高也意味着每个作业使用的GPU分钟数越多,质量设置不会影响分辨率,默认为高质量。
                             <Link
                               target="_blank"
                               rel="stylesheet"
@@ -1096,18 +1104,16 @@ export const ImageForm = ({ email }: { email: string }) => {
                     <div className="flex justify-between items-center">
                       <div className="flex gap-2 items-center">
                         <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                          Stylize:
+                          风格化程度:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
                             <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
                           </HoverCardTrigger>
                           <HoverCardContent>
-                            <p className="text-white text-sm">
-                              命令: --stylize 或 --s<br></br>
-                              风格化程度:默认为100, 范围:
+                            <p className="text-white text-sm">默认为100, 范围:
                               0-1000,低风格化值生成的图像与prompt非常匹配,但艺术性较差。
-                              高风格化值创建的图像非常艺术,但与prompt的联系较少。详情查看
+                              高风格化值创建的图像具有高艺术性,但与prompt的联系较少。详情查看
                               <Link
                                 target="_blank"
                                 rel="stylesheet"
@@ -1160,7 +1166,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                     <div className="flex justify-between items-center">
                       <div className="flex gap-2 items-center">
                         <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                          Chaos:
+                          混乱程度:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
@@ -1168,7 +1174,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
-                              命令: --chaos 或 --c<br></br>
                               混乱程度: 默认为0, 范围:
                               0-100,高混乱值将产生更多不寻常和意想不到的结果和构图。
                               较低的混乱值具有更可靠、可重复的结果。详情查看
@@ -1225,7 +1230,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                     <div className="flex justify-between items-center">
                       <div className=" flex gap-2 items-center">
                         <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                          Image Weight:
+                          图片权重:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
@@ -1233,9 +1238,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
-                              命令: --iw<br></br>
-                              范围:v5.2: 0-2, v6和niji 6: 0-3。当使用image
-                              prompt时,此项越高,图片对最终结果的影响权重越高,默认为1。
+                              范围:v5.2: 0-2, v6和niji 6: 0-3。当在promtp中存在图片地址时,此项越高,图片对最终结果的影响权重越高,默认为1。
                               <Link
                                 target="_blank"
                                 rel="stylesheet"
@@ -1286,7 +1289,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                     <div className="flex justify-between items-center">
                       <div className=" flex gap-2 items-center">
                         <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                          Stop:
+                          停止:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
@@ -1294,7 +1297,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
-                              命令: --stop<br></br>
                               范围:10-100, 默认为100,
                               调整此项将提前停止图像的生成,以较早的百分比停止作业可能会产生更模糊、不太详细的结果。
                               <Link
@@ -1346,7 +1348,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                     <div className="flex justify-between items-center">
                       <div className=" flex gap-2 items-center">
                         <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                          Weird:
+                          抽象程度:
                         </FormLabel>
                         <HoverCard openDelay={300}>
                           <HoverCardTrigger>
@@ -1354,7 +1356,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                           </HoverCardTrigger>
                           <HoverCardContent>
                             <p className="text-white text-sm">
-                              命令: --weird 或 --w<br></br>
                               范围:0-3000, 默认为0,
                               抽象程度,此参数为生成的图像引入了古怪和另类的品质,从而产生独特和意想不到的结果。
                               <Link
@@ -1406,7 +1407,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex flex-col ">
                     <div className=" flex gap-2 items-center">
                       <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                        Seeds:
+                        种子数:
                       </FormLabel>
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
@@ -1414,10 +1415,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
-                            命令: --seed<br></br>
-                            范围:0-4294967295,是为每个图像随机生成的,但可以使用
-                            --seed
-                            参数指定。如果您使用相同的seed和prompt,您最终将获得相似的图像。
+                            范围:0-4294967295,种子数是为每个图像随机生成的id,如果您使用相同的种子数和prompt,您最终将获得相似的图像。
                             <Link
                               target="_blank"
                               rel="stylesheet"
@@ -1457,7 +1455,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                   <FormItem className="flex flex-col ">
                     <div className=" flex gap-2 items-center">
                       <FormLabel className="text-neutral-800 dark:text-white text-nowrap text-sm">
-                        Negative Words:
+                        消极词:
                       </FormLabel>
                       <HoverCard openDelay={300}>
                         <HoverCardTrigger>
@@ -1465,7 +1463,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                         </HoverCardTrigger>
                         <HoverCardContent>
                           <p className="text-white text-sm">
-                            命令: --no<br></br>
                             不想图片中出现的元素(以逗号分开),比如:床,凳子,书桌
                             详情查看
                             <Link
@@ -1498,16 +1495,14 @@ export const ImageForm = ({ email }: { email: string }) => {
               <div className="flex flex-col gap-2">
                 <div className=" flex gap-2 items-center">
                   <p className="text-neutral-800 dark:text-white font-medium text-nowrap text-sm">
-                    Image Urls:
+                    图片地址:
                   </p>
                   <HoverCard openDelay={300}>
                     <HoverCardTrigger>
                       <InfoCircledIcon className="dark:text-white dark:hover:text-gray-100 cursor-pointer hover:stroke-black/20"></InfoCircledIcon>
                     </HoverCardTrigger>
                     <HoverCardContent>
-                      <p className="text-white text-sm">
-                        Image prompt中的image url,以 png, jpg, jpeg, webp 结尾,
-                        在prompt的最前面,
+                      <p className="text-white text-sm">以 png, jpg, jpeg, webp 结尾,
                         您可以添加图像作为prompt的一部分来影响作业的构图、风格和颜色。
                       </p>
                     </HoverCardContent>
@@ -1560,7 +1555,7 @@ export const ImageForm = ({ email }: { email: string }) => {
               <div className="flex flex-col gap-2">
                 <div className=" flex gap-2 items-center">
                   <p className="text-neutral-800 dark:text-white font-medium text-nowrap text-sm">
-                    Style References Image Urls:
+                    风格一致图片地址:
                   </p>
                   <HoverCard openDelay={300}>
                     <HoverCardTrigger>
@@ -1568,18 +1563,15 @@ export const ImageForm = ({ email }: { email: string }) => {
                     </HoverCardTrigger>
                     <HoverCardContent>
                       <p className="text-white text-sm">
-                        命令: --sref<br></br>
-                        仅适用于v 6, niji 6, 风格参考的image urls,以 png, jpg,
-                        jpeg, webp 结尾,
-                        在prompt的后面,可以得到与输入的图像非常相似的图像,可以与image
-                        prompt搭配使用。
+                        仅适用于v 6, niji 6,以 png, jpg,
+                        jpeg, webp 结尾,可以得到与输入的图像整体风格一致的图像
                       </p>
                     </HoverCardContent>
                   </HoverCard>
                 </div>
 
                 <Input
-                  value={sreftUrl}
+                  value={srefUrl}
                   disabled={useDefaultModel}
                   onBlur={() => handleInputBlur(-1, "srefUrls")}
                   onChange={(e) => setSrefUrl(e.target.value)}
@@ -1587,7 +1579,39 @@ export const ImageForm = ({ email }: { email: string }) => {
                   placeholder="https://example.com/image.png"
                 ></Input>
               </div>
+
               <Separator className=" w-full" />
+
+              <div className="flex flex-col gap-2">
+                <div className=" flex gap-2 items-center">
+                  <p className="text-neutral-800 dark:text-white font-medium text-nowrap text-sm">
+                    角色一致图片地址:
+                  </p>
+                  <HoverCard openDelay={300}>
+                    <HoverCardTrigger>
+                      <InfoCircledIcon className=" cursor-pointer dark:text-white dark:hover:text-gray-100 hover:stroke-black/20"></InfoCircledIcon>
+                    </HoverCardTrigger>
+                    <HoverCardContent>
+                      <p className="text-white text-sm">
+                        仅适用于v 6, niji 6,图片的地址以 png, jpg,
+                        jpeg, webp 结尾,可以得到与角色风格一致的图片
+                      </p>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
+
+                <Input
+                  value={crefUrl}
+                  disabled={useDefaultModel}
+                  onBlur={() => handleInputBlur(-1, "crefUrls")}
+                  onChange={(e) => setCrefUrl(e.target.value)}
+                  className="bg-gray-100 border-none text-xs dark:bg-[#202e4d] dark:text-white  placeholder:text-xs resize-none focus-visible:ring-transparent focus-visible:ring-offset-transparent "
+                  placeholder="https://example.com/image.png"
+                ></Input>
+              </div>
+
+              <Separator className=" w-full"></Separator>
+
               <div className="flex flex-col gap-3">
                 <div className=" w-full flex gap-[89px] text-black items-center">
                   <Switch
@@ -1596,12 +1620,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                     checked={useStyleRow}
                     onCheckedChange={(value) => setUseStyleRow(value)}
                   ></Switch>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 flex-row-reverse items-center -translate-x-[0.22rem]">
                     <Label
                       htmlFor="use-form-data"
                       className=" dark:text-white text-sm cursor-pointer"
                     >
-                      Style Raw
+                      原始风格
                     </Label>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
@@ -1609,7 +1633,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
-                          命令: --style row<br></br>
                           此项开启后,图像应用的自动美化较少,这可以在prompt特定样式时实现更准确的匹配。详情查看
                           <Link
                             target="_blank"
@@ -1631,12 +1654,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                     checked={useTile}
                     onCheckedChange={(value) => setUseTile(value)}
                   ></Switch>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 flex-row-reverse -translate-x-[2.8rem] items-center">
                     <Label
                       htmlFor="use-tile"
                       className="text-sm dark:text-white cursor-pointer"
                     >
-                      Tile
+                      瓦片风格
                     </Label>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
@@ -1644,7 +1667,6 @@ export const ImageForm = ({ email }: { email: string }) => {
                       </HoverCardTrigger>
                       <HoverCardContent>
                         <p className="text-white text-sm">
-                          命令:--tile<br></br>
                           此项开启可以生成重复的无缝图案,类似地板砖。详情查看
                           <Link
                             target="_blank"
@@ -1667,12 +1689,12 @@ export const ImageForm = ({ email }: { email: string }) => {
                     onCheckedChange={(value) => setUseTurbo(value)}
                     id="use-turbo"
                   ></Switch>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 flex-row-reverse items-center">
                     <Label
                       htmlFor="use-turbo"
                       className="text-sm dark:text-white cursor-pointer"
                     >
-                      Turbo模式
+                      涡轮模式
                     </Label>
                     <HoverCard openDelay={300}>
                       <HoverCardTrigger>
@@ -1681,8 +1703,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                       <HoverCardContent>
                         <p className="text-white text-sm">
                           仅v5.2可用;
-                          此项开启后,文生图,图生文,图生图的速度会更快,但是会消耗更多的GPU算力。turbo比fast快四倍,但消耗的订阅GPU分钟数是fast的两倍。
-                          默认fast模式。详情查看
+                          此项开启后,文生图,图生文,图生图的速度会更快,但是会消耗更多的GPU算力。
                           <Link
                             target="_blank"
                             rel="stylesheet"
@@ -1851,7 +1872,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                           </TooltipTrigger>
                                           <TooltipContent side="right">
                                             <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                              Vary(strong)
+                                              高变化
                                             </p>
                                           </TooltipContent>
                                         </Tooltip>
@@ -1882,7 +1903,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                           </TooltipTrigger>
                                           <TooltipContent side="right">
                                             <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                              Vary(subtle)
+                                              低变化
                                             </p>
                                           </TooltipContent>
                                         </Tooltip>
@@ -1910,7 +1931,7 @@ export const ImageForm = ({ email }: { email: string }) => {
                                           </TooltipTrigger>
                                           <TooltipContent side="right">
                                             <p className=" bg-black/70 py-1.5 px-2.5 text-white rounded-md">
-                                              Vary(Region)
+                                              区域变化
                                             </p>
                                           </TooltipContent>
                                         </Tooltip>
